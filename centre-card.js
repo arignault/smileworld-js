@@ -95,11 +95,10 @@ function initScrollDrag(scrollWrapper) {
         if (!isDragging) return;
         e.preventDefault();
         const x = e.pageX - scrollWrapper.offsetLeft;
-        const walk = (x - startX) * 2; // Vitesse de déplacement
+        const walk = (x - startX) * 2;
         scrollWrapper.scrollLeft = scrollLeft - walk;
     });
 
-    // Style initial
     scrollWrapper.style.cursor = 'grab';
     scrollWrapper.style.userSelect = 'none';
     scrollWrapper.style.overflowX = 'auto';
@@ -355,8 +354,114 @@ function initTagHolderMarquee(tagHolderWrapper) {
     startMarquee();
 }
 
-// Fonction pour initialiser les cartes
-async function initCentreCards() {
+// Fonction pour initialiser une carte individuelle
+function initCard(card, index) {
+    if (!card) return;
+
+    // Vérification des éléments requis
+    const elements = {
+        scrollWrapper: card.querySelector('.centre-card_scroll_wrapper'),
+        tagHolderWrapper: card.querySelector('.tag-holder-wrapper'),
+        maskGradient: card.querySelector('.mask-gradient'),
+        toggleButton: card.querySelector('[data-attribute="data-card-toggle"]'),
+        scrollElements: gsap.utils.toArray(card.querySelectorAll('.centre-card_scroll_element')),
+        listElements: gsap.utils.toArray(card.querySelectorAll('.centre-card_list')),
+        buttonHolders: gsap.utils.toArray(card.querySelectorAll('.centre-card_button-holder')),
+        arrowHolder: card.querySelector('.svg-holder.arrow')
+    };
+
+    // Vérifier si tous les éléments requis sont présents
+    const missingElements = Object.entries(elements)
+        .filter(([_, element]) => !element || (Array.isArray(element) && element.length === 0))
+        .map(([name]) => name);
+
+    if (missingElements.length > 0) {
+        console.warn(`⚠️ Carte ${index + 1} - Éléments manquants:`, missingElements);
+        return;
+    }
+
+    let isOpen = false;
+
+    // Initialiser le drag et le marquee
+    initScrollDrag(elements.scrollWrapper);
+    initTagHolderMarquee(elements.tagHolderWrapper);
+    elements.tagHolderWrapper.startMarquee();
+
+    // Gérer le toggle
+    elements.toggleButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (isOpen) {
+            // Fermeture
+            gsap.set(elements.scrollWrapper, CARD_STATES.CLOSED.scrollWrapper);
+            gsap.set(elements.scrollElements, CARD_STATES.CLOSED.scrollElement);
+            gsap.set(elements.listElements, CARD_STATES.CLOSED.list);
+            gsap.set(elements.buttonHolders, CARD_STATES.CLOSED.buttonHolder);
+            gsap.set(elements.tagHolderWrapper, CARD_STATES.CLOSED.tagHolderWrapper);
+            gsap.set(elements.tagHolderWrapper.querySelector('.tag-holder'), CARD_STATES.CLOSED.tagHolder);
+            gsap.set(elements.maskGradient, CARD_STATES.CLOSED.maskGradient);
+            gsap.to(elements.arrowHolder, { 
+                rotation: CARD_STATES.CLOSED.arrowHolder.rotate,
+                duration: 0.3,
+                ease: "power2.inOut",
+                transformOrigin: "center center"
+            });
+            elements.tagHolderWrapper.startMarquee();
+            card.classList.remove('is-open');
+        } else {
+            // Ouverture
+            elements.tagHolderWrapper.stopMarquee();
+            gsap.set(elements.scrollWrapper, CARD_STATES.OPEN.scrollWrapper);
+            gsap.set(elements.scrollElements, CARD_STATES.OPEN.scrollElement);
+            gsap.set(elements.listElements, CARD_STATES.OPEN.list);
+            gsap.set(elements.buttonHolders, CARD_STATES.OPEN.buttonHolder);
+            gsap.set(elements.tagHolderWrapper, CARD_STATES.OPEN.tagHolderWrapper);
+            gsap.set(elements.tagHolderWrapper.querySelector('.tag-holder'), CARD_STATES.OPEN.tagHolder);
+            gsap.set(elements.maskGradient, CARD_STATES.OPEN.maskGradient);
+            gsap.to(elements.arrowHolder, { 
+                rotation: CARD_STATES.OPEN.arrowHolder.rotate,
+                duration: 0.3,
+                ease: "power2.inOut",
+                transformOrigin: "center center"
+            });
+            card.classList.add('is-open');
+        }
+        isOpen = !isOpen;
+    });
+
+    // État initial
+    gsap.set(elements.scrollWrapper, CARD_STATES.CLOSED.scrollWrapper);
+    gsap.set(elements.scrollElements, CARD_STATES.CLOSED.scrollElement);
+    gsap.set(elements.listElements, CARD_STATES.CLOSED.list);
+    gsap.set(elements.buttonHolders, CARD_STATES.CLOSED.buttonHolder);
+    gsap.set(elements.tagHolderWrapper, CARD_STATES.CLOSED.tagHolderWrapper);
+    gsap.set(elements.tagHolderWrapper.querySelector('.tag-holder'), CARD_STATES.CLOSED.tagHolder);
+    gsap.set(elements.maskGradient, CARD_STATES.CLOSED.maskGradient);
+    gsap.set(elements.arrowHolder, { 
+        rotation: CARD_STATES.CLOSED.arrowHolder.rotate,
+        transformOrigin: "center center"
+    });
+
+    // Créer un ScrollTrigger pour cette carte
+    ScrollTrigger.create({
+        trigger: card,
+        start: "top bottom-=100",
+        onEnter: () => {
+            // Animation d'entrée si nécessaire
+            gsap.from(card, {
+                y: 50,
+                opacity: 0,
+                duration: 0.8,
+                ease: "power2.out"
+            });
+        },
+        once: true
+    });
+}
+
+// Fonction principale d'initialisation
+function initCentreCards() {
     console.log('🔄 Attente du chargement des cartes...');
     
     // Attendre que le DOM soit complètement chargé
@@ -373,163 +478,24 @@ async function initCentreCards() {
 
     console.log('🔍 Recherche des cartes...');
     
-    // Utiliser Array.from pour une meilleure manipulation
-    const cards = Array.from(document.querySelectorAll('.centre-card_wrapper.effect-cartoon-shadow'));
-    console.log('📊 Nombre de cartes trouvées:', cards.length);
+    // Utiliser gsap.utils.toArray pour une meilleure compatibilité
+    const cards = gsap.utils.toArray('.centre-card_wrapper.effect-cartoon-shadow');
     
-    if (cards.length === 0) {
+    if (!cards || cards.length === 0) {
         console.warn('⚠️ Aucune carte trouvée. Vérifiez que la collection liste est bien chargée.');
         return;
     }
 
-    // Vérifier que les éléments nécessaires sont présents
-    const validateCard = (card, index) => {
-        const requiredElements = {
-            scrollWrapper: card.querySelector('.centre-card_scroll_wrapper'),
-            tagHolderWrapper: card.querySelector('.tag-holder-wrapper'),
-            maskGradient: card.querySelector('.mask-gradient'),
-            toggleButton: card.querySelector('[data-attribute="data-card-toggle"]')
-        };
-
-        const missingElements = Object.entries(requiredElements)
-            .filter(([_, element]) => !element)
-            .map(([name]) => name);
-
-        if (missingElements.length > 0) {
-            console.warn(`⚠️ Carte ${index + 1} - Éléments manquants:`, missingElements);
-            return false;
-        }
-
-        return true;
-    };
+    console.log(`📊 ${cards.length} cartes trouvées`);
 
     // Initialiser chaque carte
     cards.forEach((card, index) => {
         console.log(`🔄 Initialisation de la carte ${index + 1}`);
-        
-        if (!validateCard(card, index)) {
-            console.warn(`❌ Carte ${index + 1} - Initialisation annulée`);
-            return;
-        }
-
-        let isOpen = false;
-        
-        // Sélectionner les éléments avec Array.from
-        const scrollWrapper = card.querySelector('.centre-card_scroll_wrapper');
-        const scrollElements = Array.from(card.querySelectorAll('.centre-card_scroll_element'));
-        const listElements = Array.from(card.querySelectorAll('.centre-card_list'));
-        const buttonHolders = Array.from(card.querySelectorAll('.centre-card_button-holder'));
-        const tagHolderWrapper = card.querySelector('.tag-holder-wrapper');
-        const maskGradient = tagHolderWrapper?.querySelector('.mask-gradient');
-        const arrowHolder = card.querySelector('.svg-holder.arrow');
-        const toggleButton = card.querySelector('[data-attribute="data-card-toggle"]');
-        
-        // Initialiser le drag sur le scroll wrapper
-        if (scrollWrapper) {
-            initScrollDrag(scrollWrapper);
-        }
-        
-        // Initialiser le marquee pour le tag holder wrapper
-        if (tagHolderWrapper) {
-            initTagHolderMarquee(tagHolderWrapper);
-            tagHolderWrapper.startMarquee();
-        }
-        
-        if (toggleButton) {
-            console.log(`Carte ${index + 1} - Ajout du gestionnaire de clic`);
-            
-            toggleButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                if (!scrollWrapper || !tagHolderWrapper || !maskGradient) {
-                    console.warn(`Carte ${index + 1} - Éléments manquants pour l'animation`);
-                    return;
-                }
-                
-                if (isOpen) {
-                    console.log(`Carte ${index + 1} - Fermeture`);
-                    if (scrollWrapper) gsap.set(scrollWrapper, CARD_STATES.CLOSED.scrollWrapper);
-                    if (scrollElements.length) gsap.set(scrollElements, CARD_STATES.CLOSED.scrollElement);
-                    if (listElements.length) gsap.set(listElements, CARD_STATES.CLOSED.list);
-                    if (buttonHolders.length) gsap.set(buttonHolders, CARD_STATES.CLOSED.buttonHolder);
-                    if (tagHolderWrapper) {
-                        const tagHolder = tagHolderWrapper.querySelector('.tag-holder');
-                        if (tagHolder) {
-                            gsap.set(tagHolderWrapper, CARD_STATES.CLOSED.tagHolderWrapper);
-                            gsap.set(tagHolder, CARD_STATES.CLOSED.tagHolder);
-                        }
-                        tagHolderWrapper.startMarquee(); // Redémarrer le marquee
-                    }
-                    if (maskGradient) gsap.set(maskGradient, CARD_STATES.CLOSED.maskGradient);
-                    if (arrowHolder) {
-                        console.log('Rotation de la flèche vers 0°');
-                        gsap.to(arrowHolder, { 
-                            rotation: CARD_STATES.CLOSED.arrowHolder.rotate,
-                            duration: 0.3,
-                            ease: "power2.inOut",
-                            transformOrigin: "center center"
-                        });
-                    }
-                    card.classList.remove('is-open');
-                } else {
-                    console.log(`Carte ${index + 1} - Ouverture`);
-                    if (tagHolderWrapper) {
-                        tagHolderWrapper.stopMarquee(); // Arrêter le marquee
-                    }
-                    if (scrollWrapper) gsap.set(scrollWrapper, CARD_STATES.OPEN.scrollWrapper);
-                    if (scrollElements.length) gsap.set(scrollElements, CARD_STATES.OPEN.scrollElement);
-                    if (listElements.length) gsap.set(listElements, CARD_STATES.OPEN.list);
-                    if (buttonHolders.length) gsap.set(buttonHolders, CARD_STATES.OPEN.buttonHolder);
-                    if (tagHolderWrapper) {
-                        const tagHolder = tagHolderWrapper.querySelector('.tag-holder');
-                        if (tagHolder) {
-                            gsap.set(tagHolderWrapper, CARD_STATES.OPEN.tagHolderWrapper);
-                            gsap.set(tagHolder, CARD_STATES.OPEN.tagHolder);
-                        }
-                    }
-                    if (maskGradient) gsap.set(maskGradient, CARD_STATES.OPEN.maskGradient);
-                    if (arrowHolder) {
-                        console.log('Rotation de la flèche vers 90°');
-                        gsap.to(arrowHolder, { 
-                            rotation: CARD_STATES.OPEN.arrowHolder.rotate,
-                            duration: 0.3,
-                            ease: "power2.inOut",
-                            transformOrigin: "center center"
-                        });
-                    }
-                    card.classList.add('is-open');
-                }
-                isOpen = !isOpen;
-            });
-        } else {
-            console.warn(`Carte ${index + 1} - Aucun bouton toggle trouvé`);
-        }
-        
-        // État initial (fermé)
-        if (scrollWrapper) gsap.set(scrollWrapper, CARD_STATES.CLOSED.scrollWrapper);
-        if (scrollElements.length) gsap.set(scrollElements, CARD_STATES.CLOSED.scrollElement);
-        if (listElements.length) gsap.set(listElements, CARD_STATES.CLOSED.list);
-        if (buttonHolders.length) gsap.set(buttonHolders, CARD_STATES.CLOSED.buttonHolder);
-        if (tagHolderWrapper) {
-            const tagHolder = tagHolderWrapper.querySelector('.tag-holder');
-            if (tagHolder) {
-                gsap.set(tagHolderWrapper, CARD_STATES.CLOSED.tagHolderWrapper);
-                gsap.set(tagHolder, CARD_STATES.CLOSED.tagHolder);
-            }
-        }
-        if (maskGradient) gsap.set(maskGradient, CARD_STATES.CLOSED.maskGradient);
-        if (arrowHolder) {
-            console.log('Initialisation de la flèche à 0°');
-            gsap.set(arrowHolder, { 
-                rotation: CARD_STATES.CLOSED.arrowHolder.rotate,
-                transformOrigin: "center center"
-            });
-        }
+        initCard(card, index);
     });
 
     console.log('✅ Initialisation des cartes terminée');
 }
 
-// Export de la fonction pour l'utiliser dans main_gsap.js
+// Export de la fonction
 export { initCentreCards };
