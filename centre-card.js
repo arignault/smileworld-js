@@ -356,25 +356,73 @@ function initTagHolderMarquee(tagHolderWrapper) {
 }
 
 // Fonction pour initialiser les cartes
-function initCentreCards() {
-    console.log('Initialisation des cartes...');
+async function initCentreCards() {
+    console.log('🔄 Attente du chargement des cartes...');
     
-    const cards = document.querySelectorAll('.centre-card_wrapper.effect-cartoon-shadow');
-    console.log('Nombre de cartes trouvées:', cards.length);
+    // Attendre que le DOM soit complètement chargé
+    await new Promise(resolve => {
+        if (document.readyState === 'complete') {
+            resolve();
+        } else {
+            window.addEventListener('load', resolve);
+        }
+    });
+
+    // Attendre un peu plus pour s'assurer que la collection liste est chargée
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    console.log('🔍 Recherche des cartes...');
     
+    // Utiliser Array.from pour une meilleure manipulation
+    const cards = Array.from(document.querySelectorAll('.centre-card_wrapper.effect-cartoon-shadow'));
+    console.log('📊 Nombre de cartes trouvées:', cards.length);
+    
+    if (cards.length === 0) {
+        console.warn('⚠️ Aucune carte trouvée. Vérifiez que la collection liste est bien chargée.');
+        return;
+    }
+
+    // Vérifier que les éléments nécessaires sont présents
+    const validateCard = (card, index) => {
+        const requiredElements = {
+            scrollWrapper: card.querySelector('.centre-card_scroll_wrapper'),
+            tagHolderWrapper: card.querySelector('.tag-holder-wrapper'),
+            maskGradient: card.querySelector('.mask-gradient'),
+            toggleButton: card.querySelector('[data-attribute="data-card-toggle"]')
+        };
+
+        const missingElements = Object.entries(requiredElements)
+            .filter(([_, element]) => !element)
+            .map(([name]) => name);
+
+        if (missingElements.length > 0) {
+            console.warn(`⚠️ Carte ${index + 1} - Éléments manquants:`, missingElements);
+            return false;
+        }
+
+        return true;
+    };
+
+    // Initialiser chaque carte
     cards.forEach((card, index) => {
-        console.log(`Initialisation de la carte ${index + 1}`);
+        console.log(`🔄 Initialisation de la carte ${index + 1}`);
         
+        if (!validateCard(card, index)) {
+            console.warn(`❌ Carte ${index + 1} - Initialisation annulée`);
+            return;
+        }
+
         let isOpen = false;
         
-        // Sélectionner les éléments spécifiques à toggle
+        // Sélectionner les éléments avec Array.from
         const scrollWrapper = card.querySelector('.centre-card_scroll_wrapper');
-        const scrollElements = card.querySelectorAll('.centre-card_scroll_element');
-        const listElements = card.querySelectorAll('.centre-card_list');
-        const buttonHolders = card.querySelectorAll('.centre-card_button-holder');
+        const scrollElements = Array.from(card.querySelectorAll('.centre-card_scroll_element'));
+        const listElements = Array.from(card.querySelectorAll('.centre-card_list'));
+        const buttonHolders = Array.from(card.querySelectorAll('.centre-card_button-holder'));
         const tagHolderWrapper = card.querySelector('.tag-holder-wrapper');
         const maskGradient = tagHolderWrapper?.querySelector('.mask-gradient');
         const arrowHolder = card.querySelector('.svg-holder.arrow');
+        const toggleButton = card.querySelector('[data-attribute="data-card-toggle"]');
         
         // Initialiser le drag sur le scroll wrapper
         if (scrollWrapper) {
@@ -383,14 +431,9 @@ function initCentreCards() {
         
         // Initialiser le marquee pour le tag holder wrapper
         if (tagHolderWrapper) {
-            // Initialiser le marquee immédiatement
             initTagHolderMarquee(tagHolderWrapper);
-            tagHolderWrapper.startMarquee(); // Démarrer le marquee tout de suite
+            tagHolderWrapper.startMarquee();
         }
-        
-        // Sélectionner spécifiquement le clickable_wrap avec l'attribut data-attribute="data-card-toggle"
-        const toggleButton = card.querySelector('[data-attribute="data-card-toggle"]');
-        console.log(`Carte ${index + 1} - Bouton toggle trouvé:`, !!toggleButton);
         
         if (toggleButton) {
             console.log(`Carte ${index + 1} - Ajout du gestionnaire de clic`);
@@ -484,6 +527,8 @@ function initCentreCards() {
             });
         }
     });
+
+    console.log('✅ Initialisation des cartes terminée');
 }
 
 // Export de la fonction pour l'utiliser dans main_gsap.js
