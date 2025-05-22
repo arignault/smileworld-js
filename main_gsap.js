@@ -9,6 +9,48 @@ console.log('🔍 Script main_gsap.js chargé');
 let isInitializing = false;
 let initializationTimeout = null;
 
+// Fonction pour définir les états initiaux
+function setInitialStates() {
+    console.log('🔄 Définition des états initiaux...');
+    
+    // Fermer tous les menus desktop
+    const menuWrapper = document.querySelector('.desktop_menu_wrapper');
+    if (menuWrapper) {
+        menuWrapper.style.display = 'none';
+        menuWrapper.style.opacity = '0';
+    }
+
+    // Fermer tous les menus individuels
+    const menuContainers = document.querySelectorAll('.parc_menu_desktop, .activites_menu_desktop, .offres_menu_desktop');
+    menuContainers.forEach(container => {
+        if (container) {
+            container.style.display = 'none';
+            container.style.opacity = '0';
+        }
+    });
+
+    // Fermer le menu mobile
+    const menuMobile = document.querySelector('.menu-mobile');
+    if (menuMobile) {
+        menuMobile.style.display = 'none';
+        menuMobile.style.opacity = '0';
+    }
+
+    // Fermer toutes les cartes
+    const cards = document.querySelectorAll('.centre-card_wrapper.effect-cartoon-shadow');
+    cards.forEach(card => {
+        if (card) {
+            card.classList.remove('is-open');
+            const tagHolderWrapper = card.querySelector('.tag-holder-wrapper');
+            if (tagHolderWrapper) {
+                tagHolderWrapper.classList.remove('is-open');
+            }
+        }
+    });
+
+    console.log('✅ États initiaux définis');
+}
+
 // Fonction pour afficher un compte à rebours
 function logCountdown(seconds) {
     console.log('\n==========================================');
@@ -66,6 +108,9 @@ function initializeWithDelay() {
     console.log('⚠️ ATTENTION: UN DÉLAI DE 5 SECONDES VA COMMENCER');
     console.log('==========================================\n');
 
+    // Définir les états initiaux avant le délai
+    setInitialStates();
+
     // Démarrer le compte à rebours
     const countdownInterval = logCountdown(5);
 
@@ -84,7 +129,7 @@ function initializeWithDelay() {
             // Vérifier l'état du DOM avant l'initialisation
             checkDOMState();
             
-            // Initialiser les menus
+            // Initialiser les menus dans l'ordre
             console.log('\n🔄 Initialisation du menu mobile...');
             initMenuMobile();
             console.log("✅ Menu mobile initialisé");
@@ -93,14 +138,16 @@ function initializeWithDelay() {
             initMenuDesktop();
             console.log("✅ Menu desktop initialisé");
             
-            // Initialiser les cartes
-            console.log('\n🔄 Initialisation des cartes...');
-            initCentreCards();
-            console.log("✅ Cartes initialisées");
-            
-            // Vérification finale
-            console.log('\n📊 ÉTAT FINAL APRÈS INITIALISATION:');
-            checkDOMState();
+            // Attendre un court instant avant d'initialiser les cartes
+            setTimeout(() => {
+                console.log('\n🔄 Initialisation des cartes...');
+                initCentreCards();
+                console.log("✅ Cartes initialisées");
+                
+                // Vérification finale
+                console.log('\n📊 ÉTAT FINAL APRÈS INITIALISATION:');
+                checkDOMState();
+            }, 100);
             
         } catch (error) {
             console.error("\n❌ Erreur lors de l'initialisation:", error);
