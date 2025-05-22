@@ -87,7 +87,7 @@ function initTagHolderMarquee(tagHolderWrapper) {
     if (!tagHolderWrapper) return;
 
     const GAP_VALUE = 'clamp(0.375rem, 0.34615384615384615rem + 0.15384615384615385vw, 0.5rem)';
-    const MARQUEE_SPEED = 50; // pixels par seconde
+    const MARQUEE_SPEED = 50;
 
     // Récupérer les éléments de la nouvelle structure
     const maskGradient = tagHolderWrapper.querySelector('.mask-gradient');
@@ -104,19 +104,19 @@ function initTagHolderMarquee(tagHolderWrapper) {
         visibility: visible;
     `;
 
-    // Style du tag holder
-    tagHolder.style.cssText = `
-        display: flex;
-        position: relative;
-        width: 100%;
-        height: 100%;
-        flex-direction: row;
+    // Style du tag holder - S'assurer que flex-wrap: nowrap est appliqué directement
+    tagHolder.setAttribute('style', `
+        display: flex !important;
+        position: relative !important;
+        width: 100% !important;
+        height: 100% !important;
+        flex-direction: row !important;
         flex-wrap: nowrap !important;
-        white-space: nowrap;
-        min-width: 100%;
-        visibility: visible;
-        gap: ${GAP_VALUE};
-    `;
+        white-space: nowrap !important;
+        min-width: 100% !important;
+        visibility: visible !important;
+        gap: ${GAP_VALUE} !important;
+    `);
 
     // Créer le conteneur du marquee
     const marqueeContainer = document.createElement('div');
@@ -218,6 +218,20 @@ function initTagHolderMarquee(tagHolderWrapper) {
             tagHolderWrapper._originalContent = tagHolder.innerHTML;
         }
 
+        // Réappliquer le style important sur le tag-holder
+        tagHolder.setAttribute('style', `
+            display: flex !important;
+            position: relative !important;
+            width: 100% !important;
+            height: 100% !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            white-space: nowrap !important;
+            min-width: 100% !important;
+            visibility: visible !important;
+            gap: ${GAP_VALUE} !important;
+        `);
+
         // Afficher le marquee
         if (tagHolderWrapper._marqueeContainer) {
             tagHolderWrapper._marqueeContainer.style.display = 'flex';
@@ -281,8 +295,21 @@ function initTagHolderMarquee(tagHolderWrapper) {
             tagHolderWrapper._timeline = null;
         }
         
-        // Restaurer le contenu original et cacher le marquee
+        // Restaurer le contenu original et réappliquer le style
         tagHolder.innerHTML = tagHolderWrapper._originalContent;
+        tagHolder.setAttribute('style', `
+            display: flex !important;
+            position: relative !important;
+            width: 100% !important;
+            height: 100% !important;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            white-space: normal !important;
+            min-width: 100% !important;
+            visibility: visible !important;
+            gap: ${GAP_VALUE} !important;
+        `);
+
         if (tagHolderWrapper._marqueeContainer) {
             tagHolderWrapper._marqueeContainer.style.display = 'none';
         }
