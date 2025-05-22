@@ -9,8 +9,12 @@ const CARD_STATES = {
             display: 'flex',
             position: 'relative',
             width: '100%',
+            height: '100%',
             flexDirection: 'row',
             flexWrap: 'nowrap !important',
+            whiteSpace: 'nowrap',
+            minWidth: '100%',
+            visibility: 'visible',
             gap: 'clamp(0.375rem, 0.34615384615384615rem + 0.15384615384615385vw, 0.5rem)'
         },
         maskGradient: { 
@@ -29,8 +33,12 @@ const CARD_STATES = {
             display: 'flex',
             position: 'relative',
             width: '100%',
+            height: '100%',
             flexDirection: 'row',
             flexWrap: 'wrap !important',
+            whiteSpace: 'normal',
+            minWidth: '100%',
+            visibility: 'visible',
             gap: 'clamp(0.375rem, 0.34615384615384615rem + 0.15384615384615385vw, 0.5rem)'
         },
         maskGradient: { 
@@ -387,7 +395,10 @@ function initCentreCards() {
                     if (listElements.length) gsap.set(listElements, CARD_STATES.CLOSED.list);
                     if (buttonHolders.length) gsap.set(buttonHolders, CARD_STATES.CLOSED.buttonHolder);
                     if (tagHolderWrapper) {
-                        gsap.set(tagHolderWrapper, CARD_STATES.CLOSED.tagHolder);
+                        const tagHolder = tagHolderWrapper.querySelector('.tag-holder');
+                        if (tagHolder) {
+                            gsap.set(tagHolder, CARD_STATES.CLOSED.tagHolder);
+                        }
                         tagHolderWrapper.startMarquee(); // Redémarrer le marquee
                     }
                     if (maskGradient) gsap.set(maskGradient, CARD_STATES.CLOSED.maskGradient);
@@ -411,7 +422,10 @@ function initCentreCards() {
                     if (listElements.length) gsap.set(listElements, CARD_STATES.OPEN.list);
                     if (buttonHolders.length) gsap.set(buttonHolders, CARD_STATES.OPEN.buttonHolder);
                     if (tagHolderWrapper) {
-                        gsap.set(tagHolderWrapper, CARD_STATES.OPEN.tagHolder);
+                        const tagHolder = tagHolderWrapper.querySelector('.tag-holder');
+                        if (tagHolder) {
+                            gsap.set(tagHolder, CARD_STATES.OPEN.tagHolder);
+                        }
                     }
                     if (maskGradient) gsap.set(maskGradient, CARD_STATES.OPEN.maskGradient);
                     if (arrowHolder) {
@@ -437,7 +451,10 @@ function initCentreCards() {
         if (listElements.length) gsap.set(listElements, CARD_STATES.CLOSED.list);
         if (buttonHolders.length) gsap.set(buttonHolders, CARD_STATES.CLOSED.buttonHolder);
         if (tagHolderWrapper) {
-            gsap.set(tagHolderWrapper, CARD_STATES.CLOSED.tagHolder);
+            const tagHolder = tagHolderWrapper.querySelector('.tag-holder');
+            if (tagHolder) {
+                gsap.set(tagHolder, CARD_STATES.CLOSED.tagHolder);
+            }
         }
         if (maskGradient) gsap.set(maskGradient, CARD_STATES.CLOSED.maskGradient);
         if (arrowHolder) {
