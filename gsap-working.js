@@ -1,3 +1,5 @@
+// test github
+
 document.addEventListener("DOMContentLoaded", function () {
     const hamburger = document.getElementById("hamburger-menu");
     const closeButton = document.getElementById("button-close");

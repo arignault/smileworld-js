@@ -24,4 +24,8 @@ document.addEventListener("DOMContentLoaded", function() {
     // initAnimations();
     // initParallax();
     // etc...
+    // test github
+    // test github
+    // test github
+    
 });
