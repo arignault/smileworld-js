@@ -398,6 +398,7 @@ function initCard(card, index) {
     console.log(`✅ [Carte ${index + 1}] Tous les éléments requis sont présents`);
 
     let isOpen = false;
+    let isAnimating = false; // Nouveau flag pour éviter les animations simultanées
 
     try {
         // Initialiser le drag et le marquee
@@ -412,53 +413,73 @@ function initCard(card, index) {
         // Gérer le toggle
         console.log(`🔄 [Carte ${index + 1}] Configuration du toggle...`);
         elements.toggleButton.addEventListener('click', (e) => {
-            console.log(`🖱️ [Carte ${index + 1}] Clic détecté, état actuel: ${isOpen ? 'ouvert' : 'fermé'}`);
             e.preventDefault();
             e.stopPropagation();
 
+            // Vérifier si une animation est déjà en cours
+            if (isAnimating) {
+                console.log(`⚠️ [Carte ${index + 1}] Animation en cours, clic ignoré`);
+                return;
+            }
+
+            console.log(`🖱️ [Carte ${index + 1}] Clic détecté, état actuel: ${isOpen ? 'ouvert' : 'fermé'}`);
+
             try {
+                isAnimating = true;
+
+                // Créer une timeline pour l'animation
+                const tl = gsap.timeline({
+                    onComplete: () => {
+                        isAnimating = false;
+                        console.log(`✅ [Carte ${index + 1}] Animation terminée`);
+                    }
+                });
+
                 if (isOpen) {
                     console.log(`🔄 [Carte ${index + 1}] Début de la fermeture...`);
                     // Fermeture
-                    gsap.set(elements.scrollWrapper, CARD_STATES.CLOSED.scrollWrapper);
-                    gsap.set(elements.scrollElements, CARD_STATES.CLOSED.scrollElement);
-                    gsap.set(elements.listElements, CARD_STATES.CLOSED.list);
-                    gsap.set(elements.buttonHolders, CARD_STATES.CLOSED.buttonHolder);
-                    gsap.set(elements.tagHolderWrapper, CARD_STATES.CLOSED.tagHolderWrapper);
-                    gsap.set(elements.tagHolderWrapper.querySelector('.tag-holder'), CARD_STATES.CLOSED.tagHolder);
-                    gsap.set(elements.maskGradient, CARD_STATES.CLOSED.maskGradient);
-                    gsap.to(elements.arrowHolder, { 
+                    tl.to(elements.arrowHolder, { 
                         rotation: CARD_STATES.CLOSED.arrowHolder.rotate,
                         duration: 0.3,
                         ease: "power2.inOut",
                         transformOrigin: "center center"
+                    })
+                    .set(elements.scrollWrapper, CARD_STATES.CLOSED.scrollWrapper, "<")
+                    .set(elements.scrollElements, CARD_STATES.CLOSED.scrollElement, "<")
+                    .set(elements.listElements, CARD_STATES.CLOSED.list, "<")
+                    .set(elements.buttonHolders, CARD_STATES.CLOSED.buttonHolder, "<")
+                    .set(elements.tagHolderWrapper, CARD_STATES.CLOSED.tagHolderWrapper, "<")
+                    .set(elements.tagHolderWrapper.querySelector('.tag-holder'), CARD_STATES.CLOSED.tagHolder, "<")
+                    .set(elements.maskGradient, CARD_STATES.CLOSED.maskGradient, "<")
+                    .call(() => {
+                        elements.tagHolderWrapper.startMarquee();
+                        card.classList.remove('is-open');
                     });
-                    elements.tagHolderWrapper.startMarquee();
-                    card.classList.remove('is-open');
-                    console.log(`✅ [Carte ${index + 1}] Fermeture terminée`);
                 } else {
                     console.log(`🔄 [Carte ${index + 1}] Début de l'ouverture...`);
                     // Ouverture
                     elements.tagHolderWrapper.stopMarquee();
-                    gsap.set(elements.scrollWrapper, CARD_STATES.OPEN.scrollWrapper);
-                    gsap.set(elements.scrollElements, CARD_STATES.OPEN.scrollElement);
-                    gsap.set(elements.listElements, CARD_STATES.OPEN.list);
-                    gsap.set(elements.buttonHolders, CARD_STATES.OPEN.buttonHolder);
-                    gsap.set(elements.tagHolderWrapper, CARD_STATES.OPEN.tagHolderWrapper);
-                    gsap.set(elements.tagHolderWrapper.querySelector('.tag-holder'), CARD_STATES.OPEN.tagHolder);
-                    gsap.set(elements.maskGradient, CARD_STATES.OPEN.maskGradient);
-                    gsap.to(elements.arrowHolder, { 
+                    tl.set(elements.scrollWrapper, CARD_STATES.OPEN.scrollWrapper)
+                    .set(elements.scrollElements, CARD_STATES.OPEN.scrollElement, "<")
+                    .set(elements.listElements, CARD_STATES.OPEN.list, "<")
+                    .set(elements.buttonHolders, CARD_STATES.OPEN.buttonHolder, "<")
+                    .set(elements.tagHolderWrapper, CARD_STATES.OPEN.tagHolderWrapper, "<")
+                    .set(elements.tagHolderWrapper.querySelector('.tag-holder'), CARD_STATES.OPEN.tagHolder, "<")
+                    .set(elements.maskGradient, CARD_STATES.OPEN.maskGradient, "<")
+                    .to(elements.arrowHolder, { 
                         rotation: CARD_STATES.OPEN.arrowHolder.rotate,
                         duration: 0.3,
                         ease: "power2.inOut",
                         transformOrigin: "center center"
+                    })
+                    .call(() => {
+                        card.classList.add('is-open');
                     });
-                    card.classList.add('is-open');
-                    console.log(`✅ [Carte ${index + 1}] Ouverture terminée`);
                 }
                 isOpen = !isOpen;
             } catch (error) {
                 console.error(`❌ [Carte ${index + 1}] Erreur lors de l'animation:`, error);
+                isAnimating = false;
             }
         });
 
@@ -483,13 +504,15 @@ function initCard(card, index) {
             trigger: card,
             start: "top bottom-=100",
             onEnter: () => {
-                console.log(`🎯 [Carte ${index + 1}] Entrée dans la vue`);
-                gsap.from(card, {
-                    y: 50,
-                    opacity: 0,
-                    duration: 0.8,
-                    ease: "power2.out"
-                });
+                if (!isAnimating) {
+                    console.log(`🎯 [Carte ${index + 1}] Entrée dans la vue`);
+                    gsap.from(card, {
+                        y: 50,
+                        opacity: 0,
+                        duration: 0.8,
+                        ease: "power2.out"
+                    });
+                }
             },
             once: true
         });
