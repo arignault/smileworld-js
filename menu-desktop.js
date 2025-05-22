@@ -6,17 +6,17 @@ let isAnimating = false; // Nouveau flag pour éviter les animations simultanée
 // Configuration des menus
 const menuConfig = [
     {
-        buttonSelector: '[data-attribute="data-nav-link-desktop-parcs"]',
+        buttonSelector: '[data-nav-link-desktop-parcs]',
         containerSelector: '.parc_menu_desktop',
         isOpen: false
     },
     {
-        buttonSelector: '[data-attribute="data-nav-link-desktop-activites"]',
+        buttonSelector: '[data-nav-link-desktop-activites]',
         containerSelector: '.activites_menu_desktop',
         isOpen: false
     },
     {
-        buttonSelector: '[data-attribute="data-nav-link-desktop-offres"]',
+        buttonSelector: '[data-nav-link-desktop-offres]',
         containerSelector: '.offres_menu_desktop',
         isOpen: false
     }
@@ -118,6 +118,15 @@ export function initMenuDesktop() {
     menuConfig.forEach(menu => {
         const elements = document.querySelectorAll(menu.buttonSelector);
         console.log(`Éléments trouvés pour ${menu.buttonSelector}:`, elements.length);
+        if (elements.length === 0) {
+            console.warn(`⚠️ Aucun élément trouvé pour ${menu.buttonSelector}`);
+            // Afficher tous les éléments avec des attributs data-nav pour le débogage
+            const allNavElements = document.querySelectorAll('[data-nav]');
+            console.log('Tous les éléments avec data-nav:', allNavElements);
+            allNavElements.forEach(el => {
+                console.log('Attributs de l\'élément:', el.attributes);
+            });
+        }
     });
 
     // Initialisation de chaque menu
