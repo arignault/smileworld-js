@@ -356,9 +356,15 @@ function initTagHolderMarquee(tagHolderWrapper) {
 
 // Fonction pour initialiser une carte individuelle
 function initCard(card, index) {
-    if (!card) return;
+    console.log(`🔍 [Carte ${index + 1}] Début de l'initialisation`);
+    
+    if (!card) {
+        console.error(`❌ [Carte ${index + 1}] Carte invalide (null ou undefined)`);
+        return;
+    }
 
     // Vérification des éléments requis
+    console.log(`🔍 [Carte ${index + 1}] Recherche des éléments...`);
     const elements = {
         scrollWrapper: card.querySelector('.centre-card_scroll_wrapper'),
         tagHolderWrapper: card.querySelector('.tag-holder-wrapper'),
@@ -370,131 +376,152 @@ function initCard(card, index) {
         arrowHolder: card.querySelector('.svg-holder.arrow')
     };
 
+    // Log de chaque élément trouvé
+    Object.entries(elements).forEach(([name, element]) => {
+        if (Array.isArray(element)) {
+            console.log(`📦 [Carte ${index + 1}] ${name}: ${element.length} éléments trouvés`);
+        } else {
+            console.log(`📦 [Carte ${index + 1}] ${name}: ${element ? '✅ trouvé' : '❌ non trouvé'}`);
+        }
+    });
+
     // Vérifier si tous les éléments requis sont présents
     const missingElements = Object.entries(elements)
         .filter(([_, element]) => !element || (Array.isArray(element) && element.length === 0))
         .map(([name]) => name);
 
     if (missingElements.length > 0) {
-        console.warn(`⚠️ Carte ${index + 1} - Éléments manquants:`, missingElements);
+        console.warn(`⚠️ [Carte ${index + 1}] Éléments manquants:`, missingElements);
         return;
     }
 
+    console.log(`✅ [Carte ${index + 1}] Tous les éléments requis sont présents`);
+
     let isOpen = false;
 
-    // Initialiser le drag et le marquee
-    initScrollDrag(elements.scrollWrapper);
-    initTagHolderMarquee(elements.tagHolderWrapper);
-    elements.tagHolderWrapper.startMarquee();
+    try {
+        // Initialiser le drag et le marquee
+        console.log(`🔄 [Carte ${index + 1}] Initialisation du drag...`);
+        initScrollDrag(elements.scrollWrapper);
+        
+        console.log(`🔄 [Carte ${index + 1}] Initialisation du marquee...`);
+        initTagHolderMarquee(elements.tagHolderWrapper);
+        elements.tagHolderWrapper.startMarquee();
+        console.log(`✅ [Carte ${index + 1}] Marquee démarré`);
 
-    // Gérer le toggle
-    elements.toggleButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+        // Gérer le toggle
+        console.log(`🔄 [Carte ${index + 1}] Configuration du toggle...`);
+        elements.toggleButton.addEventListener('click', (e) => {
+            console.log(`🖱️ [Carte ${index + 1}] Clic détecté, état actuel: ${isOpen ? 'ouvert' : 'fermé'}`);
+            e.preventDefault();
+            e.stopPropagation();
 
-        if (isOpen) {
-            // Fermeture
-            gsap.set(elements.scrollWrapper, CARD_STATES.CLOSED.scrollWrapper);
-            gsap.set(elements.scrollElements, CARD_STATES.CLOSED.scrollElement);
-            gsap.set(elements.listElements, CARD_STATES.CLOSED.list);
-            gsap.set(elements.buttonHolders, CARD_STATES.CLOSED.buttonHolder);
-            gsap.set(elements.tagHolderWrapper, CARD_STATES.CLOSED.tagHolderWrapper);
-            gsap.set(elements.tagHolderWrapper.querySelector('.tag-holder'), CARD_STATES.CLOSED.tagHolder);
-            gsap.set(elements.maskGradient, CARD_STATES.CLOSED.maskGradient);
-            gsap.to(elements.arrowHolder, { 
-                rotation: CARD_STATES.CLOSED.arrowHolder.rotate,
-                duration: 0.3,
-                ease: "power2.inOut",
-                transformOrigin: "center center"
-            });
-            elements.tagHolderWrapper.startMarquee();
-            card.classList.remove('is-open');
-        } else {
-            // Ouverture
-            elements.tagHolderWrapper.stopMarquee();
-            gsap.set(elements.scrollWrapper, CARD_STATES.OPEN.scrollWrapper);
-            gsap.set(elements.scrollElements, CARD_STATES.OPEN.scrollElement);
-            gsap.set(elements.listElements, CARD_STATES.OPEN.list);
-            gsap.set(elements.buttonHolders, CARD_STATES.OPEN.buttonHolder);
-            gsap.set(elements.tagHolderWrapper, CARD_STATES.OPEN.tagHolderWrapper);
-            gsap.set(elements.tagHolderWrapper.querySelector('.tag-holder'), CARD_STATES.OPEN.tagHolder);
-            gsap.set(elements.maskGradient, CARD_STATES.OPEN.maskGradient);
-            gsap.to(elements.arrowHolder, { 
-                rotation: CARD_STATES.OPEN.arrowHolder.rotate,
-                duration: 0.3,
-                ease: "power2.inOut",
-                transformOrigin: "center center"
-            });
-            card.classList.add('is-open');
-        }
-        isOpen = !isOpen;
-    });
+            try {
+                if (isOpen) {
+                    console.log(`🔄 [Carte ${index + 1}] Début de la fermeture...`);
+                    // Fermeture
+                    gsap.set(elements.scrollWrapper, CARD_STATES.CLOSED.scrollWrapper);
+                    gsap.set(elements.scrollElements, CARD_STATES.CLOSED.scrollElement);
+                    gsap.set(elements.listElements, CARD_STATES.CLOSED.list);
+                    gsap.set(elements.buttonHolders, CARD_STATES.CLOSED.buttonHolder);
+                    gsap.set(elements.tagHolderWrapper, CARD_STATES.CLOSED.tagHolderWrapper);
+                    gsap.set(elements.tagHolderWrapper.querySelector('.tag-holder'), CARD_STATES.CLOSED.tagHolder);
+                    gsap.set(elements.maskGradient, CARD_STATES.CLOSED.maskGradient);
+                    gsap.to(elements.arrowHolder, { 
+                        rotation: CARD_STATES.CLOSED.arrowHolder.rotate,
+                        duration: 0.3,
+                        ease: "power2.inOut",
+                        transformOrigin: "center center"
+                    });
+                    elements.tagHolderWrapper.startMarquee();
+                    card.classList.remove('is-open');
+                    console.log(`✅ [Carte ${index + 1}] Fermeture terminée`);
+                } else {
+                    console.log(`🔄 [Carte ${index + 1}] Début de l'ouverture...`);
+                    // Ouverture
+                    elements.tagHolderWrapper.stopMarquee();
+                    gsap.set(elements.scrollWrapper, CARD_STATES.OPEN.scrollWrapper);
+                    gsap.set(elements.scrollElements, CARD_STATES.OPEN.scrollElement);
+                    gsap.set(elements.listElements, CARD_STATES.OPEN.list);
+                    gsap.set(elements.buttonHolders, CARD_STATES.OPEN.buttonHolder);
+                    gsap.set(elements.tagHolderWrapper, CARD_STATES.OPEN.tagHolderWrapper);
+                    gsap.set(elements.tagHolderWrapper.querySelector('.tag-holder'), CARD_STATES.OPEN.tagHolder);
+                    gsap.set(elements.maskGradient, CARD_STATES.OPEN.maskGradient);
+                    gsap.to(elements.arrowHolder, { 
+                        rotation: CARD_STATES.OPEN.arrowHolder.rotate,
+                        duration: 0.3,
+                        ease: "power2.inOut",
+                        transformOrigin: "center center"
+                    });
+                    card.classList.add('is-open');
+                    console.log(`✅ [Carte ${index + 1}] Ouverture terminée`);
+                }
+                isOpen = !isOpen;
+            } catch (error) {
+                console.error(`❌ [Carte ${index + 1}] Erreur lors de l'animation:`, error);
+            }
+        });
 
-    // État initial
-    gsap.set(elements.scrollWrapper, CARD_STATES.CLOSED.scrollWrapper);
-    gsap.set(elements.scrollElements, CARD_STATES.CLOSED.scrollElement);
-    gsap.set(elements.listElements, CARD_STATES.CLOSED.list);
-    gsap.set(elements.buttonHolders, CARD_STATES.CLOSED.buttonHolder);
-    gsap.set(elements.tagHolderWrapper, CARD_STATES.CLOSED.tagHolderWrapper);
-    gsap.set(elements.tagHolderWrapper.querySelector('.tag-holder'), CARD_STATES.CLOSED.tagHolder);
-    gsap.set(elements.maskGradient, CARD_STATES.CLOSED.maskGradient);
-    gsap.set(elements.arrowHolder, { 
-        rotation: CARD_STATES.CLOSED.arrowHolder.rotate,
-        transformOrigin: "center center"
-    });
+        // État initial
+        console.log(`🔄 [Carte ${index + 1}] Application de l'état initial...`);
+        gsap.set(elements.scrollWrapper, CARD_STATES.CLOSED.scrollWrapper);
+        gsap.set(elements.scrollElements, CARD_STATES.CLOSED.scrollElement);
+        gsap.set(elements.listElements, CARD_STATES.CLOSED.list);
+        gsap.set(elements.buttonHolders, CARD_STATES.CLOSED.buttonHolder);
+        gsap.set(elements.tagHolderWrapper, CARD_STATES.CLOSED.tagHolderWrapper);
+        gsap.set(elements.tagHolderWrapper.querySelector('.tag-holder'), CARD_STATES.CLOSED.tagHolder);
+        gsap.set(elements.maskGradient, CARD_STATES.CLOSED.maskGradient);
+        gsap.set(elements.arrowHolder, { 
+            rotation: CARD_STATES.CLOSED.arrowHolder.rotate,
+            transformOrigin: "center center"
+        });
+        console.log(`✅ [Carte ${index + 1}] État initial appliqué`);
 
-    // Créer un ScrollTrigger pour cette carte
-    ScrollTrigger.create({
-        trigger: card,
-        start: "top bottom-=100",
-        onEnter: () => {
-            // Animation d'entrée si nécessaire
-            gsap.from(card, {
-                y: 50,
-                opacity: 0,
-                duration: 0.8,
-                ease: "power2.out"
-            });
-        },
-        once: true
-    });
+        // Créer un ScrollTrigger pour cette carte
+        console.log(`🔄 [Carte ${index + 1}] Configuration du ScrollTrigger...`);
+        ScrollTrigger.create({
+            trigger: card,
+            start: "top bottom-=100",
+            onEnter: () => {
+                console.log(`🎯 [Carte ${index + 1}] Entrée dans la vue`);
+                gsap.from(card, {
+                    y: 50,
+                    opacity: 0,
+                    duration: 0.8,
+                    ease: "power2.out"
+                });
+            },
+            once: true
+        });
+        console.log(`✅ [Carte ${index + 1}] ScrollTrigger configuré`);
+
+    } catch (error) {
+        console.error(`❌ [Carte ${index + 1}] Erreur lors de l'initialisation:`, error);
+    }
+
+    console.log(`✅ [Carte ${index + 1}] Initialisation terminée avec succès`);
 }
 
 // Fonction principale d'initialisation
 function initCentreCards() {
-    console.log('🔄 Attente du chargement des cartes...');
-    
-    // Attendre que le DOM soit complètement chargé
-    await new Promise(resolve => {
-        if (document.readyState === 'complete') {
-            resolve();
-        } else {
-            window.addEventListener('load', resolve);
-        }
-    });
-
-    // Attendre un peu plus pour s'assurer que la collection liste est chargée
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    console.log('🔍 Recherche des cartes...');
+    console.log('🔍 Début de la recherche des cartes...');
     
     // Utiliser gsap.utils.toArray pour une meilleure compatibilité
     const cards = gsap.utils.toArray('.centre-card_wrapper.effect-cartoon-shadow');
+    console.log(`📊 ${cards.length} cartes trouvées`);
     
     if (!cards || cards.length === 0) {
         console.warn('⚠️ Aucune carte trouvée. Vérifiez que la collection liste est bien chargée.');
         return;
     }
 
-    console.log(`📊 ${cards.length} cartes trouvées`);
-
     // Initialiser chaque carte
     cards.forEach((card, index) => {
-        console.log(`🔄 Initialisation de la carte ${index + 1}`);
+        console.log(`\n🔄 Initialisation de la carte ${index + 1}...`);
         initCard(card, index);
     });
 
-    console.log('✅ Initialisation des cartes terminée');
+    console.log('\n✅ Initialisation de toutes les cartes terminée');
 }
 
 // Export de la fonction
