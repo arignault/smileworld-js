@@ -3,24 +3,31 @@ let isInitialized = false;
 let isWrapperOpen = false;
 let isAnimating = false; // Nouveau flag pour éviter les animations simultanées
 
-// Configuration des menus
+// Configuration des menus avec des sélecteurs plus robustes
 const menuConfig = [
     {
-        buttonSelector: '.nav_menu_item:has(button:contains("Nos Parcs"))',
+        buttonSelector: '[data-nav-link-desktop-parc]',
         containerSelector: '.parc_menu_desktop',
         isOpen: false
     },
     {
-        buttonSelector: '.nav_menu_item:has(button:contains("Activités"))',
+        buttonSelector: '[data-nav-link-desktop-activites]',
         containerSelector: '.activites_menu_desktop',
         isOpen: false
     },
     {
-        buttonSelector: '.nav_menu_item:has(button:contains("Offres"))',
+        buttonSelector: '[data-nav-link-desktop-offres]',
         containerSelector: '.offres_menu_desktop',
         isOpen: false
     }
 ];
+
+// Fonction pour vérifier si un élément est visible dans le DOM
+function isElementVisible(element) {
+    if (!element) return false;
+    const style = window.getComputedStyle(element);
+    return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+}
 
 // Fonction pour obtenir le display calculé par Webflow
 function getComputedDisplay(element) {
@@ -30,8 +37,8 @@ function getComputedDisplay(element) {
 
 // Fonction pour fermer tous les menus et le wrapper
 function closeAllMenusAndWrapper(menuWrapper) {
-    if (isAnimating) {
-        console.log('⚠️ Animation en cours, fermeture ignorée');
+    if (!menuWrapper || isAnimating) {
+        console.log('⚠️ Animation en cours ou wrapper invalide, fermeture ignorée');
         return;
     }
 
@@ -39,22 +46,22 @@ function closeAllMenusAndWrapper(menuWrapper) {
     console.log('🔄 Début de la fermeture...');
 
     try {
-        // Créer une timeline pour l'animation de fermeture
         const tl = gsap.timeline({
             onComplete: () => {
-                menuWrapper.style.display = 'none';
+                if (menuWrapper) {
+                    menuWrapper.style.display = 'none';
+                }
                 isWrapperOpen = false;
                 isAnimating = false;
                 console.log('✅ Fermeture terminée');
             }
         });
 
-        // Fermer tous les menus avec animation
         menuConfig.forEach(menu => {
             const menuButton = document.querySelector(menu.buttonSelector);
             const menuContainer = document.querySelector(menu.containerSelector);
             
-            if (menuButton) {
+            if (menuButton && isElementVisible(menuButton)) {
                 const navMenuItem = menuButton.closest('.nav_menu_item');
                 if (navMenuItem) {
                     tl.to(navMenuItem, {
@@ -65,7 +72,7 @@ function closeAllMenusAndWrapper(menuWrapper) {
                 }
             }
             
-            if (menuContainer) {
+            if (menuContainer && isElementVisible(menuContainer)) {
                 tl.to(menuContainer, {
                     opacity: 0,
                     duration: 0.2,
@@ -78,12 +85,13 @@ function closeAllMenusAndWrapper(menuWrapper) {
             }
         });
 
-        // Animation du wrapper
-        tl.to(menuWrapper, {
-            opacity: 0,
-            duration: 0.3,
-            ease: "power2.out"
-        }, 0);
+        if (isElementVisible(menuWrapper)) {
+            tl.to(menuWrapper, {
+                opacity: 0,
+                duration: 0.3,
+                ease: "power2.out"
+            }, 0);
+        }
 
     } catch (error) {
         console.error('❌ Erreur lors de la fermeture:', error);
@@ -93,7 +101,6 @@ function closeAllMenusAndWrapper(menuWrapper) {
 
 // Fonction pour initialiser le menu desktop
 export function initMenuDesktop() {
-    // Éviter la double initialisation
     if (isInitialized) {
         console.log('⚠️ Menu desktop déjà initialisé');
         return;
@@ -101,7 +108,6 @@ export function initMenuDesktop() {
 
     console.log('🚀 Initialisation du menu desktop...');
 
-    // Sélection du wrapper
     const menuWrapper = document.querySelector('.desktop_menu_wrapper');
     if (!menuWrapper) {
         console.warn('⚠️ Menu wrapper non trouvé');
@@ -125,50 +131,19 @@ export function initMenuDesktop() {
 
     // Initialisation de chaque menu
     menuConfig.forEach(menu => {
-        // Essayer différents sélecteurs
-        const possibleSelectors = [
-            menu.buttonSelector,
-            `.nav_menu_item button:contains("${menu.buttonSelector.split(':contains("')[1].split('")')[0]}")`,
-            `.nav_menu_item:has(button:contains("${menu.buttonSelector.split(':contains("')[1].split('")')[0]}"))`,
-            `[data-nav-link-desktop-${menu.containerSelector.split('_')[0]}]`
-        ];
-
-        let menuButton = null;
-        let usedSelector = '';
-
-        for (const selector of possibleSelectors) {
-            const elements = document.querySelectorAll(selector);
-            if (elements.length > 0) {
-                menuButton = elements[0];
-                usedSelector = selector;
-                break;
-            }
-        }
-
+        const menuButton = document.querySelector(menu.buttonSelector);
         const menuContainer = document.querySelector(menu.containerSelector);
 
-        console.log('🔍 Éléments trouvés pour', menu.containerSelector, ':', {
-            menuButton: menuButton ? '✅' : '❌',
-            menuContainer: menuContainer ? '✅' : '❌',
-            usedSelector: usedSelector || 'Aucun sélecteur ne fonctionne'
-        });
-
-        // Vérification que les éléments existent
         if (!menuButton || !menuContainer) {
-            console.warn('⚠️ Menu desktop: éléments non trouvés pour', menu.containerSelector);
+            console.warn(`⚠️ Menu desktop: éléments non trouvés pour ${menu.containerSelector}`);
             return;
         }
-
-        // Stockage du display original
-        const originalDisplay = getComputedDisplay(menuContainer);
-        console.log('📝 Display original du menu:', originalDisplay);
 
         // Fermer le menu au démarrage
         menuContainer.style.display = 'none';
         menuContainer.style.opacity = '0';
         console.log('🔒 Menu fermé au démarrage:', menu.containerSelector);
 
-        // Ajout de l'écouteur d'événement sur le bouton
         menuButton.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -181,14 +156,12 @@ export function initMenuDesktop() {
             console.log('🖱️ Clic sur le bouton du menu:', menu.containerSelector);
             
             if (menu.isOpen) {
-                // Si le menu est déjà ouvert, tout fermer
                 closeAllMenusAndWrapper(menuWrapper);
             } else {
                 isAnimating = true;
                 console.log('🔄 Début de l\'ouverture...');
 
                 try {
-                    // Créer une timeline pour l'animation d'ouverture
                     const tl = gsap.timeline({
                         onComplete: () => {
                             isAnimating = false;
@@ -196,7 +169,6 @@ export function initMenuDesktop() {
                         }
                     });
 
-                    // Ouvrir le wrapper si c'est le premier clic
                     if (!isWrapperOpen) {
                         menuWrapper.style.display = 'flex';
                         tl.to(menuWrapper, {
@@ -206,14 +178,13 @@ export function initMenuDesktop() {
                         });
                         isWrapperOpen = true;
                     }
-                    
-                    // Fermer tous les autres menus
+
                     menuConfig.forEach(otherMenu => {
                         if (otherMenu !== menu) {
                             const otherContainer = document.querySelector(otherMenu.containerSelector);
                             const otherButton = document.querySelector(otherMenu.buttonSelector);
                             
-                            if (otherContainer) {
+                            if (otherContainer && isElementVisible(otherContainer)) {
                                 tl.to(otherContainer, {
                                     opacity: 0,
                                     duration: 0.2,
@@ -238,15 +209,14 @@ export function initMenuDesktop() {
                             }
                         }
                     });
-                    
-                    // Ouvrir le menu cliqué
+
                     menuContainer.style.display = 'block';
                     tl.to(menuContainer, {
                         opacity: 1,
                         duration: 0.3,
                         ease: "power2.out"
                     });
-                    
+
                     const navMenuItem = menuButton.closest('.nav_menu_item');
                     if (navMenuItem) {
                         tl.to(navMenuItem, {
@@ -256,7 +226,7 @@ export function initMenuDesktop() {
                         });
                         navMenuItem.classList.add('active');
                     }
-                    
+
                     menu.isOpen = true;
 
                 } catch (error) {
@@ -267,16 +237,18 @@ export function initMenuDesktop() {
         });
     });
 
-    // Fermeture du wrapper et des menus au clic en dehors
+    // Fermeture au clic en dehors avec vérification de visibilité
     document.addEventListener('click', (e) => {
         if (isAnimating) return;
 
-        const isClickOutside = !menuConfig.some(menu => 
-            e.target.closest(menu.buttonSelector) || 
-            e.target.closest(menu.containerSelector)
-        ) && !e.target.closest('.desktop_menu_wrapper');
+        const isClickOutside = !menuConfig.some(menu => {
+            const button = document.querySelector(menu.buttonSelector);
+            const container = document.querySelector(menu.containerSelector);
+            return (button && e.target.closest(menu.buttonSelector)) || 
+                   (container && e.target.closest(menu.containerSelector));
+        }) && !e.target.closest('.desktop_menu_wrapper');
         
-        if (isClickOutside && isWrapperOpen) {
+        if (isClickOutside && isWrapperOpen && isElementVisible(menuWrapper)) {
             closeAllMenusAndWrapper(menuWrapper);
         }
     });
