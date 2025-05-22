@@ -3,6 +3,22 @@ import { initMenuMobile } from './menu-mobile.js';
 import { initCentreCards } from './centre-card.js';
 import { initMenuDesktop } from './menu-desktop.js';
 
+// Fonction pour afficher un compte à rebours
+function logCountdown(seconds) {
+    console.log(`\n⏰ DÉLAI DE ${seconds} SECONDES EN COURS...`);
+    let remaining = seconds;
+    
+    const interval = setInterval(() => {
+        remaining--;
+        console.log(`⏰ ${remaining} seconde${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''}...`);
+        
+        if (remaining <= 0) {
+            clearInterval(interval);
+            console.log('⏰ DÉLAI TERMINÉ !');
+        }
+    }, 1000);
+}
+
 // Fonction pour vérifier si la CMS List est chargée
 function isCMSListLoaded() {
     const cmsList = document.querySelector('.centre-card_wrapper.effect-cartoon-shadow');
@@ -17,13 +33,17 @@ function isCMSListLoaded() {
 
 // Fonction pour attendre que la CMS List soit chargée
 function waitForCMSList(callback, maxAttempts = 10) {
-    console.log('⏳ Début de l\'attente de la CMS List...');
+    console.log('\n⏳ DÉBUT DE L\'ATTENTE DE LA CMS LIST');
+    console.log('⚠️ ATTENTION: DÉLAI DE 5 SECONDES AVANT LES VÉRIFICATIONS');
+    
+    // Afficher le compte à rebours
+    logCountdown(5);
+    
     let attempts = 0;
     
     // Attendre 5 secondes avant de commencer à vérifier
-    console.log('⏰ Attente initiale de 5 secondes...');
     setTimeout(() => {
-        console.log('⏰ Fin de l\'attente initiale, début des vérifications');
+        console.log('\n🔄 DÉBUT DES VÉRIFICATIONS APRÈS LE DÉLAI');
         
         const checkCMSList = () => {
             console.log(`\n🔄 Tentative ${attempts + 1}/${maxAttempts}`);
@@ -60,7 +80,7 @@ function checkDOMState() {
 
 // Initialisation globale
 document.addEventListener("DOMContentLoaded", function() {
-    console.log("\n🚀 Début de l'initialisation des modules GSAP");
+    console.log("\n🚀 DÉBUT DE L'INITIALISATION DES MODULES GSAP");
     console.log('⏰ DOMContentLoaded déclenché');
     
     // Vérifier l'état initial du DOM
@@ -75,10 +95,11 @@ document.addEventListener("DOMContentLoaded", function() {
         initMenuDesktop();
         console.log("✅ Menu desktop initialisé");
         
-        console.log('\n⏳ Préparation de l\'initialisation des cartes...');
+        console.log('\n⏳ PRÉPARATION DE L\'INITIALISATION DES CARTES');
+        console.log('⚠️ ATTENTION: UN DÉLAI DE 5 SECONDES VA COMMENCER');
         // Attendre que la CMS List soit chargée avant d'initialiser les cartes
         waitForCMSList(() => {
-            console.log('\n🔄 Début de l\'initialisation des cartes...');
+            console.log('\n🔄 DÉBUT DE L\'INITIALISATION DES CARTES');
             // Vérifier l'état du DOM avant l'initialisation des cartes
             checkDOMState();
             
@@ -87,7 +108,7 @@ document.addEventListener("DOMContentLoaded", function() {
             console.log("✅ Cartes initialisées");
             
             // Vérification finale
-            console.log('\n📊 État final après initialisation:');
+            console.log('\n📊 ÉTAT FINAL APRÈS INITIALISATION:');
             checkDOMState();
         });
          
