@@ -6,17 +6,17 @@ let isAnimating = false; // Nouveau flag pour éviter les animations simultanée
 // Configuration des menus
 const menuConfig = [
     {
-        buttonSelector: '[data-nav-link-desktop-parcs]',
+        buttonSelector: '.nav_menu_item:has(button:contains("Nos Parcs"))',
         containerSelector: '.parc_menu_desktop',
         isOpen: false
     },
     {
-        buttonSelector: '[data-nav-link-desktop-activites]',
+        buttonSelector: '.nav_menu_item:has(button:contains("Activités"))',
         containerSelector: '.activites_menu_desktop',
         isOpen: false
     },
     {
-        buttonSelector: '[data-nav-link-desktop-offres]',
+        buttonSelector: '.nav_menu_item:has(button:contains("Offres"))',
         containerSelector: '.offres_menu_desktop',
         isOpen: false
     }
@@ -108,35 +108,49 @@ export function initMenuDesktop() {
         return;
     }
 
-    // Fermer le wrapper au démarrage
-    menuWrapper.style.display = 'none';
-    menuWrapper.style.opacity = '0';
-    console.log('🔒 Wrapper fermé au démarrage');
-
     // Debug des sélecteurs
     console.log('🔍 Recherche des éléments...');
-    menuConfig.forEach(menu => {
-        const elements = document.querySelectorAll(menu.buttonSelector);
-        console.log(`Éléments trouvés pour ${menu.buttonSelector}:`, elements.length);
-        if (elements.length === 0) {
-            console.warn(`⚠️ Aucun élément trouvé pour ${menu.buttonSelector}`);
-            // Afficher tous les éléments avec des attributs data-nav pour le débogage
-            const allNavElements = document.querySelectorAll('[data-nav]');
-            console.log('Tous les éléments avec data-nav:', allNavElements);
-            allNavElements.forEach(el => {
-                console.log('Attributs de l\'élément:', el.attributes);
-            });
-        }
+    
+    // Afficher tous les éléments de menu pour le débogage
+    const allMenuItems = document.querySelectorAll('.nav_menu_item');
+    console.log('Tous les éléments nav_menu_item:', allMenuItems.length);
+    allMenuItems.forEach((item, index) => {
+        console.log(`Menu item ${index + 1}:`, {
+            classes: item.className,
+            html: item.innerHTML,
+            buttons: item.querySelectorAll('button'),
+            links: item.querySelectorAll('a')
+        });
     });
 
     // Initialisation de chaque menu
     menuConfig.forEach(menu => {
-        const menuButton = document.querySelector(menu.buttonSelector);
+        // Essayer différents sélecteurs
+        const possibleSelectors = [
+            menu.buttonSelector,
+            `.nav_menu_item button:contains("${menu.buttonSelector.split(':contains("')[1].split('")')[0]}")`,
+            `.nav_menu_item:has(button:contains("${menu.buttonSelector.split(':contains("')[1].split('")')[0]}"))`,
+            `[data-nav-link-desktop-${menu.containerSelector.split('_')[0]}]`
+        ];
+
+        let menuButton = null;
+        let usedSelector = '';
+
+        for (const selector of possibleSelectors) {
+            const elements = document.querySelectorAll(selector);
+            if (elements.length > 0) {
+                menuButton = elements[0];
+                usedSelector = selector;
+                break;
+            }
+        }
+
         const menuContainer = document.querySelector(menu.containerSelector);
 
         console.log('🔍 Éléments trouvés pour', menu.containerSelector, ':', {
             menuButton: menuButton ? '✅' : '❌',
-            menuContainer: menuContainer ? '✅' : '❌'
+            menuContainer: menuContainer ? '✅' : '❌',
+            usedSelector: usedSelector || 'Aucun sélecteur ne fonctionne'
         });
 
         // Vérification que les éléments existent
