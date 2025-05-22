@@ -5,17 +5,25 @@ const CARD_STATES = {
         scrollElement: { display: 'none' },
         list: { display: 'none' },
         buttonHolder: { display: 'none' },
-        tagHolder: { 
+        tagHolderWrapper: { 
             display: 'flex',
             position: 'relative',
             width: '100%',
             height: '100%',
             flexDirection: 'row',
             flexWrap: 'nowrap !important',
-            whiteSpace: 'nowrap',
-            minWidth: '100%',
+            overflow: 'hidden',
             visibility: 'visible',
             gap: 'clamp(0.375rem, 0.34615384615384615rem + 0.15384615384615385vw, 0.5rem)'
+        },
+        tagHolder: {
+            display: 'inherit',
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            whiteSpace: 'nowrap',
+            minWidth: '100%',
+            visibility: 'visible'
         },
         maskGradient: { 
             display: 'block'
@@ -29,17 +37,25 @@ const CARD_STATES = {
         scrollElement: { display: 'flex' },
         list: { display: 'flex' },
         buttonHolder: { display: 'flex' },
-        tagHolder: { 
+        tagHolderWrapper: { 
             display: 'flex',
             position: 'relative',
             width: '100%',
             height: '100%',
             flexDirection: 'row',
             flexWrap: 'wrap !important',
-            whiteSpace: 'normal',
-            minWidth: '100%',
+            overflow: 'hidden',
             visibility: 'visible',
             gap: 'clamp(0.375rem, 0.34615384615384615rem + 0.15384615384615385vw, 0.5rem)'
+        },
+        tagHolder: {
+            display: 'inherit',
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            whiteSpace: 'normal',
+            minWidth: '100%',
+            visibility: 'visible'
         },
         maskGradient: { 
             display: 'none'
@@ -397,6 +413,7 @@ function initCentreCards() {
                     if (tagHolderWrapper) {
                         const tagHolder = tagHolderWrapper.querySelector('.tag-holder');
                         if (tagHolder) {
+                            gsap.set(tagHolderWrapper, CARD_STATES.CLOSED.tagHolderWrapper);
                             gsap.set(tagHolder, CARD_STATES.CLOSED.tagHolder);
                         }
                         tagHolderWrapper.startMarquee(); // Redémarrer le marquee
@@ -424,6 +441,7 @@ function initCentreCards() {
                     if (tagHolderWrapper) {
                         const tagHolder = tagHolderWrapper.querySelector('.tag-holder');
                         if (tagHolder) {
+                            gsap.set(tagHolderWrapper, CARD_STATES.OPEN.tagHolderWrapper);
                             gsap.set(tagHolder, CARD_STATES.OPEN.tagHolder);
                         }
                     }
@@ -453,6 +471,7 @@ function initCentreCards() {
         if (tagHolderWrapper) {
             const tagHolder = tagHolderWrapper.querySelector('.tag-holder');
             if (tagHolder) {
+                gsap.set(tagHolderWrapper, CARD_STATES.CLOSED.tagHolderWrapper);
                 gsap.set(tagHolder, CARD_STATES.CLOSED.tagHolder);
             }
         }
