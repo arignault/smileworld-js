@@ -1,4 +1,4 @@
-// Import des modules
+// Import des modules existants
 import { initMenuMobile } from './menu-mobile.js';
 import { initCentreCards } from './centre-card.js';
 import { initMenuDesktop } from './menu-desktop.js';
