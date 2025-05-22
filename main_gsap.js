@@ -4,7 +4,7 @@ import { initCentreCards } from './centre-card.js';
 import { initMenuDesktop } from './menu-desktop.js';
 
 // Initialisation globale
-document.addEventListener("DOMContentLoaded", async function() {
+document.addEventListener("DOMContentLoaded", function() {
     console.log("🚀 Initialisation des modules GSAP");
     
     try {
@@ -16,8 +16,8 @@ document.addEventListener("DOMContentLoaded", async function() {
         initMenuDesktop();
         console.log("✅ Menu desktop initialisé");
         
-        // Initialisation des cartes (attendre que la collection liste soit chargée)
-        await initCentreCards();
+        // Initialisation des cartes (après le chargement complet du DOM)
+        initCentreCards();
         console.log("✅ Cartes initialisées");
         
     } catch (error) {
