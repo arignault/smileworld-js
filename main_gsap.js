@@ -3,8 +3,11 @@ import { initMenuMobile } from './menu-mobile.js';
 import { initCentreCards } from './centre-card.js';
 import { initMenuDesktop } from './menu-desktop.js';
 
+console.log('🔍 Script main_gsap.js chargé');
+
 // Variable globale pour suivre l'état d'initialisation
 let isInitializing = false;
+let initializationTimeout = null;
 
 // Fonction pour afficher un compte à rebours
 function logCountdown(seconds) {
@@ -44,10 +47,17 @@ function isCMSListLoaded() {
 }
 
 // Fonction pour initialiser avec délai
-async function initializeWithDelay() {
+function initializeWithDelay() {
+    console.log('🔍 Fonction initializeWithDelay appelée');
+    
     if (isInitializing) {
         console.log('⚠️ Initialisation déjà en cours...');
         return;
+    }
+
+    if (initializationTimeout) {
+        console.log('⚠️ Timeout déjà en cours, annulation...');
+        clearTimeout(initializationTimeout);
     }
 
     isInitializing = true;
@@ -59,46 +69,46 @@ async function initializeWithDelay() {
     // Démarrer le compte à rebours
     const countdownInterval = logCountdown(5);
 
-    // Créer une promesse qui se résout après le délai
-    await new Promise(resolve => {
-        setTimeout(() => {
-            clearInterval(countdownInterval);
-            resolve();
-        }, 5000);
-    });
+    // Créer le timeout
+    initializationTimeout = setTimeout(() => {
+        console.log('🔍 Timeout déclenché');
+        clearInterval(countdownInterval);
+        clearTimeout(initializationTimeout);
+        initializationTimeout = null;
 
-    console.log('\n==========================================');
-    console.log('🔄 DÉBUT DE L\'INITIALISATION APRÈS DÉLAI');
-    console.log('==========================================\n');
+        console.log('\n==========================================');
+        console.log('🔄 DÉBUT DE L\'INITIALISATION APRÈS DÉLAI');
+        console.log('==========================================\n');
 
-    try {
-        // Vérifier l'état du DOM avant l'initialisation
-        checkDOMState();
-        
-        // Initialiser les menus
-        console.log('\n🔄 Initialisation du menu mobile...');
-        initMenuMobile();
-        console.log("✅ Menu mobile initialisé");
-        
-        console.log('\n🔄 Initialisation du menu desktop...');
-        initMenuDesktop();
-        console.log("✅ Menu desktop initialisé");
-        
-        // Initialiser les cartes
-        console.log('\n🔄 Initialisation des cartes...');
-        initCentreCards();
-        console.log("✅ Cartes initialisées");
-        
-        // Vérification finale
-        console.log('\n📊 ÉTAT FINAL APRÈS INITIALISATION:');
-        checkDOMState();
-        
-    } catch (error) {
-        console.error("\n❌ Erreur lors de l'initialisation:", error);
-        console.error("Stack trace:", error.stack);
-    } finally {
-        isInitializing = false;
-    }
+        try {
+            // Vérifier l'état du DOM avant l'initialisation
+            checkDOMState();
+            
+            // Initialiser les menus
+            console.log('\n🔄 Initialisation du menu mobile...');
+            initMenuMobile();
+            console.log("✅ Menu mobile initialisé");
+            
+            console.log('\n🔄 Initialisation du menu desktop...');
+            initMenuDesktop();
+            console.log("✅ Menu desktop initialisé");
+            
+            // Initialiser les cartes
+            console.log('\n🔄 Initialisation des cartes...');
+            initCentreCards();
+            console.log("✅ Cartes initialisées");
+            
+            // Vérification finale
+            console.log('\n📊 ÉTAT FINAL APRÈS INITIALISATION:');
+            checkDOMState();
+            
+        } catch (error) {
+            console.error("\n❌ Erreur lors de l'initialisation:", error);
+            console.error("Stack trace:", error.stack);
+        } finally {
+            isInitializing = false;
+        }
+    }, 5000);
 }
 
 // Fonction pour vérifier l'état du DOM
@@ -110,26 +120,37 @@ function checkDOMState() {
     console.log('- Nombre total de cartes:', document.querySelectorAll('.centre-card_wrapper.effect-cartoon-shadow').length);
 }
 
-// Initialisation globale
-document.addEventListener("DOMContentLoaded", function() {
-    console.log("\n==========================================");
+// Fonction d'initialisation principale
+function initializeAll() {
+    console.log('\n==========================================');
     console.log("🚀 DÉBUT DE L'INITIALISATION DES MODULES GSAP");
-    console.log("⏰ DOMContentLoaded déclenché");
+    console.log("⏰ Fonction initializeAll appelée");
     console.log("==========================================\n");
     
     // Vérifier l'état initial du DOM
     checkDOMState();
     
     // Démarrer l'initialisation avec délai
-    initializeWithDelay().catch(error => {
-        console.error("\n❌ Erreur fatale lors de l'initialisation:", error);
-        console.error("Stack trace:", error.stack);
-        isInitializing = false;
+    initializeWithDelay();
+}
+
+// Attendre que le DOM soit complètement chargé
+if (document.readyState === 'loading') {
+    console.log('🔍 DOM en cours de chargement, attente de DOMContentLoaded...');
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('🔍 DOMContentLoaded déclenché');
+        initializeAll();
     });
-    
-    // Vérification périodique de l'état du DOM
-    setInterval(() => {
-        console.log('\n🔄 Vérification périodique du DOM:');
-        checkDOMState();
-    }, 10000); // Toutes les 10 secondes
-});
+} else {
+    console.log('🔍 DOM déjà chargé, initialisation immédiate...');
+    initializeAll();
+}
+
+// Backup avec window.onload
+window.onload = function() {
+    console.log('🔍 window.onload déclenché');
+    if (!isInitializing) {
+        console.log('⚠️ Réinitialisation via window.onload');
+        initializeAll();
+    }
+};
