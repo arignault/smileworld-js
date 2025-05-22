@@ -8,6 +8,11 @@ console.log('🔍 Script main_gsap.js chargé');
 // Variable globale pour suivre l'état d'initialisation
 let isInitializing = false;
 let initializationTimeout = null;
+let modulesLoaded = {
+    menuMobile: false,
+    menuDesktop: false,
+    centreCards: false
+};
 
 // Fonction pour définir les états initiaux
 function setInitialStates() {
@@ -51,6 +56,11 @@ function setInitialStates() {
     console.log('✅ États initiaux définis');
 }
 
+// Fonction pour vérifier si tous les modules sont chargés
+function checkModulesLoaded() {
+    return Object.values(modulesLoaded).every(loaded => loaded);
+}
+
 // Fonction pour afficher un compte à rebours
 function logCountdown(seconds) {
     console.log('\n==========================================');
@@ -89,7 +99,7 @@ function isCMSListLoaded() {
 }
 
 // Fonction pour initialiser avec délai
-function initializeWithDelay() {
+async function initializeWithDelay() {
     console.log('🔍 Fonction initializeWithDelay appelée');
     
     if (isInitializing) {
@@ -114,48 +124,71 @@ function initializeWithDelay() {
     // Démarrer le compte à rebours
     const countdownInterval = logCountdown(5);
 
-    // Créer le timeout
-    initializationTimeout = setTimeout(() => {
-        console.log('🔍 Timeout déclenché');
-        clearInterval(countdownInterval);
-        clearTimeout(initializationTimeout);
-        initializationTimeout = null;
+    try {
+        // Attendre que tous les modules soient chargés
+        while (!checkModulesLoaded()) {
+            console.log('⏳ En attente du chargement des modules...', modulesLoaded);
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+        // Attendre le délai de 5 secondes
+        await new Promise(resolve => {
+            initializationTimeout = setTimeout(() => {
+                clearInterval(countdownInterval);
+                clearTimeout(initializationTimeout);
+                initializationTimeout = null;
+                resolve();
+            }, 5000);
+        });
 
         console.log('\n==========================================');
         console.log('🔄 DÉBUT DE L\'INITIALISATION APRÈS DÉLAI');
         console.log('==========================================\n');
 
+        // Vérifier l'état du DOM avant l'initialisation
+        checkDOMState();
+        
+        // Initialiser les menus dans l'ordre
+        console.log('\n🔄 Initialisation du menu mobile...');
         try {
-            // Vérifier l'état du DOM avant l'initialisation
-            checkDOMState();
-            
-            // Initialiser les menus dans l'ordre
-            console.log('\n🔄 Initialisation du menu mobile...');
-            initMenuMobile();
+            await initMenuMobile();
+            modulesLoaded.menuMobile = true;
             console.log("✅ Menu mobile initialisé");
-            
-            console.log('\n🔄 Initialisation du menu desktop...');
-            initMenuDesktop();
-            console.log("✅ Menu desktop initialisé");
-            
-            // Attendre un court instant avant d'initialiser les cartes
-            setTimeout(() => {
-                console.log('\n🔄 Initialisation des cartes...');
-                initCentreCards();
-                console.log("✅ Cartes initialisées");
-                
-                // Vérification finale
-                console.log('\n📊 ÉTAT FINAL APRÈS INITIALISATION:');
-                checkDOMState();
-            }, 100);
-            
         } catch (error) {
-            console.error("\n❌ Erreur lors de l'initialisation:", error);
-            console.error("Stack trace:", error.stack);
-        } finally {
-            isInitializing = false;
+            console.error("❌ Erreur lors de l'initialisation du menu mobile:", error);
         }
-    }, 5000);
+        
+        console.log('\n🔄 Initialisation du menu desktop...');
+        try {
+            await initMenuDesktop();
+            modulesLoaded.menuDesktop = true;
+            console.log("✅ Menu desktop initialisé");
+        } catch (error) {
+            console.error("❌ Erreur lors de l'initialisation du menu desktop:", error);
+        }
+        
+        // Attendre un court instant avant d'initialiser les cartes
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        console.log('\n🔄 Initialisation des cartes...');
+        try {
+            await initCentreCards();
+            modulesLoaded.centreCards = true;
+            console.log("✅ Cartes initialisées");
+        } catch (error) {
+            console.error("❌ Erreur lors de l'initialisation des cartes:", error);
+        }
+        
+        // Vérification finale
+        console.log('\n📊 ÉTAT FINAL APRÈS INITIALISATION:');
+        checkDOMState();
+        
+    } catch (error) {
+        console.error("\n❌ Erreur lors de l'initialisation:", error);
+        console.error("Stack trace:", error.stack);
+    } finally {
+        isInitializing = false;
+    }
 }
 
 // Fonction pour vérifier l'état du DOM
@@ -167,37 +200,27 @@ function checkDOMState() {
     console.log('- Nombre total de cartes:', document.querySelectorAll('.centre-card_wrapper.effect-cartoon-shadow').length);
 }
 
-// Fonction d'initialisation principale
-function initializeAll() {
-    console.log('\n==========================================');
+// Initialisation globale
+window.addEventListener('load', function() {
+    console.log("\n==========================================");
     console.log("🚀 DÉBUT DE L'INITIALISATION DES MODULES GSAP");
-    console.log("⏰ Fonction initializeAll appelée");
+    console.log("⏰ window.load déclenché");
     console.log("==========================================\n");
     
     // Vérifier l'état initial du DOM
     checkDOMState();
     
+    // Marquer les modules comme chargés
+    modulesLoaded = {
+        menuMobile: true,
+        menuDesktop: true,
+        centreCards: true
+    };
+    
     // Démarrer l'initialisation avec délai
-    initializeWithDelay();
-}
-
-// Attendre que le DOM soit complètement chargé
-if (document.readyState === 'loading') {
-    console.log('🔍 DOM en cours de chargement, attente de DOMContentLoaded...');
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log('🔍 DOMContentLoaded déclenché');
-        initializeAll();
+    initializeWithDelay().catch(error => {
+        console.error("\n❌ Erreur fatale lors de l'initialisation:", error);
+        console.error("Stack trace:", error.stack);
+        isInitializing = false;
     });
-} else {
-    console.log('🔍 DOM déjà chargé, initialisation immédiate...');
-    initializeAll();
-}
-
-// Backup avec window.onload
-window.onload = function() {
-    console.log('🔍 window.onload déclenché');
-    if (!isInitializing) {
-        console.log('⚠️ Réinitialisation via window.onload');
-        initializeAll();
-    }
-};
+});
