@@ -3,24 +3,54 @@ let isInitialized = false;
 let isWrapperOpen = false;
 let isAnimating = false; // Nouveau flag pour éviter les animations simultanées
 
-// Configuration des menus avec des sélecteurs plus robustes
+// Configuration des menus avec les sélecteurs existants
 const menuConfig = [
     {
-        buttonSelector: '[data-nav-link-desktop-parc]',
+        buttonSelector: '.nav_menu_item:has(button:contains("Nos Parcs"))',
         containerSelector: '.parc_menu_desktop',
         isOpen: false
     },
     {
-        buttonSelector: '[data-nav-link-desktop-activites]',
+        buttonSelector: '.nav_menu_item:has(button:contains("Activités"))',
         containerSelector: '.activites_menu_desktop',
         isOpen: false
     },
     {
-        buttonSelector: '[data-nav-link-desktop-offres]',
+        buttonSelector: '.nav_menu_item:has(button:contains("Offres"))',
         containerSelector: '.offres_menu_desktop',
         isOpen: false
     }
 ];
+
+// Fonction pour trouver le bouton du menu
+function findMenuButton(selector) {
+    // Essayer différents sélecteurs
+    const possibleSelectors = [
+        selector,
+        `.nav_menu_item button:contains("${selector.split(':contains("')[1].split('")')[0]}")`,
+        `.nav_menu_item:has(button:contains("${selector.split(':contains("')[1].split('")')[0]}"))`
+    ];
+
+    for (const sel of possibleSelectors) {
+        const elements = document.querySelectorAll(sel);
+        if (elements.length > 0) {
+            console.log(`✅ Trouvé avec le sélecteur: ${sel}`);
+            return elements[0];
+        }
+    }
+
+    // Si aucun sélecteur ne fonctionne, chercher par le texte du bouton
+    const allButtons = document.querySelectorAll('.nav_menu_item button');
+    for (const button of allButtons) {
+        if (button.textContent.includes(selector.split(':contains("')[1].split('")')[0])) {
+            console.log('✅ Trouvé par le texte du bouton');
+            return button.closest('.nav_menu_item');
+        }
+    }
+
+    console.log('❌ Aucun bouton trouvé pour:', selector);
+    return null;
+}
 
 // Fonction pour vérifier si un élément est visible dans le DOM
 function isElementVisible(element) {
@@ -58,18 +88,15 @@ function closeAllMenusAndWrapper(menuWrapper) {
         });
 
         menuConfig.forEach(menu => {
-            const menuButton = document.querySelector(menu.buttonSelector);
+            const menuButton = findMenuButton(menu.buttonSelector);
             const menuContainer = document.querySelector(menu.containerSelector);
             
             if (menuButton && isElementVisible(menuButton)) {
-                const navMenuItem = menuButton.closest('.nav_menu_item');
-                if (navMenuItem) {
-                    tl.to(navMenuItem, {
-                        opacity: 0,
-                        duration: 0.2,
-                        ease: "power2.out"
-                    }, 0);
-                }
+                tl.to(menuButton, {
+                    opacity: 0,
+                    duration: 0.2,
+                    ease: "power2.out"
+                }, 0);
             }
             
             if (menuContainer && isElementVisible(menuContainer)) {
@@ -114,24 +141,11 @@ export function initMenuDesktop() {
         return;
     }
 
-    // Debug des sélecteurs
-    console.log('🔍 Recherche des éléments...');
-    
-    // Afficher tous les éléments de menu pour le débogage
-    const allMenuItems = document.querySelectorAll('.nav_menu_item');
-    console.log('Tous les éléments nav_menu_item:', allMenuItems.length);
-    allMenuItems.forEach((item, index) => {
-        console.log(`Menu item ${index + 1}:`, {
-            classes: item.className,
-            html: item.innerHTML,
-            buttons: item.querySelectorAll('button'),
-            links: item.querySelectorAll('a')
-        });
-    });
-
     // Initialisation de chaque menu
     menuConfig.forEach(menu => {
-        const menuButton = document.querySelector(menu.buttonSelector);
+        console.log(`\n🔍 Initialisation du menu: ${menu.containerSelector}`);
+        
+        const menuButton = findMenuButton(menu.buttonSelector);
         const menuContainer = document.querySelector(menu.containerSelector);
 
         if (!menuButton || !menuContainer) {
@@ -142,7 +156,7 @@ export function initMenuDesktop() {
         // Fermer le menu au démarrage
         menuContainer.style.display = 'none';
         menuContainer.style.opacity = '0';
-        console.log('🔒 Menu fermé au démarrage:', menu.containerSelector);
+        console.log(`🔒 Menu fermé au démarrage: ${menu.containerSelector}`);
 
         menuButton.addEventListener('click', (e) => {
             e.preventDefault();
@@ -153,13 +167,12 @@ export function initMenuDesktop() {
                 return;
             }
 
-            console.log('🖱️ Clic sur le bouton du menu:', menu.containerSelector);
-            
+            console.log(`🖱️ Clic sur le bouton du menu: ${menu.containerSelector}`);
+
             if (menu.isOpen) {
                 closeAllMenusAndWrapper(menuWrapper);
             } else {
                 isAnimating = true;
-                console.log('🔄 Début de l\'ouverture...');
 
                 try {
                     const tl = gsap.timeline({
@@ -177,12 +190,13 @@ export function initMenuDesktop() {
                             ease: "power2.out"
                         });
                         isWrapperOpen = true;
+                        console.log('🔓 Wrapper ouvert');
                     }
 
                     menuConfig.forEach(otherMenu => {
                         if (otherMenu !== menu) {
                             const otherContainer = document.querySelector(otherMenu.containerSelector);
-                            const otherButton = document.querySelector(otherMenu.buttonSelector);
+                            const otherButton = findMenuButton(otherMenu.buttonSelector);
                             
                             if (otherContainer && isElementVisible(otherContainer)) {
                                 tl.to(otherContainer, {
@@ -194,18 +208,15 @@ export function initMenuDesktop() {
                                         otherMenu.isOpen = false;
                                     }
                                 }, 0);
+                                console.log(`🔒 Menu fermé: ${otherMenu.containerSelector}`);
                             }
                             
                             if (otherButton) {
-                                const otherNavMenuItem = otherButton.closest('.nav_menu_item');
-                                if (otherNavMenuItem) {
-                                    tl.to(otherNavMenuItem, {
-                                        opacity: 0,
-                                        duration: 0.2,
-                                        ease: "power2.out"
-                                    }, 0);
-                                    otherNavMenuItem.classList.remove('active');
-                                }
+                                tl.to(otherButton, {
+                                    opacity: 0,
+                                    duration: 0.2,
+                                    ease: "power2.out"
+                                }, 0);
                             }
                         }
                     });
@@ -217,17 +228,14 @@ export function initMenuDesktop() {
                         ease: "power2.out"
                     });
 
-                    const navMenuItem = menuButton.closest('.nav_menu_item');
-                    if (navMenuItem) {
-                        tl.to(navMenuItem, {
-                            opacity: 1,
-                            duration: 0.3,
-                            ease: "power2.out"
-                        });
-                        navMenuItem.classList.add('active');
-                    }
+                    tl.to(menuButton, {
+                        opacity: 1,
+                        duration: 0.3,
+                        ease: "power2.out"
+                    });
 
                     menu.isOpen = true;
+                    console.log(`🔓 Menu ouvert: ${menu.containerSelector}`);
 
                 } catch (error) {
                     console.error('❌ Erreur lors de l\'ouverture:', error);
@@ -242,7 +250,7 @@ export function initMenuDesktop() {
         if (isAnimating) return;
 
         const isClickOutside = !menuConfig.some(menu => {
-            const button = document.querySelector(menu.buttonSelector);
+            const button = findMenuButton(menu.buttonSelector);
             const container = document.querySelector(menu.containerSelector);
             return (button && e.target.closest(menu.buttonSelector)) || 
                    (container && e.target.closest(menu.containerSelector));
