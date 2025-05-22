@@ -10,7 +10,7 @@ const CARD_STATES = {
             position: 'relative',
             width: '100%',
             flexDirection: 'row',
-            flexWrap: 'nowrap',
+            flexWrap: 'nowrap !important',
             gap: 'clamp(0.375rem, 0.34615384615384615rem + 0.15384615384615385vw, 0.5rem)'
         },
         maskGradient: { 
@@ -30,7 +30,7 @@ const CARD_STATES = {
             position: 'relative',
             width: '100%',
             flexDirection: 'row',
-            flexWrap: 'wrap',
+            flexWrap: 'wrap !important',
             gap: 'clamp(0.375rem, 0.34615384615384615rem + 0.15384615384615385vw, 0.5rem)'
         },
         maskGradient: { 
@@ -111,7 +111,7 @@ function initTagHolderMarquee(tagHolderWrapper) {
         width: 100%;
         height: 100%;
         flex-direction: row;
-        flex-wrap: nowrap;
+        flex-wrap: nowrap !important;
         white-space: nowrap;
         min-width: 100%;
         visibility: visible;
