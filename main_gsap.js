@@ -1,7 +1,7 @@
-// Import des modules existants
-import { initMenuMobile } from './menu-mobile.js';
-import { initCentreCards } from './centre-card.js';
-import { initMenuDesktop } from './menu-desktop.js';
+// Import des modules via CDN
+import { initMenuMobile } from 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js/menu-mobile.js';
+import { initCentreCards } from 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js/centre-card.js';
+import { initMenuDesktop } from 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js/menu-desktop.js';
 
 console.log('🔍 Script main_gsap.js chargé');
 
