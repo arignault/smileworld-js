@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", function() {
         // Initialisation des cartes (après le chargement complet du DOM)
         initCentreCards();
         console.log("✅ Cartes initialisées");
-        
+         
     } catch (error) {
         console.error("❌ Erreur lors de l'initialisation:", error);
     }
