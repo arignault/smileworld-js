@@ -8,20 +8,27 @@ let isInitializing = false;
 
 // Fonction pour afficher un compte à rebours
 function logCountdown(seconds) {
-    console.log(`\n⏰ DÉLAI DE ${seconds} SECONDES EN COURS...`);
+    console.log('\n==========================================');
+    console.log(`⏰ DÉLAI DE ${seconds} SECONDES EN COURS...`);
+    console.log('==========================================\n');
+    
     let remaining = seconds;
     
     const interval = setInterval(() => {
         remaining--;
+        console.log('\n==========================================');
         console.log(`⏰ ${remaining} seconde${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''}...`);
+        console.log('==========================================\n');
         
         if (remaining <= 0) {
             clearInterval(interval);
+            console.log('\n==========================================');
             console.log('⏰ DÉLAI TERMINÉ !');
+            console.log('==========================================\n');
         }
     }, 1000);
 
-    return interval; // Retourner l'interval pour pouvoir l'arrêter si nécessaire
+    return interval;
 }
 
 // Fonction pour vérifier si la CMS List est chargée
@@ -37,28 +44,48 @@ function isCMSListLoaded() {
 }
 
 // Fonction pour initialiser avec délai
-function initializeWithDelay() {
+async function initializeWithDelay() {
     if (isInitializing) {
         console.log('⚠️ Initialisation déjà en cours...');
         return;
     }
 
     isInitializing = true;
-    console.log('\n⏳ PRÉPARATION DE L\'INITIALISATION DES CARTES');
+    console.log('\n==========================================');
+    console.log('⏳ PRÉPARATION DE L\'INITIALISATION');
     console.log('⚠️ ATTENTION: UN DÉLAI DE 5 SECONDES VA COMMENCER');
+    console.log('==========================================\n');
 
     // Démarrer le compte à rebours
     const countdownInterval = logCountdown(5);
 
-    // Attendre 5 secondes avant d'initialiser
-    setTimeout(() => {
-        clearInterval(countdownInterval); // Arrêter le compte à rebours
-        console.log('\n🔄 DÉBUT DE L\'INITIALISATION DES CARTES APRÈS DÉLAI');
-        
+    // Créer une promesse qui se résout après le délai
+    await new Promise(resolve => {
+        setTimeout(() => {
+            clearInterval(countdownInterval);
+            resolve();
+        }, 5000);
+    });
+
+    console.log('\n==========================================');
+    console.log('🔄 DÉBUT DE L\'INITIALISATION APRÈS DÉLAI');
+    console.log('==========================================\n');
+
+    try {
         // Vérifier l'état du DOM avant l'initialisation
         checkDOMState();
         
+        // Initialiser les menus
+        console.log('\n🔄 Initialisation du menu mobile...');
+        initMenuMobile();
+        console.log("✅ Menu mobile initialisé");
+        
+        console.log('\n🔄 Initialisation du menu desktop...');
+        initMenuDesktop();
+        console.log("✅ Menu desktop initialisé");
+        
         // Initialiser les cartes
+        console.log('\n🔄 Initialisation des cartes...');
         initCentreCards();
         console.log("✅ Cartes initialisées");
         
@@ -66,8 +93,12 @@ function initializeWithDelay() {
         console.log('\n📊 ÉTAT FINAL APRÈS INITIALISATION:');
         checkDOMState();
         
+    } catch (error) {
+        console.error("\n❌ Erreur lors de l'initialisation:", error);
+        console.error("Stack trace:", error.stack);
+    } finally {
         isInitializing = false;
-    }, 5000);
+    }
 }
 
 // Fonction pour vérifier l'état du DOM
@@ -81,30 +112,20 @@ function checkDOMState() {
 
 // Initialisation globale
 document.addEventListener("DOMContentLoaded", function() {
-    console.log("\n🚀 DÉBUT DE L'INITIALISATION DES MODULES GSAP");
-    console.log('⏰ DOMContentLoaded déclenché');
+    console.log("\n==========================================");
+    console.log("🚀 DÉBUT DE L'INITIALISATION DES MODULES GSAP");
+    console.log("⏰ DOMContentLoaded déclenché");
+    console.log("==========================================\n");
     
     // Vérifier l'état initial du DOM
     checkDOMState();
     
-    try {
-        // Initialisation immédiate des menus
-        console.log('\n🔄 Initialisation du menu mobile...');
-        initMenuMobile();
-        console.log("✅ Menu mobile initialisé");
-        
-        console.log('\n🔄 Initialisation du menu desktop...');
-        initMenuDesktop();
-        console.log("✅ Menu desktop initialisé");
-        
-        // Initialisation différée des cartes avec délai
-        initializeWithDelay();
-         
-    } catch (error) {
-        console.error("\n❌ Erreur lors de l'initialisation:", error);
+    // Démarrer l'initialisation avec délai
+    initializeWithDelay().catch(error => {
+        console.error("\n❌ Erreur fatale lors de l'initialisation:", error);
         console.error("Stack trace:", error.stack);
         isInitializing = false;
-    }
+    });
     
     // Vérification périodique de l'état du DOM
     setInterval(() => {
