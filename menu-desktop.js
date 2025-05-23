@@ -6,49 +6,38 @@ let isAnimating = false; // Nouveau flag pour éviter les animations simultanée
 // Configuration des menus avec les sélecteurs existants
 const menuConfig = [
     {
-        buttonSelector: '.nav_menu_item:has(button:contains("Nos Parcs"))',
+        buttonText: "Nos Parcs",
         containerSelector: '.parc_menu_desktop',
         isOpen: false
     },
     {
-        buttonSelector: '.nav_menu_item:has(button:contains("Activités"))',
+        buttonText: "Activités",
         containerSelector: '.activites_menu_desktop',
         isOpen: false
     },
     {
-        buttonSelector: '.nav_menu_item:has(button:contains("Offres"))',
+        buttonText: "Offres",
         containerSelector: '.offres_menu_desktop',
         isOpen: false
     }
 ];
 
 // Fonction pour trouver le bouton du menu
-function findMenuButton(selector) {
-    // Essayer différents sélecteurs
-    const possibleSelectors = [
-        selector,
-        `.nav_menu_item button:contains("${selector.split(':contains("')[1].split('")')[0]}")`,
-        `.nav_menu_item:has(button:contains("${selector.split(':contains("')[1].split('")')[0]}"))`
-    ];
-
-    for (const sel of possibleSelectors) {
-        const elements = document.querySelectorAll(sel);
-        if (elements.length > 0) {
-            console.log(`✅ Trouvé avec le sélecteur: ${sel}`);
-            return elements[0];
+function findMenuButton(buttonText) {
+    console.log(`🔍 Recherche du bouton pour: ${buttonText}`);
+    
+    // Chercher tous les boutons dans les éléments de menu
+    const menuItems = document.querySelectorAll('.nav_menu_item');
+    
+    for (const menuItem of menuItems) {
+        const button = menuItem.querySelector('button');
+        if (button && button.textContent.trim() === buttonText) {
+            console.log(`✅ Bouton trouvé pour: ${buttonText}`);
+            return menuItem;
         }
     }
-
-    // Si aucun sélecteur ne fonctionne, chercher par le texte du bouton
-    const allButtons = document.querySelectorAll('.nav_menu_item button');
-    for (const button of allButtons) {
-        if (button.textContent.includes(selector.split(':contains("')[1].split('")')[0])) {
-            console.log('✅ Trouvé par le texte du bouton');
-            return button.closest('.nav_menu_item');
-        }
-    }
-
-    console.log('❌ Aucun bouton trouvé pour:', selector);
+    
+    console.log(`❌ Aucun bouton trouvé pour: ${buttonText}`);
     return null;
 }
 
@@ -88,7 +77,7 @@ function closeAllMenusAndWrapper(menuWrapper) {
         });
 
         menuConfig.forEach(menu => {
-            const menuButton = findMenuButton(menu.buttonSelector);
+            const menuButton = findMenuButton(menu.buttonText);
             const menuContainer = document.querySelector(menu.containerSelector);
             
             if (menuButton && isElementVisible(menuButton)) {
@@ -145,7 +134,7 @@ export function initMenuDesktop() {
     menuConfig.forEach(menu => {
         console.log(`\n🔍 Initialisation du menu: ${menu.containerSelector}`);
         
-        const menuButton = findMenuButton(menu.buttonSelector);
+        const menuButton = findMenuButton(menu.buttonText);
         const menuContainer = document.querySelector(menu.containerSelector);
 
         if (!menuButton || !menuContainer) {
@@ -196,7 +185,7 @@ export function initMenuDesktop() {
                     menuConfig.forEach(otherMenu => {
                         if (otherMenu !== menu) {
                             const otherContainer = document.querySelector(otherMenu.containerSelector);
-                            const otherButton = findMenuButton(otherMenu.buttonSelector);
+                            const otherButton = findMenuButton(otherMenu.buttonText);
                             
                             if (otherContainer && isElementVisible(otherContainer)) {
                                 tl.to(otherContainer, {
@@ -250,7 +239,7 @@ export function initMenuDesktop() {
         if (isAnimating) return;
 
         const isClickOutside = !menuConfig.some(menu => {
-            const button = findMenuButton(menu.buttonSelector);
+            const button = findMenuButton(menu.buttonText);
             const container = document.querySelector(menu.containerSelector);
             return (button && e.target.closest(menu.buttonSelector)) || 
                    (container && e.target.closest(menu.containerSelector));
