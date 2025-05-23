@@ -1,3 +1,6 @@
+// Version: 1.0.0 - Version initiale
+console.log('🚀 centre-card.js v1.0.0 chargé');
+
 // Configuration des états de la carte
 const CARD_STATES = {
     CLOSED: {
