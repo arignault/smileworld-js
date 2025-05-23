@@ -5,9 +5,9 @@ console.log('🚀 main_gsap.js v1.0.1 chargé');
 console.log('🔍 Tentative d\'import des modules...');
 
 // Import des modules
-import { initMenuMobile } from 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js/menu-mobile.js';
-import { initCentreCards } from 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js/centre-card.js';
-import { initMenuDesktop } from 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js/menu-desktop.js';
+import { initMenuMobile } from './menu-mobile.js';
+import { initCentreCards } from './centre-card.js';
+import { initMenuDesktop } from './menu-desktop.js';
 
 // Logs de confirmation des imports
 console.log('📦 Import de menu-mobile.js...');
