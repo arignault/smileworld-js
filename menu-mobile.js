@@ -1,3 +1,6 @@
+// Version: 1.0.0 - Version initiale
+console.log('🚀 menu-mobile.js v1.0.0 chargé');
+
 // Module Menu Mobile
 export function initMenuMobile() {
     console.log("menu-mobile.js chargé");
