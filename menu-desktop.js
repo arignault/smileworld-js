@@ -1,10 +1,11 @@
-// Version: 1.0.1 - Utilisation des IDs directs pour les boutons
-console.log('🚀 menu-desktop.js v1.0.1 chargé et oh');
+// Version: 1.0.2 - Optimisation des recherches de boutons
+console.log('🚀 menu-desktop.js v1.0.2 chargé et oh');
 
 // Variables globales
 let isInitialized = false;
 let isWrapperOpen = false;
-let isAnimating = false; // Nouveau flag pour éviter les animations simultanées testé
+let isAnimating = false;
+let menuButtons = new Map(); // Stockage des boutons
 
 // Configuration des menus avec les IDs des boutons
 const menuConfig = [
@@ -25,20 +26,23 @@ const menuConfig = [
     }
 ];
 
-// Fonction pour trouver le bouton du menu
-function findMenuButton(buttonId) {
-    console.log(`🔍 Recherche du bouton avec l'ID: ${buttonId}`);
-    
-    // Chercher directement le bouton par son ID
-    const button = document.getElementById(buttonId);
-    if (button) {
-        console.log(`✅ Bouton trouvé pour l'ID: ${buttonId}`);
-        // Retourner directement le bouton car il a déjà la classe clickable_button
-        return button;
-    }
-    
-    console.log(`❌ Aucun bouton trouvé pour l'ID: ${buttonId}`);
-    return null;
+// Fonction pour initialiser les boutons une seule fois
+function initializeMenuButtons() {
+    console.log('🔍 Initialisation des boutons de menu...');
+    menuConfig.forEach(menu => {
+        const button = document.getElementById(menu.buttonId);
+        if (button) {
+            menuButtons.set(menu.buttonId, button);
+            console.log(`✅ Bouton initialisé pour l'ID: ${menu.buttonId}`);
+        } else {
+            console.log(`❌ Bouton non trouvé pour l'ID: ${menu.buttonId}`);
+        }
+    });
+}
+
+// Fonction pour obtenir un bouton (utilise le cache)
+function getMenuButton(buttonId) {
+    return menuButtons.get(buttonId);
 }
 
 // Fonction pour vérifier si un élément est visible dans le DOM
@@ -77,7 +81,7 @@ function closeAllMenusAndWrapper(menuWrapper) {
         });
 
         menuConfig.forEach(menu => {
-            const menuButton = findMenuButton(menu.buttonId);
+            const menuButton = getMenuButton(menu.buttonId);
             const menuContainer = document.querySelector(menu.containerSelector);
             
             if (menuButton && isElementVisible(menuButton)) {
@@ -124,6 +128,9 @@ export function initMenuDesktop() {
 
     console.log('🚀 Initialisation du menu desktop...');
 
+    // Initialiser les boutons une seule fois
+    initializeMenuButtons();
+
     const menuWrapper = document.querySelector('.desktop_menu_wrapper');
     if (!menuWrapper) {
         console.warn('⚠️ Menu wrapper non trouvé');
@@ -134,7 +141,7 @@ export function initMenuDesktop() {
     menuConfig.forEach(menu => {
         console.log(`\n🔍 Initialisation du menu: ${menu.containerSelector}`);
         
-        const menuButton = findMenuButton(menu.buttonId);
+        const menuButton = getMenuButton(menu.buttonId);
         const menuContainer = document.querySelector(menu.containerSelector);
 
         if (!menuButton || !menuContainer) {
@@ -185,7 +192,7 @@ export function initMenuDesktop() {
                     menuConfig.forEach(otherMenu => {
                         if (otherMenu !== menu) {
                             const otherContainer = document.querySelector(otherMenu.containerSelector);
-                            const otherButton = findMenuButton(otherMenu.buttonId);
+                            const otherButton = getMenuButton(otherMenu.buttonId);
                             
                             if (otherContainer && isElementVisible(otherContainer)) {
                                 tl.to(otherContainer, {
@@ -239,7 +246,7 @@ export function initMenuDesktop() {
         if (isAnimating) return;
 
         const isClickOutside = !menuConfig.some(menu => {
-            const button = findMenuButton(menu.buttonId);
+            const button = getMenuButton(menu.buttonId);
             const container = document.querySelector(menu.containerSelector);
             return (button && e.target === button) || 
                    (container && e.target.closest(menu.containerSelector));
