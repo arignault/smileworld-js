@@ -4,7 +4,7 @@ console.log('🚀 centre-card.js v2.0.0 chargé - Prêt pour reconstruction');
 // Configuration des sélecteurs
 const SELECTORS = {
     CARD: '.centre-card._wrapper',
-    CLICKABLE: '.clickable_wrap, .clickable_button',
+    CLICKABLE: '#data-card-toggle, .clickable_wrap, .clickable_button, [data-attribute="data-card-toggle"]',
     TOGGLE_ELEMENTS: [
         '.centre-card_scroll_wrapper',
         '.centre-card_list',
@@ -84,23 +84,39 @@ function setupCardListeners() {
         return;
     }
 
+    console.log('🔍 Recherche des éléments cliquables...');
+    const clickableElements = cardsContainer.querySelectorAll(SELECTORS.CLICKABLE);
+    console.log(`📊 Nombre d'éléments cliquables trouvés: ${clickableElements.length}`);
+    clickableElements.forEach((el, index) => {
+        console.log(`📌 Élément ${index + 1}:`, el);
+    });
+
     cardsContainer.addEventListener('click', (event) => {
+        console.log('👆 Clic détecté dans le conteneur');
+        console.log('🎯 Élément cliqué:', event.target);
+        
         // Vérifier si le clic provient d'un élément cliquable
         const clickable = event.target.closest(SELECTORS.CLICKABLE);
-        if (!clickable) return;
+        if (!clickable) {
+            console.log('❌ Le clic n\'est pas sur un élément cliquable');
+            return;
+        }
 
+        console.log('✅ Élément cliquable trouvé:', clickable);
         event.preventDefault();
-        console.log('👆 Clic détecté sur un élément cliquable');
+        event.stopPropagation();
         
         // Trouver la carte parente
         const card = clickable.closest(SELECTORS.CARD);
         if (card) {
             console.log('🎴 Carte parente trouvée:', card);
+            console.log('🔍 Chemin DOM:', card.parentElement);
             toggleCard(card);
         } else {
             console.warn('⚠️ Aucune carte parente trouvée pour cet élément');
             console.log('🔍 Élément cliqué:', clickable);
             console.log('🔍 Chemin DOM:', clickable.parentElement);
+            console.log('🔍 Recherche de la carte avec:', SELECTORS.CARD);
         }
     });
 
