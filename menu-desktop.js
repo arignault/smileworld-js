@@ -4,7 +4,7 @@ console.log('🚀 menu-desktop.js v1.0.1 chargé et oh');
 // Variables globales
 let isInitialized = false;
 let isWrapperOpen = false;
-let isAnimating = false; // Nouveauvfjvsjfv flag pour évv dfvditer les animations simultanées testé
+let isAnimating = false; // Nouveau flag pour éviter les animations simultanées testé
 
 // Configuration des menus avec les IDs des boutons
 const menuConfig = [
