@@ -3,37 +3,38 @@ let isInitialized = false;
 let isWrapperOpen = false;
 let isAnimating = false; // Nouveau flag pour éviter les animations simultanées testé
 
-// Configuration des menus avec les data-attributes
+// Configuration des menus avec les IDs des boutons
 const menuConfig = [
     {
-        buttonSelector: '[data-attribute="nav-link-desktop-parcs"]',
+        buttonId: 'nav-link-desktop-parcs',
         containerSelector: '.parc_menu_desktop',
         isOpen: false
     },
     {
-        buttonSelector: '[data-attribute="nav-link-desktop-activites"]',
+        buttonId: 'nav-link-desktop-activites',
         containerSelector: '.activites_menu_desktop',
         isOpen: false
     },
     {
-        buttonSelector: '[data-attribute="nav-link-desktop-offres"]',
+        buttonId: 'nav-link-desktop-offres',
         containerSelector: '.offres_menu_desktop',
         isOpen: false
     }
 ];
 
 // Fonction pour trouver le bouton du menu
-function findMenuButton(buttonSelector) {
-    console.log(`🔍 Recherche du bouton avec le sélecteur: ${buttonSelector}`);
+function findMenuButton(buttonId) {
+    console.log(`🔍 Recherche du bouton avec l'ID: ${buttonId}`);
     
-    // Chercher directement le bouton par son data-attribute
-    const button = document.querySelector(buttonSelector);
+    // Chercher directement le bouton par son ID
+    const button = document.getElementById(buttonId);
     if (button) {
-        console.log(`✅ Bouton trouvé pour le sélecteur: ${buttonSelector}`);
-        return button.closest('.nav_menu_item');
+        console.log(`✅ Bouton trouvé pour l'ID: ${buttonId}`);
+        // Retourner directement le bouton car il a déjà la classe clickable_button
+        return button;
     }
     
-    console.log(`❌ Aucun bouton trouvé pour le sélecteur: ${buttonSelector}`);
+    console.log(`❌ Aucun bouton trouvé pour l'ID: ${buttonId}`);
     return null;
 }
 
@@ -73,7 +74,7 @@ function closeAllMenusAndWrapper(menuWrapper) {
         });
 
         menuConfig.forEach(menu => {
-            const menuButton = findMenuButton(menu.buttonSelector);
+            const menuButton = findMenuButton(menu.buttonId);
             const menuContainer = document.querySelector(menu.containerSelector);
             
             if (menuButton && isElementVisible(menuButton)) {
@@ -130,7 +131,7 @@ export function initMenuDesktop() {
     menuConfig.forEach(menu => {
         console.log(`\n🔍 Initialisation du menu: ${menu.containerSelector}`);
         
-        const menuButton = findMenuButton(menu.buttonSelector);
+        const menuButton = findMenuButton(menu.buttonId);
         const menuContainer = document.querySelector(menu.containerSelector);
 
         if (!menuButton || !menuContainer) {
@@ -181,7 +182,7 @@ export function initMenuDesktop() {
                     menuConfig.forEach(otherMenu => {
                         if (otherMenu !== menu) {
                             const otherContainer = document.querySelector(otherMenu.containerSelector);
-                            const otherButton = findMenuButton(otherMenu.buttonSelector);
+                            const otherButton = findMenuButton(otherMenu.buttonId);
                             
                             if (otherContainer && isElementVisible(otherContainer)) {
                                 tl.to(otherContainer, {
@@ -230,14 +231,14 @@ export function initMenuDesktop() {
         });
     });
 
-    // Fermeture au clic en dehors avec vérification de visibilité
+    // Fermeture au clic en dehors
     document.addEventListener('click', (e) => {
         if (isAnimating) return;
 
         const isClickOutside = !menuConfig.some(menu => {
-            const button = findMenuButton(menu.buttonSelector);
+            const button = findMenuButton(menu.buttonId);
             const container = document.querySelector(menu.containerSelector);
-            return (button && e.target.closest('.nav_menu_item')) || 
+            return (button && e.target === button) || 
                    (container && e.target.closest(menu.containerSelector));
         }) && !e.target.closest('.desktop_menu_wrapper');
         
