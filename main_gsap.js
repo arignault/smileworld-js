@@ -132,14 +132,14 @@ async function initializeWithDelay() {
     isInitializing = true;
     console.log('\n==========================================');
     console.log('⏳ PRÉPARATION DE L\'INITIALISATION');
-    console.log('⚠️ ATTENTION: UN DÉLAI DE 5 SECONDES VA COMMENCER');
+    // console.log('⚠️ ATTENTION: UN DÉLAI DE 5 SECONDES VA COMMENCER'); // Désactivé
     console.log('==========================================\n');
 
     // Définir les états initiaux avant le délai
     setInitialStates();
 
-    // Démarrer le compte à rebours
-    const countdownInterval = logCountdown(5);
+    // Désactiver le compte à rebours
+    // const countdownInterval = logCountdown(5); // Désactivé
 
     try {
         // Attendre que tous les modules soient chargés
@@ -148,7 +148,8 @@ async function initializeWithDelay() {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
 
-        // Attendre le délai de 5 secondes
+        // Désactiver le délai de 5 secondes
+        /*
         await new Promise(resolve => {
             initializationTimeout = setTimeout(() => {
                 clearInterval(countdownInterval);
@@ -157,9 +158,11 @@ async function initializeWithDelay() {
                 resolve();
             }, 5000);
         });
-
+        */
+        
+        // Initialisation immédiate
         console.log('\n==========================================');
-        console.log('🔄 DÉBUT DE L\'INITIALISATION APRÈS DÉLAI');
+        console.log('🔄 DÉBUT DE L\'INITIALISATION IMMÉDIATE');
         console.log('==========================================\n');
 
         // Vérifier l'état du DOM avant l'initialisation
