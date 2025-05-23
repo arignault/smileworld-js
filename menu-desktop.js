@@ -3,41 +3,37 @@ let isInitialized = false;
 let isWrapperOpen = false;
 let isAnimating = false; // Nouveau flag pour éviter les animations simultanées testé
 
-// Configuration des menus avec les sélecteurs existants
+// Configuration des menus avec les IDs des boutons
 const menuConfig = [
     {
-        buttonText: "Nos Parcs",
+        buttonId: 'nav-link-desktop-parcs',
         containerSelector: '.parc_menu_desktop',
         isOpen: false
     },
     {
-        buttonText: "Activités",
+        buttonId: 'nav-link-desktop-activites',
         containerSelector: '.activites_menu_desktop',
         isOpen: false
     },
     {
-        buttonText: "Offres",
+        buttonId: 'nav-link-desktop-offres',
         containerSelector: '.offres_menu_desktop',
         isOpen: false
     }
 ];
 
 // Fonction pour trouver le bouton du menu
-function findMenuButton(buttonText) {
-    console.log(`🔍 Recherche du bouton pour: ${buttonText}`);
+function findMenuButton(buttonId) {
+    console.log(`🔍 Recherche du bouton avec l'ID: ${buttonId}`);
     
-    // Chercher tous les boutons dans les éléments de menu
-    const menuItems = document.querySelectorAll('.nav_menu_item');
-    
-    for (const menuItem of menuItems) {
-        const button = menuItem.querySelector('button');
-        if (button && button.textContent.trim() === buttonText) {
-            console.log(`✅ Bouton trouvé pour: ${buttonText}`);
-            return menuItem;
-        }
+    // Chercher directement le bouton par son ID
+    const button = document.getElementById(buttonId);
+    if (button) {
+        console.log(`✅ Bouton trouvé pour l'ID: ${buttonId}`);
+        return button.closest('.nav_menu_item');
     }
     
-    console.log(`❌ Aucun bouton trouvé pour: ${buttonText}`);
+    console.log(`❌ Aucun bouton trouvé pour l'ID: ${buttonId}`);
     return null;
 }
 
@@ -77,7 +73,7 @@ function closeAllMenusAndWrapper(menuWrapper) {
         });
 
         menuConfig.forEach(menu => {
-            const menuButton = findMenuButton(menu.buttonText);
+            const menuButton = findMenuButton(menu.buttonId);
             const menuContainer = document.querySelector(menu.containerSelector);
             
             if (menuButton && isElementVisible(menuButton)) {
@@ -134,7 +130,7 @@ export function initMenuDesktop() {
     menuConfig.forEach(menu => {
         console.log(`\n🔍 Initialisation du menu: ${menu.containerSelector}`);
         
-        const menuButton = findMenuButton(menu.buttonText);
+        const menuButton = findMenuButton(menu.buttonId);
         const menuContainer = document.querySelector(menu.containerSelector);
 
         if (!menuButton || !menuContainer) {
@@ -185,7 +181,7 @@ export function initMenuDesktop() {
                     menuConfig.forEach(otherMenu => {
                         if (otherMenu !== menu) {
                             const otherContainer = document.querySelector(otherMenu.containerSelector);
-                            const otherButton = findMenuButton(otherMenu.buttonText);
+                            const otherButton = findMenuButton(otherMenu.buttonId);
                             
                             if (otherContainer && isElementVisible(otherContainer)) {
                                 tl.to(otherContainer, {
@@ -239,7 +235,7 @@ export function initMenuDesktop() {
         if (isAnimating) return;
 
         const isClickOutside = !menuConfig.some(menu => {
-            const button = findMenuButton(menu.buttonText);
+            const button = findMenuButton(menu.buttonId);
             const container = document.querySelector(menu.containerSelector);
             return (button && e.target.closest('.nav_menu_item')) || 
                    (container && e.target.closest(menu.containerSelector));
