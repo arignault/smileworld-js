@@ -1,3 +1,6 @@
+// Version: 1.0.1 - Utilisation des IDs directs pour les boutons
+console.log('🚀 menu-desktop.js v1.0.1 chargé');
+
 // Variables globales
 let isInitialized = false;
 let isWrapperOpen = false;
