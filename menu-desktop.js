@@ -1,7 +1,7 @@
 // Variables globales
 let isInitialized = false;
 let isWrapperOpen = false;
-let isAnimating = false; // Nouveau flag pour éviter les animations simultanées
+let isAnimating = false; // Nouveau flag pour éviter les animations simultanées testé
 
 // Configuration des menus avec les sélecteurs existants
 const menuConfig = [
