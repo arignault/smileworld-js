@@ -241,7 +241,7 @@ export function initMenuDesktop() {
         const isClickOutside = !menuConfig.some(menu => {
             const button = findMenuButton(menu.buttonText);
             const container = document.querySelector(menu.containerSelector);
-            return (button && e.target.closest(menu.buttonSelector)) || 
+            return (button && e.target.closest('.nav_menu_item')) || 
                    (container && e.target.closest(menu.containerSelector));
         }) && !e.target.closest('.desktop_menu_wrapper');
         
