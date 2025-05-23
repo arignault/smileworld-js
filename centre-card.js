@@ -7,9 +7,10 @@ const SELECTORS = {
     CLICKABLE: '.clickable_wrap, .clickable_button',
     TOGGLE_ELEMENTS: [
         '.centre-card_scroll_wrapper',
-        '.tag-holder-wrapper',
+        '.centre-card_list',
         '.centre-card_button-holder'
-    ]
+    ],
+    ALWAYS_VISIBLE: '.tag-holder-wrapper'
 };
 
 // État initial des éléments à cacher
@@ -17,13 +18,26 @@ function initializeCardElements() {
     console.log('📝 Initialisation des éléments des cartes...');
     let elementsInitialized = 0;
     
+    // Initialiser les éléments à cacher
     SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
         const elements = document.querySelectorAll(selector);
         console.log(`🔍 Recherche des éléments "${selector}": ${elements.length} trouvés`);
         
         elements.forEach(element => {
-            gsap.set(element, { display: 'none' });
+            gsap.set(element, { 
+                display: 'none',
+                opacity: 0
+            });
             elementsInitialized++;
+        });
+    });
+
+    // S'assurer que tag-holder-wrapper est visible
+    const tagHolders = document.querySelectorAll(SELECTORS.ALWAYS_VISIBLE);
+    tagHolders.forEach(element => {
+        gsap.set(element, { 
+            display: 'block',
+            opacity: 1
         });
     });
     
@@ -34,6 +48,7 @@ function initializeCardElements() {
 function toggleCard(cardElement) {
     const isOpen = cardElement.classList.contains('is-open');
     console.log(`🔄 Toggle de la carte: ${isOpen ? 'fermeture' : 'ouverture'}`);
+    console.log('🎴 Élément carte:', cardElement);
     
     // Animation des éléments
     SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
@@ -42,6 +57,7 @@ function toggleCard(cardElement) {
             console.log(`🎭 Animation de "${selector}" vers ${isOpen ? 'none' : 'flex'}`);
             gsap.to(element, {
                 display: isOpen ? 'none' : 'flex',
+                opacity: isOpen ? 0 : 1,
                 duration: 0.3,
                 ease: 'power2.inOut',
                 onStart: () => console.log(`▶️ Début animation pour ${selector}`),
@@ -60,24 +76,35 @@ function toggleCard(cardElement) {
 // Gestionnaire d'événements pour les cartes
 function setupCardListeners() {
     console.log('🎯 Configuration des écouteurs d\'événements...');
-    const clickables = document.querySelectorAll(SELECTORS.CLICKABLE);
-    console.log(`🔍 ${clickables.length} éléments cliquables trouvés`);
+    
+    // Utiliser une délégation d'événements au niveau du conteneur
+    const cardsContainer = document.querySelector('.collection-list-centre-wrapper');
+    if (!cardsContainer) {
+        console.warn('⚠️ Conteneur de cartes non trouvé');
+        return;
+    }
 
-    clickables.forEach((clickable, index) => {
-        clickable.addEventListener('click', (event) => {
-            event.preventDefault();
-            console.log(`👆 Clic détecté sur l'élément ${index + 1}`);
-            
-            const card = clickable.closest(SELECTORS.CARD);
-            if (card) {
-                console.log('🎴 Carte parente trouvée, déclenchement du toggle');
-                toggleCard(card);
-            } else {
-                console.warn('⚠️ Aucune carte parente trouvée pour cet élément');
-            }
-        });
-        console.log(`✅ Écouteur ajouté à l'élément ${index + 1}`);
+    cardsContainer.addEventListener('click', (event) => {
+        // Vérifier si le clic provient d'un élément cliquable
+        const clickable = event.target.closest(SELECTORS.CLICKABLE);
+        if (!clickable) return;
+
+        event.preventDefault();
+        console.log('👆 Clic détecté sur un élément cliquable');
+        
+        // Trouver la carte parente
+        const card = clickable.closest(SELECTORS.CARD);
+        if (card) {
+            console.log('🎴 Carte parente trouvée:', card);
+            toggleCard(card);
+        } else {
+            console.warn('⚠️ Aucune carte parente trouvée pour cet élément');
+            console.log('🔍 Élément cliqué:', clickable);
+            console.log('🔍 Chemin DOM:', clickable.parentElement);
+        }
     });
+
+    console.log('✅ Écouteur d\'événements configuré sur le conteneur');
 }
 
 // Fonction d'initialisation principale
@@ -106,7 +133,7 @@ export function initCentreCards() {
             if (mutation.addedNodes.length) {
                 console.log(`➕ ${mutation.addedNodes.length} nouveau(x) nœud(s) détecté(s)`);
                 initializeCardElements();
-                setupCardListeners();
+                // Pas besoin de réinitialiser les écouteurs car on utilise la délégation d'événements
             }
         });
     });
