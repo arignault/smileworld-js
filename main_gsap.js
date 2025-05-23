@@ -1,3 +1,6 @@
+// Version: 1.0.1 - Ajout des logs de version
+console.log('🚀 main_gsap.js v1.0.1 chargé');
+
 // Import des modules
 import { initMenuMobile } from 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js/menu-mobile.js';
 import { initCentreCards } from 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js/centre-card.js';
