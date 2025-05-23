@@ -5,29 +5,20 @@ console.log('🚀 main_gsap.js v1.0.1 chargé');
 console.log('🔍 Tentative d\'import des modules...');
 
 // Import des modules
-try {
-    console.log('📦 Import de menu-mobile.js...');
-    import { initMenuMobile } from 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js/menu-mobile.js';
-    console.log('✅ menu-mobile.js importé avec succès');
-} catch (error) {
-    console.error('❌ Erreur lors de l\'import de menu-mobile.js:', error);
-}
+import { initMenuMobile } from 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js/menu-mobile.js';
+import { initCentreCards } from 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js/centre-card.js';
+import { initMenuDesktop } from 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js/menu-desktop.js';
 
-try {
-    console.log('📦 Import de centre-card.js...');
-    import { initCentreCards } from 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js/centre-card.js';
-    console.log('✅ centre-card.js importé avec succès');
-} catch (error) {
-    console.error('❌ Erreur lors de l\'import de centre-card.js:', error);
-}
+// Logs de confirmation des imports
+console.log('📦 Import de menu-mobile.js...');
+console.log('📦 Import de centre-card.js...');
+console.log('📦 Import de menu-desktop.js...');
 
-try {
-    console.log('📦 Import de menu-desktop.js...');
-    import { initMenuDesktop } from 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js/menu-desktop.js';
-    console.log('✅ menu-desktop.js importé avec succès');
-} catch (error) {
-    console.error('❌ Erreur lors de l\'import de menu-desktop.js:', error);
-}
+// Vérification des fonctions importées
+console.log('🔍 Vérification des fonctions importées:');
+console.log('- initMenuMobile:', typeof initMenuMobile === 'function' ? '✅' : '❌');
+console.log('- initCentreCards:', typeof initCentreCards === 'function' ? '✅' : '❌');
+console.log('- initMenuDesktop:', typeof initMenuDesktop === 'function' ? '✅' : '❌');
 
 console.log('🔍 Script main_gsap.js chargé');
 
