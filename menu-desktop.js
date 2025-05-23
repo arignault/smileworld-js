@@ -1,11 +1,12 @@
-// Version: 1.0.2 - Optimisation des recherches de boutons
-console.log('🚀 menu-desktop.js v1.0.2 chargé et oh');
+// Version: 1.0.3 - Optimisation de la gestion des clics en dehors
+console.log('🚀 menu-desktop.js v1.0.3 chargé et oh');
 
 // Variables globales
 let isInitialized = false;
 let isWrapperOpen = false;
 let isAnimating = false;
 let menuButtons = new Map(); // Stockage des boutons
+let clickOutsideListener = null; // Référence au listener de clic en dehors
 
 // Configuration des menus avec les IDs des boutons
 const menuConfig = [
@@ -119,6 +120,44 @@ function closeAllMenusAndWrapper(menuWrapper) {
     }
 }
 
+// Fonction pour activer la vérification des clics en dehors
+function enableClickOutsideCheck(menuWrapper) {
+    // Supprimer l'ancien listener s'il existe
+    if (clickOutsideListener) {
+        document.removeEventListener('click', clickOutsideListener);
+    }
+
+    // Créer et stocker le nouveau listener
+    clickOutsideListener = (e) => {
+        if (isAnimating) return;
+
+        const isClickOutside = !menuConfig.some(menu => {
+            const button = getMenuButton(menu.buttonId);
+            const container = document.querySelector(menu.containerSelector);
+            return (button && e.target === button) || 
+                   (container && e.target.closest(menu.containerSelector));
+        }) && !e.target.closest('.desktop_menu_wrapper');
+        
+        if (isClickOutside && isWrapperOpen && isElementVisible(menuWrapper)) {
+            closeAllMenusAndWrapper(menuWrapper);
+            // Désactiver la vérification une fois le menu fermé
+            disableClickOutsideCheck();
+        }
+    };
+
+    document.addEventListener('click', clickOutsideListener);
+    console.log('🔍 Vérification des clics en dehors activée');
+}
+
+// Fonction pour désactiver la vérification des clics en dehors
+function disableClickOutsideCheck() {
+    if (clickOutsideListener) {
+        document.removeEventListener('click', clickOutsideListener);
+        clickOutsideListener = null;
+        console.log('🔒 Vérification des clics en dehors désactivée');
+    }
+}
+
 // Fonction pour initialiser le menu desktop
 export function initMenuDesktop() {
     if (isInitialized) {
@@ -167,6 +206,7 @@ export function initMenuDesktop() {
 
             if (menu.isOpen) {
                 closeAllMenusAndWrapper(menuWrapper);
+                disableClickOutsideCheck();
             } else {
                 isAnimating = true;
 
@@ -187,6 +227,8 @@ export function initMenuDesktop() {
                         });
                         isWrapperOpen = true;
                         console.log('🔓 Wrapper ouvert');
+                        // Activer la vérification des clics en dehors uniquement quand un menu est ouvert
+                        enableClickOutsideCheck(menuWrapper);
                     }
 
                     menuConfig.forEach(otherMenu => {
@@ -239,22 +281,6 @@ export function initMenuDesktop() {
                 }
             }
         });
-    });
-
-    // Fermeture au clic en dehors
-    document.addEventListener('click', (e) => {
-        if (isAnimating) return;
-
-        const isClickOutside = !menuConfig.some(menu => {
-            const button = getMenuButton(menu.buttonId);
-            const container = document.querySelector(menu.containerSelector);
-            return (button && e.target === button) || 
-                   (container && e.target.closest(menu.containerSelector));
-        }) && !e.target.closest('.desktop_menu_wrapper');
-        
-        if (isClickOutside && isWrapperOpen && isElementVisible(menuWrapper)) {
-            closeAllMenusAndWrapper(menuWrapper);
-        }
     });
 
     isInitialized = true;
