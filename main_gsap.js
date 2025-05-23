@@ -6,18 +6,18 @@ console.log('🔍 Tentative d\'import des modules...');
 
 // Import des modules
 import { initMenuMobile } from './menu-mobile.js';
-import { initCentreCards } from './centre-card.js';
+// import { initCentreCards } from './centre-card.js'; // Temporairement désactivé pour debug
 import { initMenuDesktop } from './menu-desktop.js';
 
 // Logs de confirmation des imports
 console.log('📦 Import de menu-mobile.js...');
-console.log('📦 Import de centre-card.js...');
+// console.log('📦 Import de centre-card.js...'); // Temporairement désactivé
 console.log('📦 Import de menu-desktop.js...');
 
 // Vérification des fonctions importées
 console.log('🔍 Vérification des fonctions importées:');
 console.log('- initMenuMobile:', typeof initMenuMobile === 'function' ? '✅' : '❌');
-console.log('- initCentreCards:', typeof initCentreCards === 'function' ? '✅' : '❌');
+// console.log('- initCentreCards:', typeof initCentreCards === 'function' ? '✅' : '❌'); // Temporairement désactivé
 console.log('- initMenuDesktop:', typeof initMenuDesktop === 'function' ? '✅' : '❌');
 
 console.log('🔍 Script main_gsap.js chargé');
@@ -28,7 +28,7 @@ let initializationTimeout = null;
 let modulesLoaded = {
     menuMobile: false,
     menuDesktop: false,
-    centreCards: false
+    // centreCards: false // Temporairement désactivé
 };
 
 // Fonction pour définir les états initiaux
@@ -184,9 +184,8 @@ async function initializeWithDelay() {
             console.error("❌ Erreur lors de l'initialisation du menu desktop:", error);
         }
         
-        // Attendre un court instant avant d'initialiser les cartes
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
+        // Commenter l'initialisation des cartes
+        /*
         console.log('\n🔄 Initialisation des cartes...');
         try {
             await initCentreCards();
@@ -195,6 +194,7 @@ async function initializeWithDelay() {
         } catch (error) {
             console.error("❌ Erreur lors de l'initialisation des cartes:", error);
         }
+        */
         
         // Vérification finale
         console.log('\n📊 ÉTAT FINAL APRÈS INITIALISATION:');
@@ -231,7 +231,7 @@ window.addEventListener('load', function() {
     modulesLoaded = {
         menuMobile: true,
         menuDesktop: true,
-        centreCards: true
+        // centreCards: true // Temporairement désactivé
     };
     
     // Démarrer l'initialisation avec délai
