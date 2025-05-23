@@ -8,11 +8,6 @@ console.log('🔍 Script main_gsap.js chargé');
 // Variable globale pour suivre l'état d'initialisation
 let isInitializing = false;
 let initializationTimeout = null;
-let modulesLoaded = {
-    menuMobile: false,
-    menuDesktop: false,
-    centreCards: false
-};
 
 // Fonction pour définir les états initiaux
 function setInitialStates() {
@@ -54,11 +49,6 @@ function setInitialStates() {
     });
 
     console.log('✅ États initiaux définis');
-}
-
-// Fonction pour vérifier si tous les modules sont chargés
-function checkModulesLoaded() {
-    return Object.values(modulesLoaded).every(loaded => loaded);
 }
 
 // Fonction pour afficher un compte à rebours
@@ -125,12 +115,6 @@ async function initializeWithDelay() {
     const countdownInterval = logCountdown(5);
 
     try {
-        // Attendre que tous les modules soient chargés
-        while (!checkModulesLoaded()) {
-            console.log('⏳ En attente du chargement des modules...', modulesLoaded);
-            await new Promise(resolve => setTimeout(resolve, 100));
-        }
-
         // Attendre le délai de 5 secondes
         await new Promise(resolve => {
             initializationTimeout = setTimeout(() => {
@@ -152,7 +136,6 @@ async function initializeWithDelay() {
         console.log('\n🔄 Initialisation du menu mobile...');
         try {
             await initMenuMobile();
-            modulesLoaded.menuMobile = true;
             console.log("✅ Menu mobile initialisé");
         } catch (error) {
             console.error("❌ Erreur lors de l'initialisation du menu mobile:", error);
@@ -161,7 +144,6 @@ async function initializeWithDelay() {
         console.log('\n🔄 Initialisation du menu desktop...');
         try {
             await initMenuDesktop();
-            modulesLoaded.menuDesktop = true;
             console.log("✅ Menu desktop initialisé");
         } catch (error) {
             console.error("❌ Erreur lors de l'initialisation du menu desktop:", error);
@@ -173,7 +155,6 @@ async function initializeWithDelay() {
         console.log('\n🔄 Initialisation des cartes...');
         try {
             await initCentreCards();
-            modulesLoaded.centreCards = true;
             console.log("✅ Cartes initialisées");
         } catch (error) {
             console.error("❌ Erreur lors de l'initialisation des cartes:", error);
@@ -201,21 +182,14 @@ function checkDOMState() {
 }
 
 // Initialisation globale
-window.addEventListener('load', function() {
+document.addEventListener('DOMContentLoaded', function() {
     console.log("\n==========================================");
     console.log("🚀 DÉBUT DE L'INITIALISATION DES MODULES GSAP");
-    console.log("⏰ window.load déclenché");
+    console.log("⏰ DOMContentLoaded déclenché");
     console.log("==========================================\n");
     
     // Vérifier l'état initial du DOM
     checkDOMState();
-    
-    // Marquer les modules comme chargés
-    modulesLoaded = {
-        menuMobile: true,
-        menuDesktop: true,
-        centreCards: true
-    };
     
     // Démarrer l'initialisation avec délai
     initializeWithDelay().catch(error => {
