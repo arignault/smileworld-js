@@ -4,154 +4,147 @@ console.log('🚀 centre-card.js v2.0.0 chargé - Prêt pour reconstruction');
 // Configuration des sélecteurs
 const SELECTORS = {
     CARD: '.centre-card._wrapper',
-    CLICKABLE: '#data-card-toggle, .clickable_wrap, .clickable_button, [data-attribute="data-card-toggle"]',
+    CARD_HEADER: '.centre-card_header',
+    CLICKABLE: '#data-card-toggle',
     TOGGLE_ELEMENTS: [
         '.centre-card_scroll_wrapper',
         '.centre-card_list',
         '.centre-card_button-holder'
     ],
-    ALWAYS_VISIBLE: '.tag-holder-wrapper'
+    ALWAYS_VISIBLE: '.tag-holder-wrapper',
+    DYNAMIC_ELEMENTS: '[fs-list-element]'
 };
 
+// Attendre que les éléments dynamiques soient chargés
+function waitForDynamicElements(card) {
+    return new Promise((resolve) => {
+        const observer = new MutationObserver((mutations, obs) => {
+            const dynamicElements = card.querySelectorAll(SELECTORS.DYNAMIC_ELEMENTS);
+            if (dynamicElements.length > 0) {
+                console.log('✅ Éléments dynamiques chargés:', dynamicElements.length);
+                obs.disconnect();
+                resolve();
+            }
+        });
+
+        observer.observe(card, {
+            childList: true,
+            subtree: true
+        });
+
+        // Timeout de sécurité après 5 secondes
+        setTimeout(() => {
+            observer.disconnect();
+            console.log('⚠️ Timeout atteint pour le chargement des éléments dynamiques');
+            resolve();
+        }, 5000);
+    });
+}
+
 // État initial des éléments à cacher
-function initializeCardElements() {
+async function initializeCardElements() {
     console.log('📝 Initialisation des éléments des cartes...');
     let elementsInitialized = 0;
     
-    // Initialiser les éléments à cacher
-    SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
-        const elements = document.querySelectorAll(selector);
-        console.log(`🔍 Recherche des éléments "${selector}": ${elements.length} trouvés`);
-        
-        elements.forEach(element => {
-            gsap.set(element, { 
-                display: 'none',
-                opacity: 0
-            });
-            elementsInitialized++;
-        });
-    });
+    const cards = document.querySelectorAll(SELECTORS.CARD);
+    console.log(`🔍 ${cards.length} cartes trouvées`);
 
-    // S'assurer que tag-holder-wrapper est visible
-    const tagHolders = document.querySelectorAll(SELECTORS.ALWAYS_VISIBLE);
-    tagHolders.forEach(element => {
-        gsap.set(element, { 
-            display: 'block',
-            opacity: 1
+    for (const card of cards) {
+        // Attendre le chargement des éléments dynamiques
+        await waitForDynamicElements(card);
+        
+        // Initialiser les éléments à cacher
+        SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
+            const elements = card.querySelectorAll(selector);
+            elements.forEach(element => {
+                gsap.set(element, { 
+                    display: 'none',
+                    opacity: 0
+                });
+                elementsInitialized++;
+            });
         });
-    });
+
+        // S'assurer que tag-holder-wrapper est visible
+        const tagHolder = card.querySelector(SELECTORS.ALWAYS_VISIBLE);
+        if (tagHolder) {
+            gsap.set(tagHolder, { 
+                display: 'block',
+                opacity: 1
+            });
+        }
+
+        // Ajouter un gestionnaire de clic sur l'en-tête de la carte
+        const header = card.querySelector(SELECTORS.CARD_HEADER);
+        if (header) {
+            header.style.cursor = 'pointer';
+            header.addEventListener('click', () => toggleCard(card));
+        }
+    }
     
     console.log(`✅ Initialisation terminée: ${elementsInitialized} éléments configurés`);
 }
 
 // Gestion du toggle d'une carte
-function toggleCard(cardElement) {
+async function toggleCard(cardElement) {
+    console.log('🔄 Toggle de la carte');
+    
+    // Attendre que les éléments dynamiques soient chargés si nécessaire
+    await waitForDynamicElements(cardElement);
+    
     const isOpen = cardElement.classList.contains('is-open');
-    console.log(`🔄 Toggle de la carte: ${isOpen ? 'fermeture' : 'ouverture'}`);
-    console.log('🎴 Élément carte:', cardElement);
+    console.log(`📌 État actuel: ${isOpen ? 'ouverte' : 'fermée'}`);
     
     // Animation des éléments
-    SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
+    const promises = SELECTORS.TOGGLE_ELEMENTS.map(selector => {
         const element = cardElement.querySelector(selector);
         if (element) {
-            console.log(`🎭 Animation de "${selector}" vers ${isOpen ? 'none' : 'flex'}`);
-            gsap.to(element, {
-                display: isOpen ? 'none' : 'flex',
-                opacity: isOpen ? 0 : 1,
-                duration: 0.3,
-                ease: 'power2.inOut',
-                onStart: () => console.log(`▶️ Début animation pour ${selector}`),
-                onComplete: () => console.log(`✅ Animation terminée pour ${selector}`)
+            console.log(`🎭 Animation de "${selector}"`);
+            return new Promise(resolve => {
+                gsap.to(element, {
+                    display: isOpen ? 'none' : 'flex',
+                    opacity: isOpen ? 0 : 1,
+                    duration: 0.3,
+                    ease: 'power2.inOut',
+                    onComplete: resolve
+                });
             });
-        } else {
-            console.warn(`⚠️ Élément "${selector}" non trouvé dans la carte`);
         }
+        return Promise.resolve();
     });
+
+    // Attendre que toutes les animations soient terminées
+    await Promise.all(promises);
 
     // Mise à jour de l'état
     cardElement.classList.toggle('is-open');
-    console.log(`📌 État de la carte mis à jour: ${!isOpen ? 'ouverte' : 'fermée'}`);
-}
-
-// Gestionnaire d'événements pour les cartes
-function setupCardListeners() {
-    console.log('🎯 Configuration des écouteurs d\'événements...');
-    
-    // Utiliser une délégation d'événements au niveau du conteneur
-    const cardsContainer = document.querySelector('.collection-list-centre-wrapper');
-    if (!cardsContainer) {
-        console.warn('⚠️ Conteneur de cartes non trouvé');
-        return;
-    }
-
-    console.log('🔍 Recherche des éléments cliquables...');
-    const clickableElements = cardsContainer.querySelectorAll(SELECTORS.CLICKABLE);
-    console.log(`📊 Nombre d'éléments cliquables trouvés: ${clickableElements.length}`);
-    clickableElements.forEach((el, index) => {
-        console.log(`📌 Élément ${index + 1}:`, el);
-    });
-
-    cardsContainer.addEventListener('click', (event) => {
-        console.log('👆 Clic détecté dans le conteneur');
-        console.log('🎯 Élément cliqué:', event.target);
-        
-        // Vérifier si le clic provient d'un élément cliquable
-        const clickable = event.target.closest(SELECTORS.CLICKABLE);
-        if (!clickable) {
-            console.log('❌ Le clic n\'est pas sur un élément cliquable');
-            return;
-        }
-
-        console.log('✅ Élément cliquable trouvé:', clickable);
-        event.preventDefault();
-        event.stopPropagation();
-        
-        // Trouver la carte parente
-        const card = clickable.closest(SELECTORS.CARD);
-        if (card) {
-            console.log('🎴 Carte parente trouvée:', card);
-            console.log('🔍 Chemin DOM:', card.parentElement);
-            toggleCard(card);
-        } else {
-            console.warn('⚠️ Aucune carte parente trouvée pour cet élément');
-            console.log('🔍 Élément cliqué:', clickable);
-            console.log('🔍 Chemin DOM:', clickable.parentElement);
-            console.log('🔍 Recherche de la carte avec:', SELECTORS.CARD);
-        }
-    });
-
-    console.log('✅ Écouteur d\'événements configuré sur le conteneur');
+    console.log(`✅ État mis à jour: ${!isOpen ? 'ouverte' : 'fermée'}`);
 }
 
 // Fonction d'initialisation principale
-export function initCentreCards() {
+export async function initCentreCards() {
     console.log('🚀 Démarrage de l\'initialisation des cartes...');
     
     // Attendre que le DOM soit chargé
     if (document.readyState === 'loading') {
         console.log('⏳ DOM en cours de chargement, attente de DOMContentLoaded...');
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('📄 DOM chargé, initialisation des cartes...');
-            initializeCardElements();
-            setupCardListeners();
+        await new Promise(resolve => {
+            document.addEventListener('DOMContentLoaded', resolve);
         });
-    } else {
-        console.log('📄 DOM déjà chargé, initialisation immédiate...');
-        initializeCardElements();
-        setupCardListeners();
     }
+
+    console.log('📄 DOM chargé, initialisation des cartes...');
+    await initializeCardElements();
 
     // Observer les changements dans le DOM pour gérer le contenu dynamique
     console.log('👀 Configuration de l\'observateur de mutations...');
-    const observer = new MutationObserver((mutations) => {
-        console.log(`🔄 ${mutations.length} mutation(s) détectée(s)`);
-        mutations.forEach((mutation) => {
+    const observer = new MutationObserver(async (mutations) => {
+        for (const mutation of mutations) {
             if (mutation.addedNodes.length) {
                 console.log(`➕ ${mutation.addedNodes.length} nouveau(x) nœud(s) détecté(s)`);
-                initializeCardElements();
-                // Pas besoin de réinitialiser les écouteurs car on utilise la délégation d'événements
+                await initializeCardElements();
             }
-        });
+        }
     });
 
     // Observer le conteneur principal des cartes
