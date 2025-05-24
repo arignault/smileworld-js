@@ -4,39 +4,24 @@ console.log('🚀 centre-card.js v2.0.0 chargé - Prêt pour reconstruction');
 // Configuration des sélecteurs
 const SELECTORS = {
     CARD: '.centre-card._wrapper',
-    CLICKABLE_BUTTON: '.clickable_button',
+    CLICKABLE_WRAP: '#data-card-toggle, [data-attribute="data-card-toggle"]',
     TOGGLE_ELEMENTS: [
         '.centre-card_scroll_wrapper',
         '.centre-card_list',
         '.centre-card_button-holder'
     ],
-    ALWAYS_VISIBLE: '.tag-holder-wrapper',
-    DYNAMIC_ELEMENTS: '[fs-list-element]'
+    ALWAYS_VISIBLE: '.tag-holder-wrapper'
 };
 
-// Attendre que les éléments dynamiques soient chargés
-function waitForDynamicElements(card) {
-    return new Promise((resolve) => {
-        const observer = new MutationObserver((mutations, obs) => {
-            const dynamicElements = card.querySelectorAll(SELECTORS.DYNAMIC_ELEMENTS);
-            if (dynamicElements.length > 0) {
-                console.log('✅ Éléments dynamiques chargés:', dynamicElements.length);
-                obs.disconnect();
-                resolve();
-            }
-        });
-
-        observer.observe(card, {
-            childList: true,
-            subtree: true
-        });
-
-        // Timeout de sécurité après 5 secondes
-        setTimeout(() => {
-            observer.disconnect();
-            console.log('⚠️ Timeout atteint pour le chargement des éléments dynamiques');
-            resolve();
-        }, 5000);
+// Vérifier l'état d'affichage d'un élément
+function logElementState(element, context) {
+    const style = window.getComputedStyle(element);
+    console.log(`📊 État de ${context}:`, {
+        display: style.display,
+        opacity: style.opacity,
+        visibility: style.visibility,
+        height: style.height,
+        element: element
     });
 }
 
@@ -49,58 +34,65 @@ async function initializeCardElements() {
     console.log(`🔍 ${cards.length} cartes trouvées dans le DOM`);
 
     for (const card of cards) {
-        console.log('🎴 Traitement de la carte:', card);
+        console.log('\n🎴 Traitement de la carte:', card);
         
+        // Vérifier l'état initial avant modification
+        console.log('📌 État initial des éléments:');
+        SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
+            const elements = card.querySelectorAll(selector);
+            elements.forEach(element => {
+                logElementState(element, `État initial de ${selector}`);
+            });
+        });
+
         // Initialiser les éléments à cacher
         SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
             const elements = card.querySelectorAll(selector);
-            console.log(`📌 Recherche des éléments "${selector}": ${elements.length} trouvés`);
+            console.log(`\n⚙️ Configuration de "${selector}": ${elements.length} éléments trouvés`);
             
             elements.forEach(element => {
-                console.log(`⚙️ Configuration de l'état initial pour:`, element);
                 gsap.set(element, { 
                     display: 'none',
                     opacity: 0
                 });
                 elementsInitialized++;
+                
+                // Vérifier l'état après modification
+                logElementState(element, `État après initialisation de ${selector}`);
             });
         });
 
-        // S'assurer que tag-holder-wrapper est visible
-        const tagHolder = card.querySelector(SELECTORS.ALWAYS_VISIBLE);
-        if (tagHolder) {
-            console.log('🏷️ Configuration du tag-holder:', tagHolder);
-            gsap.set(tagHolder, { 
-                display: 'block',
-                opacity: 1
-            });
-        } else {
-            console.warn('⚠️ Tag-holder non trouvé dans la carte');
-        }
-
-        // Configurer le bouton cliquable
-        const clickableButton = card.querySelector(SELECTORS.CLICKABLE_BUTTON);
-        if (clickableButton) {
-            console.log('🔘 Bouton cliquable trouvé:', clickableButton);
-            clickableButton.addEventListener('click', (event) => {
-                console.log('👆 Clic détecté sur le bouton');
+        // Configurer l'élément cliquable
+        const clickableWrap = card.querySelector(SELECTORS.CLICKABLE_WRAP);
+        if (clickableWrap) {
+            console.log('\n🔘 Élément cliquable trouvé:', clickableWrap);
+            clickableWrap.addEventListener('click', (event) => {
+                console.log('\n👆 Clic détecté sur l\'élément cliquable');
                 event.preventDefault();
                 event.stopPropagation();
+                
+                // Vérifier l'état avant le toggle
+                console.log('📌 État des éléments avant toggle:');
+                SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
+                    const elements = card.querySelectorAll(selector);
+                    elements.forEach(element => {
+                        logElementState(element, `État avant toggle de ${selector}`);
+                    });
+                });
+                
                 toggleCard(card);
             });
         } else {
-            console.warn('⚠️ Bouton cliquable non trouvé dans la carte');
+            console.warn('⚠️ Élément cliquable non trouvé dans la carte');
         }
     }
     
-    console.log(`✅ Initialisation terminée: ${elementsInitialized} éléments configurés`);
+    console.log(`\n✅ Initialisation terminée: ${elementsInitialized} éléments configurés`);
 }
 
 // Gestion du toggle d'une carte
 async function toggleCard(cardElement) {
-    console.log('🔄 Début du toggle de la carte');
-    console.log('🎴 Carte concernée:', cardElement);
-    
+    console.log('\n🔄 Début du toggle de la carte');
     const isOpen = cardElement.classList.contains('is-open');
     console.log(`📌 État actuel de la carte: ${isOpen ? 'ouverte' : 'fermée'}`);
     
@@ -108,25 +100,20 @@ async function toggleCard(cardElement) {
     const promises = SELECTORS.TOGGLE_ELEMENTS.map(selector => {
         const element = cardElement.querySelector(selector);
         if (element) {
-            console.log(`🎭 Préparation de l'animation pour "${selector}"`);
-            console.log(`📊 État actuel de l'élément:`, {
-                display: window.getComputedStyle(element).display,
-                opacity: window.getComputedStyle(element).opacity
-            });
-            
+            console.log(`\n🎭 Animation de "${selector}"`);
             return new Promise(resolve => {
                 gsap.to(element, {
                     display: isOpen ? 'none' : 'flex',
                     opacity: isOpen ? 0 : 1,
                     duration: 0.3,
                     ease: 'power2.inOut',
-                    onStart: () => console.log(`▶️ Début animation pour ${selector}`),
+                    onStart: () => {
+                        console.log(`▶️ Début animation pour ${selector}`);
+                        logElementState(element, `État au début de l'animation de ${selector}`);
+                    },
                     onComplete: () => {
                         console.log(`✅ Animation terminée pour ${selector}`);
-                        console.log(`📊 Nouvel état de l'élément:`, {
-                            display: window.getComputedStyle(element).display,
-                            opacity: window.getComputedStyle(element).opacity
-                        });
+                        logElementState(element, `État à la fin de l'animation de ${selector}`);
                         resolve();
                     }
                 });
@@ -142,7 +129,16 @@ async function toggleCard(cardElement) {
 
     // Mise à jour de l'état
     cardElement.classList.toggle('is-open');
-    console.log(`📌 État final de la carte: ${!isOpen ? 'ouverte' : 'fermée'}`);
+    console.log(`\n📌 État final de la carte: ${!isOpen ? 'ouverte' : 'fermée'}`);
+    
+    // Vérifier l'état final de tous les éléments
+    console.log('📊 État final des éléments:');
+    SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
+        const elements = cardElement.querySelectorAll(selector);
+        elements.forEach(element => {
+            logElementState(element, `État final de ${selector}`);
+        });
+    });
 }
 
 // Fonction d'initialisation principale
@@ -165,20 +161,18 @@ export async function initCentreCards() {
     console.log('🔄 Début de l\'initialisation des cartes...');
     await initializeCardElements();
 
-    // Observer les changements dans le DOM pour gérer le contenu dynamique
+    // Observer les changements dans le DOM
     console.log('👀 Configuration de l\'observateur de mutations...');
     const observer = new MutationObserver(async (mutations) => {
-        console.log(`🔄 ${mutations.length} mutation(s) détectée(s)`);
+        console.log(`\n🔄 ${mutations.length} mutation(s) détectée(s)`);
         for (const mutation of mutations) {
             if (mutation.addedNodes.length) {
                 console.log(`➕ ${mutation.addedNodes.length} nouveau(x) nœud(s) détecté(s)`);
-                console.log('📦 Nœuds ajoutés:', mutation.addedNodes);
                 await initializeCardElements();
             }
         }
     });
 
-    // Observer le conteneur principal des cartes
     const cardsContainer = document.querySelector('.collection-list-centre-wrapper');
     if (cardsContainer) {
         console.log('🎯 Conteneur de cartes trouvé, démarrage de l\'observation');
@@ -193,3 +187,4 @@ export async function initCentreCards() {
     console.log('✅ Initialisation des cartes terminée');
     return Promise.resolve();
 }
+
