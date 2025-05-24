@@ -13,6 +13,18 @@ const SELECTORS = {
     ALWAYS_VISIBLE: '.tag-holder-wrapper'
 };
 
+// Forcer l'état initial des éléments
+function forceInitialState(element) {
+    console.log('🔒 Forçage de l\'état initial pour:', element);
+    element.style.display = 'none';
+    element.style.opacity = '0';
+    gsap.set(element, { 
+        display: 'none',
+        opacity: 0,
+        clearProps: 'all'
+    });
+}
+
 // Vérifier l'état d'affichage d'un élément
 function logElementState(element, context) {
     const style = window.getComputedStyle(element);
@@ -30,34 +42,37 @@ async function initializeCardElements() {
     console.log('📝 Initialisation des éléments des cartes...');
     let elementsInitialized = 0;
     
-    const cards = document.querySelectorAll(SELECTORS.CARD);
+    // Attendre que les cartes soient disponibles
+    const waitForCards = () => {
+        return new Promise((resolve) => {
+            const checkCards = () => {
+                const cards = document.querySelectorAll(SELECTORS.CARD);
+                if (cards.length > 0) {
+                    console.log(`✅ ${cards.length} cartes trouvées après attente`);
+                    resolve(cards);
+                } else {
+                    console.log('⏳ Attente des cartes...');
+                    setTimeout(checkCards, 100);
+                }
+            };
+            checkCards();
+        });
+    };
+
+    const cards = await waitForCards();
     console.log(`🔍 ${cards.length} cartes trouvées dans le DOM`);
 
     for (const card of cards) {
         console.log('\n🎴 Traitement de la carte:', card);
         
-        // Vérifier l'état initial avant modification
-        console.log('📌 État initial des éléments:');
-        SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
-            const elements = card.querySelectorAll(selector);
-            elements.forEach(element => {
-                logElementState(element, `État initial de ${selector}`);
-            });
-        });
-
-        // Initialiser les éléments à cacher
+        // Forcer l'état initial de tous les éléments
         SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
             const elements = card.querySelectorAll(selector);
             console.log(`\n⚙️ Configuration de "${selector}": ${elements.length} éléments trouvés`);
             
             elements.forEach(element => {
-                gsap.set(element, { 
-                    display: 'none',
-                    opacity: 0
-                });
+                forceInitialState(element);
                 elementsInitialized++;
-                
-                // Vérifier l'état après modification
                 logElementState(element, `État après initialisation de ${selector}`);
             });
         });
@@ -66,7 +81,12 @@ async function initializeCardElements() {
         const clickableWrap = card.querySelector(SELECTORS.CLICKABLE_WRAP);
         if (clickableWrap) {
             console.log('\n🔘 Élément cliquable trouvé:', clickableWrap);
-            clickableWrap.addEventListener('click', (event) => {
+            
+            // Supprimer les anciens écouteurs s'ils existent
+            const newClickableWrap = clickableWrap.cloneNode(true);
+            clickableWrap.parentNode.replaceChild(newClickableWrap, clickableWrap);
+            
+            newClickableWrap.addEventListener('click', (event) => {
                 console.log('\n👆 Clic détecté sur l\'élément cliquable');
                 event.preventDefault();
                 event.stopPropagation();
