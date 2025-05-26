@@ -125,10 +125,37 @@ async function initializeCardElements() {
     const cards = await waitForCards();
     console.log(`🔍 ${cards.length} cartes trouvées dans le DOM`);
 
-    // Fermer toutes les cartes au démarrage
+    // Fermer toutes les cartes au démarrage et forcer le display none immédiatement
     cards.forEach(card => {
         console.log('\n🔒 Fermeture initiale de la carte:', card);
         card.classList.remove('is-open');
+        
+        // Forcer immédiatement le display none de tous les éléments
+        SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
+            const elements = card.querySelectorAll(selector);
+            elements.forEach(element => {
+                // Forcer le display none immédiatement avec !important
+                element.style.cssText = `
+                    display: none !important;
+                    opacity: 0 !important;
+                    visibility: hidden !important;
+                    height: 0 !important;
+                    overflow: hidden !important;
+                    pointer-events: none !important;
+                `;
+                
+                // Double vérification avec setAttribute
+                element.setAttribute('style', element.style.cssText);
+                
+                // Vérification immédiate
+                const computedStyle = window.getComputedStyle(element);
+                console.log(`📊 État immédiat après forçage pour ${selector}:`, {
+                    display: computedStyle.display,
+                    opacity: computedStyle.opacity,
+                    visibility: computedStyle.visibility
+                });
+            });
+        });
     });
 
     for (const card of cards) {
@@ -149,10 +176,30 @@ async function initializeCardElements() {
                 // Vérifier si l'élément est déjà initialisé
                 const isAlreadyInitialized = element.dataset.initialized === 'true';
                 if (!isAlreadyInitialized) {
-                    forceInitialState(element);
+                    // Forcer à nouveau le display none
+                    element.style.cssText = `
+                        display: none !important;
+                        opacity: 0 !important;
+                        visibility: hidden !important;
+                        height: 0 !important;
+                        overflow: hidden !important;
+                        pointer-events: none !important;
+                    `;
+                    element.setAttribute('style', element.style.cssText);
+                    
+                    // Ajouter une classe pour le suivi
+                    element.classList.add('force-hidden');
                     element.dataset.initialized = 'true';
                     elementsInitialized++;
-                    logElementState(element, `État après initialisation de ${selector}`);
+                    
+                    // Vérification immédiate après modification
+                    const computedStyle = window.getComputedStyle(element);
+                    console.log(`📊 État après initialisation de ${selector}:`, {
+                        display: computedStyle.display,
+                        opacity: computedStyle.opacity,
+                        visibility: computedStyle.visibility,
+                        forceHidden: element.classList.contains('force-hidden')
+                    });
                 } else {
                     console.log('ℹ️ Élément déjà initialisé:', element);
                 }
@@ -178,31 +225,37 @@ async function initializeCardElements() {
                 SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
                     const elements = card.querySelectorAll(selector);
                     elements.forEach(element => {
-                        logElementState(element, `État avant toggle de ${selector}`);
+                        const style = window.getComputedStyle(element);
+                        console.log(`- ${selector}:`, {
+                            display: style.display,
+                            opacity: style.opacity,
+                            visibility: style.visibility
+                        });
                     });
                 });
                 
                 toggleCard(card);
             });
-        } else {
-            console.warn('⚠️ Élément cliquable non trouvé dans la carte');
         }
     }
     
-    console.log(`\n✅ Initialisation terminée: ${elementsInitialized} éléments configurés`);
-    
     // Vérification finale de l'état de toutes les cartes
-    cards.forEach(card => {
-        console.log('\n📊 État final de la carte:', {
+    console.log('\n📊 Vérification finale de toutes les cartes:');
+    cards.forEach((card, index) => {
+        const elements = Array.from(card.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(',')));
+        console.log(`\nCarte ${index + 1}:`, {
             isOpen: card.classList.contains('is-open'),
             display: window.getComputedStyle(card).display,
-            elements: Array.from(card.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','))).map(el => ({
+            elements: elements.map(el => ({
                 selector: el.className,
                 display: window.getComputedStyle(el).display,
-                opacity: window.getComputedStyle(el).opacity
+                opacity: window.getComputedStyle(el).opacity,
+                forceHidden: el.classList.contains('force-hidden')
             }))
         });
     });
+
+    console.log(`\n✅ Initialisation terminée: ${elementsInitialized} éléments configurés`);
 }
 
 // Gestion du toggle d'une carte
