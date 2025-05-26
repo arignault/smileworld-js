@@ -10,7 +10,8 @@ const SELECTORS = {
         '.centre-card_list',
         '.centre-card_button-holder'
     ],
-    ALWAYS_VISIBLE: '.tag-holder-wrapper'
+    ALWAYS_VISIBLE: '.tag-holder-wrapper',
+    ARROW: '.svg-holder.arrow'
 };
 
 // Fonction pour appliquer les styles en fonction de l'élément
@@ -212,11 +213,81 @@ async function initializeCardElements() {
     console.log(`\n✅ Initialisation terminée: ${elementsInitialized} éléments configurés`);
 }
 
+// Fonction pour fermer une carte spécifique
+async function closeCard(cardElement) {
+    if (!cardElement.classList.contains('is-open')) return;
+    
+    console.log('\n🔒 Fermeture de la carte:', cardElement);
+    
+    // Fermer la carte
+    cardElement.classList.remove('is-open');
+    
+    // Animer la flèche
+    const arrow = cardElement.querySelector(SELECTORS.ARROW);
+    if (arrow) {
+        gsap.to(arrow, {
+            rotation: 0,
+            duration: 0.3,
+            ease: 'power2.inOut'
+        });
+    }
+    
+    // Fermer les éléments
+    const promises = SELECTORS.TOGGLE_ELEMENTS.map(selector => {
+        const element = cardElement.querySelector(selector);
+        if (element) {
+            return new Promise(resolve => {
+                const isScrollWrapper = element.classList.contains('centre-card_scroll_wrapper');
+                
+                const baseStyles = `
+                    display: none !important;
+                    opacity: 0 !important;
+                    visibility: hidden !important;
+                    overflow: hidden !important;
+                    pointer-events: none !important;
+                `;
+                
+                const scrollWrapperStyles = baseStyles;
+                const otherStyles = baseStyles + `height: 0 !important;`;
+                const stylesToApply = isScrollWrapper ? scrollWrapperStyles : otherStyles;
+                
+                element.style.cssText = stylesToApply;
+                element.setAttribute('style', stylesToApply);
+                
+                gsap.to(element, {
+                    opacity: 0,
+                    duration: 0.3,
+                    ease: 'power2.inOut',
+                    onComplete: resolve
+                });
+            });
+        }
+        return Promise.resolve();
+    });
+    
+    await Promise.all(promises);
+}
+
+// Fonction pour fermer toutes les cartes sauf celle spécifiée
+async function closeOtherCards(currentCard) {
+    const allCards = document.querySelectorAll(SELECTORS.CARD);
+    const closePromises = Array.from(allCards)
+        .filter(card => card !== currentCard && card.classList.contains('is-open'))
+        .map(card => closeCard(card));
+    
+    await Promise.all(closePromises);
+}
+
 // Gestion du toggle d'une carte
 async function toggleCard(cardElement) {
     console.log('\n🔄 Début du toggle de la carte');
     const isOpen = cardElement.classList.contains('is-open');
     console.log(`📌 État actuel de la carte: ${isOpen ? 'ouverte' : 'fermée'}`);
+    
+    // Si on ouvre une carte, fermer les autres d'abord
+    if (!isOpen) {
+        await closeOtherCards(cardElement);
+    }
     
     // Animation des éléments
     const promises = SELECTORS.TOGGLE_ELEMENTS.map(selector => {
@@ -253,6 +324,16 @@ async function toggleCard(cardElement) {
                 const stylesToApply = isScrollWrapper ? scrollWrapperStyles : otherStyles;
                 element.style.cssText = stylesToApply;
                 element.setAttribute('style', stylesToApply);
+
+                // Animer la flèche
+                const arrow = cardElement.querySelector(SELECTORS.ARROW);
+                if (arrow) {
+                    gsap.to(arrow, {
+                        rotation: isOpen ? 0 : 90,
+                        duration: 0.3,
+                        ease: 'power2.inOut'
+                    });
+                }
 
                 gsap.to(element, {
                     opacity: isOpen ? 0 : 1,
@@ -295,15 +376,6 @@ async function toggleCard(cardElement) {
     // Mise à jour de l'état
     cardElement.classList.toggle('is-open');
     console.log(`\n📌 État final de la carte: ${!isOpen ? 'ouverte' : 'fermée'}`);
-    
-    // Vérifier l'état final de tous les éléments
-    console.log('📊 État final des éléments:');
-    SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
-        const elements = cardElement.querySelectorAll(selector);
-        elements.forEach(element => {
-            logElementState(element, `État final de ${selector}`);
-        });
-    });
 }
 
 // Fonction d'initialisation principale
