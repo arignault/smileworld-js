@@ -1,5 +1,5 @@
 // Version: 2.0.0 - Version minimaliste pour reconstruction
-console.log('🚀 centre-card.js v3.0.0 chargé - Prêt pour reconstruction');
+console.log('🚀 centre-card.js v2.2.0 chargé - Prêt pour reconstruction Cursor');
 
 // Configuration des sélecteurs
 const SELECTORS = {
