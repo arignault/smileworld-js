@@ -26,24 +26,35 @@ function forceInitialState(element) {
         height: beforeStyle.height
     });
 
-    // Appliquer les styles de manière plus agressive
-    element.style.cssText = `
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-        height: 0 !important;
-        overflow: hidden !important;
-    `;
+    // Appliquer les styles de manière plus agressive pour les éléments spécifiques
+    if (element.classList.contains('centre-card_scroll_wrapper') ||
+        element.classList.contains('centre-card_list') ||
+        element.classList.contains('centre-card_button-holder')) {
+        
+        // Forcer le display none avec !important
+        element.setAttribute('style', `
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
+        `);
 
-    // Double vérification avec GSAP
-    gsap.set(element, { 
-        display: 'none',
-        opacity: 0,
-        visibility: 'hidden',
-        height: 0,
-        overflow: 'hidden',
-        clearProps: 'all'
-    });
+        // Double vérification avec GSAP
+        gsap.set(element, { 
+            display: 'none',
+            opacity: 0,
+            visibility: 'hidden',
+            height: 0,
+            overflow: 'hidden',
+            pointerEvents: 'none',
+            clearProps: 'all'
+        });
+
+        // Ajouter une classe pour le suivi
+        element.classList.add('force-hidden');
+    }
 
     // Vérifier l'état après modification
     const afterStyle = window.getComputedStyle(element);
@@ -51,7 +62,8 @@ function forceInitialState(element) {
         display: afterStyle.display,
         opacity: afterStyle.opacity,
         visibility: afterStyle.visibility,
-        height: afterStyle.height
+        height: afterStyle.height,
+        forceHidden: element.classList.contains('force-hidden')
     });
 }
 
@@ -75,13 +87,20 @@ async function initializeCardElements() {
     // Attendre que les cartes soient disponibles
     const waitForCards = () => {
         return new Promise((resolve) => {
+            let attempts = 0;
+            const maxAttempts = 50; // Limite à 50 tentatives (5 secondes max)
+            
             const checkCards = () => {
                 const cards = document.querySelectorAll(SELECTORS.CARD);
-                if (cards.length > 0) {
-                    console.log(`✅ ${cards.length} cartes trouvées après attente`);
+                if (cards.length > 0 && cards.length <= 100) {
+                    console.log(`✅ ${cards.length} cartes trouvées après ${attempts} tentatives`);
                     resolve(cards);
+                } else if (attempts >= maxAttempts) {
+                    console.log(`⚠️ Limite d'attente atteinte après ${attempts} tentatives. Cartes trouvées: ${cards.length}`);
+                    resolve(cards); // On résout quand même avec les cartes trouvées
                 } else {
-                    console.log('⏳ Attente des cartes...');
+                    attempts++;
+                    console.log(`⏳ Tentative ${attempts}/${maxAttempts} - Cartes trouvées: ${cards.length}`);
                     setTimeout(checkCards, 100);
                 }
             };
@@ -178,28 +197,34 @@ async function toggleCard(cardElement) {
     const isOpen = cardElement.classList.contains('is-open');
     console.log(`📌 État actuel de la carte: ${isOpen ? 'ouverte' : 'fermée'}`);
     
-    // Vérifier l'état des éléments avant le toggle
-    console.log('📊 État des éléments avant toggle:');
-    SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
-        const elements = cardElement.querySelectorAll(selector);
-        elements.forEach(element => {
-            const style = window.getComputedStyle(element);
-            console.log(`- ${selector}:`, {
-                display: style.display,
-                opacity: style.opacity,
-                visibility: style.visibility
-            });
-        });
-    });
-
     // Animation des éléments
     const promises = SELECTORS.TOGGLE_ELEMENTS.map(selector => {
         const element = cardElement.querySelector(selector);
         if (element) {
             console.log(`\n🎭 Animation de "${selector}"`);
             return new Promise(resolve => {
+                // Forcer le display avec !important lors du toggle
+                if (!isOpen) {
+                    element.setAttribute('style', `
+                        display: flex !important;
+                        opacity: 1 !important;
+                        visibility: visible !important;
+                        height: auto !important;
+                        overflow: visible !important;
+                        pointer-events: auto !important;
+                    `);
+                } else {
+                    element.setAttribute('style', `
+                        display: none !important;
+                        opacity: 0 !important;
+                        visibility: hidden !important;
+                        height: 0 !important;
+                        overflow: hidden !important;
+                        pointer-events: none !important;
+                    `);
+                }
+
                 gsap.to(element, {
-                    display: isOpen ? 'none' : 'flex',
                     opacity: isOpen ? 0 : 1,
                     duration: 0.3,
                     ease: 'power2.inOut',
