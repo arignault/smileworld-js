@@ -13,58 +13,29 @@ const SELECTORS = {
     ALWAYS_VISIBLE: '.tag-holder-wrapper'
 };
 
-// Forcer l'état initial des éléments
-function forceInitialState(element) {
-    console.log('🔒 Forçage de l\'état initial pour:', element);
+// Fonction pour appliquer les styles en fonction de l'élément
+function applyInitialStyles(element) {
+    const isScrollWrapper = element.classList.contains('centre-card_scroll_wrapper');
     
-    // Vérifier l'état avant modification
-    const beforeStyle = window.getComputedStyle(element);
-    console.log('📊 État avant modification:', {
-        display: beforeStyle.display,
-        opacity: beforeStyle.opacity,
-        visibility: beforeStyle.visibility,
-        height: beforeStyle.height
-    });
+    // Styles de base pour tous les éléments
+    const baseStyles = `
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+    `;
 
-    // Appliquer les styles de manière plus agressive pour les éléments spécifiques
-    if (element.classList.contains('centre-card_scroll_wrapper') ||
-        element.classList.contains('centre-card_list') ||
-        element.classList.contains('centre-card_button-holder')) {
-        
-        // Forcer le display none avec !important
-        element.setAttribute('style', `
-            display: none !important;
-            opacity: 0 !important;
-            visibility: hidden !important;
-            height: 0 !important;
-            overflow: hidden !important;
-            pointer-events: none !important;
-        `);
+    // Styles spécifiques pour le scroll wrapper (sans height)
+    const scrollWrapperStyles = baseStyles;
 
-        // Double vérification avec GSAP
-        gsap.set(element, { 
-            display: 'none',
-            opacity: 0,
-            visibility: 'hidden',
-            height: 0,
-            overflow: 'hidden',
-            pointerEvents: 'none',
-            clearProps: 'all'
-        });
+    // Styles pour les autres éléments (avec height)
+    const otherStyles = baseStyles + `height: 0 !important;`;
 
-        // Ajouter une classe pour le suivi
-        element.classList.add('force-hidden');
-    }
-
-    // Vérifier l'état après modification
-    const afterStyle = window.getComputedStyle(element);
-    console.log('📊 État après modification:', {
-        display: afterStyle.display,
-        opacity: afterStyle.opacity,
-        visibility: afterStyle.visibility,
-        height: afterStyle.height,
-        forceHidden: element.classList.contains('force-hidden')
-    });
+    // Appliquer les styles appropriés
+    const stylesToApply = isScrollWrapper ? scrollWrapperStyles : otherStyles;
+    element.style.cssText = stylesToApply;
+    element.setAttribute('style', stylesToApply);
 }
 
 // Vérifier l'état d'affichage d'un élément
@@ -134,25 +105,16 @@ async function initializeCardElements() {
         SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
             const elements = card.querySelectorAll(selector);
             elements.forEach(element => {
-                // Forcer le display none immédiatement avec !important
-                element.style.cssText = `
-                    display: none !important;
-                    opacity: 0 !important;
-                    visibility: hidden !important;
-                    height: 0 !important;
-                    overflow: hidden !important;
-                    pointer-events: none !important;
-                `;
-                
-                // Double vérification avec setAttribute
-                element.setAttribute('style', element.style.cssText);
+                applyInitialStyles(element);
                 
                 // Vérification immédiate
                 const computedStyle = window.getComputedStyle(element);
                 console.log(`📊 État immédiat après forçage pour ${selector}:`, {
                     display: computedStyle.display,
                     opacity: computedStyle.opacity,
-                    visibility: computedStyle.visibility
+                    visibility: computedStyle.visibility,
+                    height: computedStyle.height,
+                    isScrollWrapper: element.classList.contains('centre-card_scroll_wrapper')
                 });
             });
         });
@@ -173,19 +135,9 @@ async function initializeCardElements() {
             console.log(`\n⚙️ Configuration de "${selector}": ${elements.length} éléments trouvés`);
             
             elements.forEach(element => {
-                // Vérifier si l'élément est déjà initialisé
                 const isAlreadyInitialized = element.dataset.initialized === 'true';
                 if (!isAlreadyInitialized) {
-                    // Forcer à nouveau le display none
-                    element.style.cssText = `
-                        display: none !important;
-                        opacity: 0 !important;
-                        visibility: hidden !important;
-                        height: 0 !important;
-                        overflow: hidden !important;
-                        pointer-events: none !important;
-                    `;
-                    element.setAttribute('style', element.style.cssText);
+                    applyInitialStyles(element);
                     
                     // Ajouter une classe pour le suivi
                     element.classList.add('force-hidden');
@@ -198,7 +150,9 @@ async function initializeCardElements() {
                         display: computedStyle.display,
                         opacity: computedStyle.opacity,
                         visibility: computedStyle.visibility,
-                        forceHidden: element.classList.contains('force-hidden')
+                        height: computedStyle.height,
+                        forceHidden: element.classList.contains('force-hidden'),
+                        isScrollWrapper: element.classList.contains('centre-card_scroll_wrapper')
                     });
                 } else {
                     console.log('ℹ️ Élément déjà initialisé:', element);
@@ -270,26 +224,35 @@ async function toggleCard(cardElement) {
         if (element) {
             console.log(`\n🎭 Animation de "${selector}"`);
             return new Promise(resolve => {
-                // Forcer le display avec !important lors du toggle
-                if (!isOpen) {
-                    element.setAttribute('style', `
-                        display: flex !important;
-                        opacity: 1 !important;
-                        visibility: visible !important;
-                        height: auto !important;
-                        overflow: visible !important;
-                        pointer-events: auto !important;
-                    `);
-                } else {
-                    element.setAttribute('style', `
-                        display: none !important;
-                        opacity: 0 !important;
-                        visibility: hidden !important;
-                        height: 0 !important;
-                        overflow: hidden !important;
-                        pointer-events: none !important;
-                    `);
-                }
+                const isScrollWrapper = element.classList.contains('centre-card_scroll_wrapper');
+                
+                // Styles de base pour tous les éléments
+                const baseStyles = isOpen ? `
+                    display: none !important;
+                    opacity: 0 !important;
+                    visibility: hidden !important;
+                    overflow: hidden !important;
+                    pointer-events: none !important;
+                ` : `
+                    display: flex !important;
+                    opacity: 1 !important;
+                    visibility: visible !important;
+                    overflow: visible !important;
+                    pointer-events: auto !important;
+                `;
+
+                // Styles spécifiques pour le scroll wrapper (sans height)
+                const scrollWrapperStyles = baseStyles;
+
+                // Styles pour les autres éléments (avec height)
+                const otherStyles = isOpen ? 
+                    baseStyles + `height: 0 !important;` : 
+                    baseStyles + `height: auto !important;`;
+
+                // Appliquer les styles appropriés
+                const stylesToApply = isScrollWrapper ? scrollWrapperStyles : otherStyles;
+                element.style.cssText = stylesToApply;
+                element.setAttribute('style', stylesToApply);
 
                 gsap.to(element, {
                     opacity: isOpen ? 0 : 1,
@@ -297,11 +260,25 @@ async function toggleCard(cardElement) {
                     ease: 'power2.inOut',
                     onStart: () => {
                         console.log(`▶️ Début animation pour ${selector}`);
-                        logElementState(element, `État au début de l'animation de ${selector}`);
+                        const style = window.getComputedStyle(element);
+                        console.log(`📊 État au début de l'animation:`, {
+                            display: style.display,
+                            opacity: style.opacity,
+                            visibility: style.visibility,
+                            height: style.height,
+                            isScrollWrapper: isScrollWrapper
+                        });
                     },
                     onComplete: () => {
                         console.log(`✅ Animation terminée pour ${selector}`);
-                        logElementState(element, `État à la fin de l'animation de ${selector}`);
+                        const style = window.getComputedStyle(element);
+                        console.log(`📊 État à la fin de l'animation:`, {
+                            display: style.display,
+                            opacity: style.opacity,
+                            visibility: style.visibility,
+                            height: style.height,
+                            isScrollWrapper: isScrollWrapper
+                        });
                         resolve();
                     }
                 });
