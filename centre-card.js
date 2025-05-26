@@ -3,7 +3,7 @@ console.log('🚀 centre-card.js v2.2.0 chargé - Prêt pour reconstruction Curs
 
 // Configuration des sélecteurs
 const SELECTORS = {
-    CARD: '.centre-card._wrapper',
+    CARD: '.centre-card_wrapper.effect-cartoon-shadow',
     CLICKABLE_WRAP: '#data-card-toggle, [data-attribute="data-card-toggle"]',
     TOGGLE_ELEMENTS: [
         '.centre-card_scroll_wrapper',
@@ -92,11 +92,25 @@ async function initializeCardElements() {
             
             const checkCards = () => {
                 const cards = document.querySelectorAll(SELECTORS.CARD);
+                console.log(`🔍 Recherche des cartes avec le sélecteur: "${SELECTORS.CARD}"`);
+                
                 if (cards.length > 0 && cards.length <= 100) {
                     console.log(`✅ ${cards.length} cartes trouvées après ${attempts} tentatives`);
+                    // Log des premières cartes pour vérification
+                    Array.from(cards).slice(0, 3).forEach((card, index) => {
+                        console.log(`📌 Carte ${index + 1} classes:`, card.className);
+                    });
                     resolve(cards);
                 } else if (attempts >= maxAttempts) {
                     console.log(`⚠️ Limite d'attente atteinte après ${attempts} tentatives. Cartes trouvées: ${cards.length}`);
+                    // Vérifier si le sélecteur est correct
+                    const allCards = document.querySelectorAll('.centre-card_wrapper');
+                    const allShadowCards = document.querySelectorAll('.effect-cartoon-shadow');
+                    console.log('🔍 Diagnostic des sélecteurs:', {
+                        'Toutes les cartes (.centre-card_wrapper)': allCards.length,
+                        'Tous les éléments avec shadow (.effect-cartoon-shadow)': allShadowCards.length,
+                        'Sélecteur combiné': cards.length
+                    });
                     resolve(cards); // On résout quand même avec les cartes trouvées
                 } else {
                     attempts++;
