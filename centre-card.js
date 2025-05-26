@@ -19,7 +19,7 @@ function forceInitialState(element) {
     element.style.display = 'none';
     element.style.opacity = '0';
     gsap.set(element, { 
-        display: 'none',
+        display: 'none !important',
         opacity: 0,
         clearProps: 'all'
     });
