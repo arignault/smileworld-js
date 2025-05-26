@@ -16,12 +16,42 @@ const SELECTORS = {
 // Forcer l'état initial des éléments
 function forceInitialState(element) {
     console.log('🔒 Forçage de l\'état initial pour:', element);
-    element.style.display = 'none';
-    element.style.opacity = '0';
+    
+    // Vérifier l'état avant modification
+    const beforeStyle = window.getComputedStyle(element);
+    console.log('📊 État avant modification:', {
+        display: beforeStyle.display,
+        opacity: beforeStyle.opacity,
+        visibility: beforeStyle.visibility,
+        height: beforeStyle.height
+    });
+
+    // Appliquer les styles de manière plus agressive
+    element.style.cssText = `
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        overflow: hidden !important;
+    `;
+
+    // Double vérification avec GSAP
     gsap.set(element, { 
-        display: 'none !important',
+        display: 'none',
         opacity: 0,
+        visibility: 'hidden',
+        height: 0,
+        overflow: 'hidden',
         clearProps: 'all'
+    });
+
+    // Vérifier l'état après modification
+    const afterStyle = window.getComputedStyle(element);
+    console.log('📊 État après modification:', {
+        display: afterStyle.display,
+        opacity: afterStyle.opacity,
+        visibility: afterStyle.visibility,
+        height: afterStyle.height
     });
 }
 
@@ -62,8 +92,20 @@ async function initializeCardElements() {
     const cards = await waitForCards();
     console.log(`🔍 ${cards.length} cartes trouvées dans le DOM`);
 
+    // Fermer toutes les cartes au démarrage
+    cards.forEach(card => {
+        console.log('\n🔒 Fermeture initiale de la carte:', card);
+        card.classList.remove('is-open');
+    });
+
     for (const card of cards) {
         console.log('\n🎴 Traitement de la carte:', card);
+        
+        // Vérifier l'état initial de la carte
+        console.log('📊 État initial de la carte:', {
+            isOpen: card.classList.contains('is-open'),
+            display: window.getComputedStyle(card).display
+        });
         
         // Forcer l'état initial de tous les éléments
         SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
@@ -71,9 +113,16 @@ async function initializeCardElements() {
             console.log(`\n⚙️ Configuration de "${selector}": ${elements.length} éléments trouvés`);
             
             elements.forEach(element => {
-                forceInitialState(element);
-                elementsInitialized++;
-                logElementState(element, `État après initialisation de ${selector}`);
+                // Vérifier si l'élément est déjà initialisé
+                const isAlreadyInitialized = element.dataset.initialized === 'true';
+                if (!isAlreadyInitialized) {
+                    forceInitialState(element);
+                    element.dataset.initialized = 'true';
+                    elementsInitialized++;
+                    logElementState(element, `État après initialisation de ${selector}`);
+                } else {
+                    console.log('ℹ️ Élément déjà initialisé:', element);
+                }
             });
         });
 
@@ -108,6 +157,19 @@ async function initializeCardElements() {
     }
     
     console.log(`\n✅ Initialisation terminée: ${elementsInitialized} éléments configurés`);
+    
+    // Vérification finale de l'état de toutes les cartes
+    cards.forEach(card => {
+        console.log('\n📊 État final de la carte:', {
+            isOpen: card.classList.contains('is-open'),
+            display: window.getComputedStyle(card).display,
+            elements: Array.from(card.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','))).map(el => ({
+                selector: el.className,
+                display: window.getComputedStyle(el).display,
+                opacity: window.getComputedStyle(el).opacity
+            }))
+        });
+    });
 }
 
 // Gestion du toggle d'une carte
@@ -116,6 +178,20 @@ async function toggleCard(cardElement) {
     const isOpen = cardElement.classList.contains('is-open');
     console.log(`📌 État actuel de la carte: ${isOpen ? 'ouverte' : 'fermée'}`);
     
+    // Vérifier l'état des éléments avant le toggle
+    console.log('📊 État des éléments avant toggle:');
+    SELECTORS.TOGGLE_ELEMENTS.forEach(selector => {
+        const elements = cardElement.querySelectorAll(selector);
+        elements.forEach(element => {
+            const style = window.getComputedStyle(element);
+            console.log(`- ${selector}:`, {
+                display: style.display,
+                opacity: style.opacity,
+                visibility: style.visibility
+            });
+        });
+    });
+
     // Animation des éléments
     const promises = SELECTORS.TOGGLE_ELEMENTS.map(selector => {
         const element = cardElement.querySelector(selector);
