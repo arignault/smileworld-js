@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smile World JS - CDN</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        .script-list {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .script-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .script-url {
+            color: #0066cc;
+            word-break: break-all;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+        .status.ok {
+            background: #e6ffe6;
+            color: #006600;
+        }
+        .status.error {
+            background: #ffe6e6;
+            color: #cc0000;
+        }
+    </style>
+</head>
+<body>
+    <h1>Smile World JS - CDN</h1>
+    <p>Ce serveur héberge les fichiers JavaScript utilisés par le site Smile World sur Webflow.</p>
+    
+    <div class="script-list">
+        <h2>Scripts disponibles :</h2>
+        <div id="scriptList">
+            <!-- La liste des scripts sera générée dynamiquement -->
+        </div>
+    </div>
+
+    <script>
+        // Liste des scripts à vérifier
+        const scripts = [
+            'main_gsap.js',
+            'centre-card.js',
+            'menu-mobile.js',
+            'menu-desktop.js',
+            'gsap-working.js'
+        ];
+
+        // Fonction pour vérifier si un script est accessible
+        async function checkScript(scriptName) {
+            const scriptUrl = `${window.location.origin}/${scriptName}`;
+            const scriptItem = document.createElement('div');
+            scriptItem.className = 'script-item';
+            
+            try {
+                const response = await fetch(scriptUrl, { method: 'HEAD' });
+                const status = response.ok ? 
+                    '<span class="status ok">Disponible</span>' : 
+                    '<span class="status error">Erreur</span>';
+                
+                scriptItem.innerHTML = `
+                    <strong>${scriptName}</strong>
+                    <div class="script-url">${scriptUrl}</div>
+                    ${status}
+                `;
+            } catch (error) {
+                scriptItem.innerHTML = `
+                    <strong>${scriptName}</strong>
+                    <div class="script-url">${scriptUrl}</div>
+                    <span class="status error">Erreur de chargement</span>
+                `;
+            }
+            
+            document.getElementById('scriptList').appendChild(scriptItem);
+        }
+
+        // Vérifier chaque script
+        scripts.forEach(checkScript);
+    </script>
+</body>
+</html> 

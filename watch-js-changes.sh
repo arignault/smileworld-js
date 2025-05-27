@@ -29,7 +29,7 @@ push_changes() {
     
     echo "⬆️ Poussage vers GitHub..."
     if git push origin main; then
-        echo "✅ Changements poussés avec succès!"
+        echo "✅ Changements poussés avec succès! Le webhook GitHub se chargera du déploiement sur OVH."
     else
         echo "❌ Erreur lors du push. Vérifiez votre connexion internet et vos credentials Git."
     fi
