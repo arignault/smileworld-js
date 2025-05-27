@@ -1,0 +1,4 @@
+app.engine=none        # pas de PHP ni Node, juste des fichiers statiques
+container.image=stable
+path=www               # dit au mutualisé de servir /www
+environment=production
