@@ -1,12 +1,15 @@
 {
     "name": "smile-world-gsap",
     "version": "1.0.0",
-    "description" :"",
-    "main": "index-js",
+    "description": "",
+    "main": "main_gsap.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "live-server --port=8080 --host=127.0.0.1 --cors --no-browser"
     },
     "author": "Alexandre Rignault",
-    "License": "ISC"
-
-}
+    "license": "ISC",
+    "devDependencies": {
+        "live-server": "^1.2.2"
+    }
+} 

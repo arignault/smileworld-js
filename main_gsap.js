@@ -1,5 +1,5 @@
-// Version: 1.0.2 - Nettoyage des références aux cartes
-console.log('🚀 main_gsap.js v1.0.2 chargé');
+// Version: 1.0.3 - Ajout de l'animation de texte
+console.log('🚀 main_gsap.js v1.0.3 chargé');
 
 // Log de débogage pour les imports
 console.log('🔍 Tentative d\'import des modules...');
@@ -8,17 +8,20 @@ console.log('🔍 Tentative d\'import des modules...');
 import { initMenuMobile } from './menu-mobile.js';
 import { initCentreCards } from './centre-card.js'; // Réimporté pour la reconstruction
 import { initMenuDesktop } from './menu-desktop.js';
+import { initTextAnimation } from './text-animation.js';
 
 // Logs de confirmation des imports
 console.log('📦 Import de menu-mobile.js...');
 console.log('📦 Import de centre-card.js (version minimaliste)...');
 console.log('📦 Import de menu-desktop.js...');
+console.log('📦 Import de text-animation.js...');
 
 // Vérification des fonctions importées
 console.log('🔍 Vérification des fonctions importées:');
 console.log('- initMenuMobile:', typeof initMenuMobile === 'function' ? '✅' : '❌');
 console.log('- initCentreCards:', typeof initCentreCards === 'function' ? '✅' : '❌');
 console.log('- initMenuDesktop:', typeof initMenuDesktop === 'function' ? '✅' : '❌');
+console.log('- initTextAnimation:', typeof initTextAnimation === 'function' ? '✅' : '❌');
 
 console.log('🔍 Script main_gsap.js chargé');
 
@@ -28,7 +31,8 @@ let initializationTimeout = null;
 let modulesLoaded = {
     menuMobile: false,
     menuDesktop: false,
-    centreCards: false // Gardé pour la structure mais simplifié
+    centreCards: false,
+    textAnimation: false // Ajout du module d'animation de texte
 };
 
 // Fonction pour définir les états initiaux
@@ -130,6 +134,16 @@ async function initializeWithDelay() {
             await initCentreCards();
             modulesLoaded.centreCards = true;
             console.log("✅ Module centre-card initialisé (version minimaliste)");
+
+            // Initialisation de l'animation de texte APRÈS centre-card
+            console.log('\n🔄 Initialisation de l\'animation de texte...');
+            try {
+                await initTextAnimation();
+                modulesLoaded.textAnimation = true;
+                console.log("✅ Animation de texte initialisée");
+            } catch (error) {
+                console.error("❌ Erreur lors de l'initialisation de l'animation de texte:", error);
+            }
         } catch (error) {
             console.error("❌ Erreur lors de l'initialisation du module centre-card:", error);
         }
@@ -160,7 +174,8 @@ window.addEventListener('load', function() {
     modulesLoaded = {
         menuMobile: true,
         menuDesktop: true,
-        centreCards: true
+        centreCards: true,
+        textAnimation: true // Ajout du module d'animation de texte
     };
     
     // Démarrer l'initialisation
