@@ -1,5 +1,5 @@
-// Version: 1.0.9 - Amélioration de la compatibilité Safari
-console.log('🚀 main_gsap.js v1.0.9 chargé');
+// Version: 1.0.8 - Amélioration de l'initialisation
+console.log('🚀 main_gsap.js v1.0.8 chargé');
 
 // Log de débogage pour les imports
 console.log('🔍 Tentative d\'import des modules...');
@@ -39,9 +39,6 @@ let modulesLoaded = {
     textAnimation: false,
     menuDesktopHoverActivite: false
 };
-
-// Variable pour suivre si l'initialisation a déjà été tentée
-let isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 // Fonction pour définir les états initiaux
 function setInitialStates() {
@@ -88,43 +85,12 @@ function checkDOMState() {
 
 // Fonction pour vérifier si le DOM est prêt
 function isDOMReady() {
-    // Safari a parfois des problèmes avec document.readyState
-    if (isSafari) {
-        return document.body && document.querySelector('.loadingscreen');
-    }
     return document.readyState === 'complete' || document.readyState === 'interactive';
-}
-
-// Fonction pour attendre que le DOM soit prêt
-function waitForDOM() {
-    return new Promise((resolve) => {
-        if (isDOMReady()) {
-            resolve();
-            return;
-        }
-
-        // Pour Safari, on vérifie plus fréquemment
-        const checkInterval = isSafari ? 50 : 100;
-        const maxAttempts = isSafari ? 100 : 50; // 5 secondes pour Safari, 5 secondes pour les autres
-        let attempts = 0;
-
-        const checkDOM = setInterval(() => {
-            attempts++;
-            if (isDOMReady() || attempts >= maxAttempts) {
-                clearInterval(checkDOM);
-                if (attempts >= maxAttempts) {
-                    console.warn('⚠️ Timeout en attendant le DOM');
-                }
-                resolve();
-            }
-        }, checkInterval);
-    });
 }
 
 // Fonction pour initialiser avec délai
 async function initializeWithDelay() {
     console.log('🔍 Fonction initializeWithDelay appelée');
-    console.log('🌐 Navigateur:', isSafari ? 'Safari' : 'Autre');
     
     if (isInitializing) {
         console.log('⚠️ Initialisation déjà en cours...');
@@ -143,11 +109,20 @@ async function initializeWithDelay() {
     console.log('⏳ PRÉPARATION DE L\'INITIALISATION');
     console.log('==========================================\n');
 
-    try {
-        // Attendre que le DOM soit prêt
+    // Vérifier si le DOM est prêt
+    if (!isDOMReady()) {
         console.log('⏳ En attente que le DOM soit prêt...');
-        await waitForDOM();
+        await new Promise(resolve => {
+            const checkDOM = setInterval(() => {
+                if (isDOMReady()) {
+                    clearInterval(checkDOM);
+                    resolve();
+                }
+            }, 100);
+        });
+    }
 
+    try {
         // Initialiser le loading screen en premier
         console.log('🔄 Initialisation du loading screen...');
         const loadingScreen = await initLoadingScreen();
@@ -160,11 +135,11 @@ async function initializeWithDelay() {
 
         // Attendre que tous les modules soient chargés
         let loadAttempts = 0;
-        const maxLoadAttempts = isSafari ? 100 : 50; // 10 secondes pour Safari, 5 secondes pour les autres
+        const maxLoadAttempts = 50; // 5 secondes maximum
 
         while (!checkModulesLoaded() && loadAttempts < maxLoadAttempts) {
             console.log('⏳ En attente du chargement des modules...', modulesLoaded);
-            await new Promise(resolve => setTimeout(resolve, isSafari ? 100 : 100));
+            await new Promise(resolve => setTimeout(resolve, 100));
             loadAttempts++;
         }
 
@@ -243,7 +218,6 @@ function startInitialization() {
     console.log("\n==========================================");
     console.log("🚀 DÉBUT DE L'INITIALISATION DES MODULES GSAP");
     console.log("⏰ État du DOM:", document.readyState);
-    console.log("🌐 Navigateur:", isSafari ? 'Safari' : 'Autre');
     console.log("==========================================\n");
     
     // Vérifier l'état initial du DOM
@@ -267,28 +241,17 @@ function startInitialization() {
     });
 }
 
-// Démarrer l'initialisation avec une approche spécifique à Safari
-if (isSafari) {
-    // Pour Safari, on attend un peu plus longtemps
-    setTimeout(() => {
-        if (!isInitializing && !initializationAttempted) {
-            console.log('🔄 Démarrage de l\'initialisation pour Safari');
-            startInitialization();
-        }
-    }, 100);
+// Démarrer l'initialisation dès que possible
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startInitialization);
 } else {
-    // Pour les autres navigateurs, on utilise l'approche standard
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', startInitialization);
-    } else {
-        startInitialization();
-    }
+    startInitialization();
 }
 
-// Backup : si l'initialisation n'a pas démarré après un délai, la forcer
+// Backup : si l'initialisation n'a pas démarré après 2 secondes, la forcer
 setTimeout(() => {
     if (!isInitializing && !initializationAttempted) {
-        console.log('⚠️ Initialisation non démarrée après délai, démarrage forcé');
+        console.log('⚠️ Initialisation non démarrée après 2 secondes, démarrage forcé');
         startInitialization();
     }
-}, isSafari ? 1000 : 2000); // 1 seconde pour Safari, 2 secondes pour les autres
+}, 2000);
