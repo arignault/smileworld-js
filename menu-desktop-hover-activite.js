@@ -1,95 +1,91 @@
-// Version: 1.1.0 - Removed console logs
-console.log('🚀 menu-desktop-hover-activite.js v1.1.0 chargé');
+// Version: 1.1.1 - Reverted to original selectors and logic to fix hover functionality
+console.log('🚀 menu-desktop-hover-activite.js v1.1.1 chargé');
 
 export function initMenuDesktopHoverActivite() {
-    const defaultImage = document.querySelector('.default-image');
-    const menuItems = document.querySelectorAll('.menu-item');
-    const imageMap = new Map();
-    const activeAnimations = new Map();
+    const menuItems = document.querySelectorAll('.desktop_menu_list.acitivt-s .default-container');
+    const imageList = document.querySelector('.desktop_menu_content.right .w-dyn-items');
 
-    // Early exit if essential elements are missing
-    if (!defaultImage || menuItems.length === 0) {
-        console.warn('⚠️ Éléments pour le survol du menu non trouvés.');
+    if (!imageList || menuItems.length === 0) {
+        console.warn('⚠️ Éléments pour le survol du menu (activités) non trouvés. Hover non fonctionnel.');
         return;
     }
 
-    // --- Caching and Setup ---
+    const allImages = Array.from(imageList.children);
+    const defaultImageWrapper = allImages.find(item => item.querySelector('img')?.id === 'Bowling');
+    const activeAnimations = new Map();
 
-    menuItems.forEach((item, index) => {
-        const linkId = item.id;
-        const targetImageClass = `.image-${linkId}`;
-        const targetImage = document.querySelector(targetImageClass);
-        if (targetImage) {
-            imageMap.set(linkId, targetImage);
-            gsap.set(targetImage, { display: 'none' }); // Hide all specific images initially
-        }
+    if (!defaultImageWrapper) {
+        console.warn('⚠️ Image par défaut (Bowling) non trouvée.');
+    }
+
+    // Set initial state
+    allImages.forEach(imgWrapper => {
+        const isDefault = defaultImageWrapper && imgWrapper === defaultImageWrapper;
+        gsap.set(imgWrapper, {
+            display: isDefault ? 'block' : 'none',
+            opacity: isDefault ? 1 : 0
+        });
     });
-
-    gsap.set(defaultImage, { display: 'block' }); // Show default image
-
-    // --- Core Logic ---
-
-    function handleImageDisplay(linkId, show) {
-        const targetImage = imageMap.get(linkId);
-        if (!targetImage) return;
-
-        // Kill any ongoing animation for this element
-        if (activeAnimations.has(targetImage)) {
-            activeAnimations.get(targetImage).kill();
-        }
-
-        const animation = gsap.to(targetImage, {
-            opacity: show ? 1 : 0,
+    
+    function showImage(imageWrapper) {
+        if (!imageWrapper) return;
+        if (activeAnimations.has(imageWrapper)) activeAnimations.get(imageWrapper).kill();
+        
+        const anim = gsap.to(imageWrapper, {
+            opacity: 1,
             duration: 0.3,
             ease: 'power2.out',
-            onStart: () => {
-                if (show) {
-                    gsap.set(targetImage, { display: 'block' });
-                    gsap.set(defaultImage, { display: 'none' });
-                }
-            },
-            onComplete: () => {
-                activeAnimations.delete(targetImage);
-                if (!show) {
-                    gsap.set(targetImage, { display: 'none' });
-                    // Check if any other item is hovered before showing default
-                    const isAnyHovered = Array.from(menuItems).some(item => item.matches(':hover'));
-                    if (!isAnyHovered) {
-                        gsap.set(defaultImage, { display: 'block' });
-                    }
-                }
+            onStart: () => gsap.set(imageWrapper, { display: 'block' })
+        });
+        activeAnimations.set(imageWrapper, anim);
+    }
+
+    function hideImage(imageWrapper) {
+        if (!imageWrapper) return;
+        if (activeAnimations.has(imageWrapper)) activeAnimations.get(imageWrapper).kill();
+
+        const anim = gsap.to(imageWrapper, {
+            opacity: 0,
+            duration: 0.2,
+            ease: 'power2.out',
+            onComplete: () => gsap.set(imageWrapper, { display: 'none' })
+        });
+        activeAnimations.set(imageWrapper, anim);
+    }
+
+    function handleHover(e) {
+        const name = e.currentTarget.getAttribute('data-name');
+        if (!name) return;
+
+        const targetImageWrapper = allImages.find(item => item.querySelector('img')?.id === name);
+        
+        allImages.forEach(img => {
+            if (img === targetImageWrapper) {
+                showImage(img);
+            } else {
+                hideImage(img);
             }
         });
-
-        activeAnimations.set(targetImage, animation);
     }
 
-    function handleMenuHover(e) {
-        const linkId = e.currentTarget.id;
-        if (!linkId) return;
-
-        menuItems.forEach(item => {
-            const isCurrent = item.id === linkId;
-            handleImageDisplay(item.id, isCurrent);
+    function handleMouseLeave() {
+        allImages.forEach(img => {
+            if (img === defaultImageWrapper) {
+                showImage(img);
+            } else {
+                hideImage(img);
+            }
         });
     }
-
-    function handleMenuMouseLeave() {
-        menuItems.forEach(item => {
-            handleImageDisplay(item.id, false);
-        });
-    }
-
-    // --- Event Listeners ---
 
     menuItems.forEach(item => {
-        item.addEventListener('mouseenter', handleMenuHover);
+        item.addEventListener('mouseenter', handleHover);
     });
 
     const menuContainer = document.querySelector('.activites_menu_desktop .menu-column.is-left');
     if (menuContainer) {
-        menuContainer.addEventListener('mouseleave', handleMenuMouseLeave);
+        menuContainer.addEventListener('mouseleave', handleMouseLeave);
     }
 
-    console.log('✅ Hover pour le menu desktop initialisé.');
+    console.log('✅ Hover pour le menu desktop (activités) initialisé.');
 } 

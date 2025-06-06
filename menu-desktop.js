@@ -1,5 +1,5 @@
-// Version: 1.1.0 - Removed console logs for cleaner execution
-console.log('🚀 menu-desktop.js v1.1.0 chargé');
+// Version: 1.1.1 - Fixed menu display issue by setting display to 'block'
+console.log('🚀 menu-desktop.js v1.1.1 chargé');
 
 // Variables globales
 let isInitialized = false;
@@ -152,7 +152,7 @@ function openMenu(menu, menuContainer, menuWrapper) {
             tl.to(menuWrapper, { opacity: 1, duration: 0.3, ease: "power2.out" }, 0);
         }
 
-        gsap.set(menuContainer, { display: getComputedDisplay(menuContainer) });
+        gsap.set(menuContainer, { display: 'block' });
         tl.to(menuContainer, { opacity: 1, duration: 0.2, ease: "power2.out" }, 0);
         
         menu.isOpen = true;
