@@ -1,5 +1,5 @@
-// Version: 2.3.0 - Add bouncy opening animation.
-console.log('🚀 centre-card.js v2.3.0 chargé - Animation bouncy !');
+// Version: 2.3.1 - Fix invisible content on open animation.
+console.log('🚀 centre-card.js v2.3.1 chargé - Correctif animation');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
@@ -26,10 +26,13 @@ function animateCard(element, isOpen) {
                 }
             });
         } else { // Animation d'ouverture (avec un effet "bouncy")
-            gsap.set(element, { display: originalDisplay }); // Rendre visible
-            gsap.from(element, {
+            gsap.set(element, { display: originalDisplay, opacity: 0 }); // Préparer l'élément
+            gsap.fromTo(element, {
                 opacity: 0,
                 y: -20, // Arriver du haut
+            }, {
+                opacity: 1,
+                y: 0,
                 duration: 0.6,
                 ease: 'back.out(1.7)', // L'effet bouncy !
                 onComplete: resolve
