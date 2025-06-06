@@ -7,7 +7,7 @@
     // Configuration des serveurs
     const PORT = 8080;  // Port HTTP standard
     const LOCAL_SERVER = `http://127.0.0.1:${PORT}`;
-    const GITHUB_BASE_URL = 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js@refactored';
+    const GITHUB_BASE_URL = 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js@main';
     const LOAD_DELAY = 100; // Délai entre chaque chargement en ms
     
     console.log('🌐 Serveurs configurés:', {
