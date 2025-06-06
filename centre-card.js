@@ -25,7 +25,7 @@ function closeCard(cardElement) {
 
         const tl = gsap.timeline({
             onComplete: () => {
-                gsap.set(elementsToToggle, { visibility: 'hidden' });
+                gsap.set(elementsToToggle, { display: 'none' });
                 resolve();
             }
         });
@@ -40,7 +40,7 @@ function closeCard(cardElement) {
             duration: 0.3,
             ease: 'power2.inOut'
         }, 0);
-            });
+    });
 }
 
 async function openCard(cardElement) {
@@ -51,11 +51,12 @@ async function openCard(cardElement) {
     await Promise.all(closingPromises);
     
     cardElement.classList.add('is-open');
-    
+
     const arrow = cardElement.querySelector(SELECTORS.ARROW);
     const elementsToToggle = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
 
-    gsap.set(elementsToToggle, { visibility: 'visible', height: 'auto' });
+    // Set display to block to allow for height calculation and make it visible for animation
+    gsap.set(elementsToToggle, { display: 'block', opacity: 1, height: 'auto' });
 
     const tl = gsap.timeline();
 
@@ -63,9 +64,10 @@ async function openCard(cardElement) {
         tl.to(arrow, { rotation: 180, duration: 0.3, ease: 'power2.inOut' }, 0);
     }
     
+    // Animate from height 0
     tl.from(elementsToToggle, {
         height: 0,
-                    opacity: 0,
+        opacity: 0,
         duration: 0.4,
         ease: 'power2.out'
     }, 0);
@@ -96,9 +98,7 @@ function initializeCard(card) {
     
     card.classList.remove('is-open');
     gsap.set(elementsToToggle, {
-        opacity: 0,
-        height: 0,
-        visibility: 'hidden',
+        display: 'none',
         overflow: 'hidden'
     });
     
