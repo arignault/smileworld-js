@@ -1,4 +1,5 @@
-// Version : 3.2.1 – Nettoyage du code
+// Version : 3.2.1 – Lift fluide, easing plus doux, bounce réduit
+console.log('🚀 centre-card.js v3.2.1 chargé – Effet de soulèvement optimisé et animation des tags fluide');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
@@ -13,7 +14,7 @@ let isAnimating = false;
 // --- Fonctions d'animation ---
 
 /**
- * Ferme une carte avec animation.
+ * Ferme une carte en animant le contenu et la carte elle-même.
  * @param {Element} cardElement 
  */
 async function closeCard(cardElement) {
@@ -58,7 +59,7 @@ async function closeCard(cardElement) {
 }
 
 /**
- * Ouvre une carte avec animation.
+ * Ouvre une carte en animant la carte, la flèche et le contenu.
  * @param {Element} cardElement 
  */
 async function openCard(cardElement) {
@@ -71,7 +72,7 @@ async function openCard(cardElement) {
     elementsToAnimate.forEach(el => {
         gsap.set(el, { 
             display: el.dataset.originalDisplay || 'block',
-            opacity: 0,
+                    opacity: 0,
             y: -20
         });
     });
@@ -98,7 +99,7 @@ async function openCard(cardElement) {
         y: 0,
         opacity: 1,
         duration: 0.6,
-        ease: 'back.out(1.5)',
+        ease: 'power2.out',
         stagger: {
             each: 0.07,
             from: 'start'
@@ -109,7 +110,8 @@ async function openCard(cardElement) {
 }
 
 /**
- * Bascule l'état d'une carte.
+ * Bascule l'état ouvert/fermé d'une carte, en empêchant les animations simultanées.
+ * Ferme toutes les autres cartes ouvertes avant d'en ouvrir une nouvelle.
  * @param {Element} cardElement 
  */
 async function toggleCard(cardElement) {
@@ -117,9 +119,9 @@ async function toggleCard(cardElement) {
     isAnimating = true;
 
     try {
-        const isOpen = cardElement.classList.contains('is-open');
-        
-        if (!isOpen) {
+    const isOpen = cardElement.classList.contains('is-open');
+    
+    if (!isOpen) {
             const otherOpenCards = document.querySelectorAll(`${SELECTORS.CARD}.is-open`);
             await Promise.all(Array.from(otherOpenCards).map(card => closeCard(card)));
             await openCard(cardElement);
@@ -134,7 +136,8 @@ async function toggleCard(cardElement) {
 // --- Fonctions d'initialisation ---
 
 /**
- * Met à jour le layout d'une carte.
+ * Met à jour le layout des éléments à toggle pour stocker leur display d'origine
+ * et, si la carte n'est pas ouverte, cache directement les contenus.
  * @param {Element} card 
  */
 export function updateCardLayout(card) {
@@ -154,7 +157,8 @@ export function updateCardLayout(card) {
 }
 
 /**
- * Initialise une carte.
+ * Initialise une carte : on stocke le display initial de chaque élément à animer,
+ * on les cache et on ajoute l'écouteur de clic pour toggle.
  * @param {Element} card 
  */
 export function initializeCard(card) {
@@ -178,12 +182,12 @@ export function initializeCard(card) {
     initializedCards.add(card);
 }
 
-/**
- * Configure l'observateur de mutations pour les cartes dynamiques.
- */
 function setupMutationObserver() {
     const cardsContainer = document.querySelector('.collection-list-centre-wrapper');
-    if (!cardsContainer) return;
+    if (!cardsContainer) {
+        console.warn('⚠️ Conteneur de cartes (.collection-list-centre-wrapper) non trouvé pour l\'observateur.');
+        return;
+    }
 
     const observer = new MutationObserver((mutationsList) => {
         for (const mutation of mutationsList) {
@@ -203,20 +207,23 @@ function setupMutationObserver() {
     observer.observe(cardsContainer, { childList: true, subtree: true });
 }
 
-/**
- * Initialise toutes les cartes.
- */
 export async function initCentreCards() {
-    await new Promise(resolve => {
+    console.log('🚀 Démarrage de l\'initialisation des cartes...');
+    
+        await new Promise(resolve => {
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
-            resolve();
-        } else {
+                resolve();
+    } else {
             document.addEventListener('DOMContentLoaded', resolve, { once: true });
         }
     });
 
     const cards = document.querySelectorAll(SELECTORS.CARD);
+    console.log(`🔍 ${cards.length} cartes trouvées, initialisation...`);
     cards.forEach(initializeCard);
+
     setupMutationObserver();
+    
+    console.log('✅ Initialisation des cartes terminée.');
 }
 
