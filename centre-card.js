@@ -1,5 +1,5 @@
-// Version : 3.3.1 - Fix propagation boutons dans les cartes
-console.log('🚀 centre-card.js v3.3.1 chargé – fix boutons dans cartes ouvertes');
+// Version : 3.3.2 - Fix problème d'ouverture des cartes
+console.log('🚀 centre-card.js v3.3.2 chargé – correction ouverture des cartes');
 
 const SELECTORS = {
   CARD: '.centre-card_wrapper.effect-cartoon-shadow',
@@ -193,21 +193,16 @@ export function initializeCard(card) {
   // On cache tout dès l'initialisation
   gsap.set(elementsToToggle, { display: 'none', opacity: 0, y: -15 });
 
-  // Empêcher les boutons à l'intérieur des cartes de fermer la carte quand on clique dessus
-  const buttons = card.querySelectorAll('a.button, button, .centre-card_button-holder a');
+  // Empêcher les boutons de propager les clics à la carte parent
+  const buttons = card.querySelectorAll('a.button, button, .centre-card_button-holder a, .tag_holder a');
   buttons.forEach(button => {
-    button.addEventListener('click', event => {
-      event.stopPropagation();
+    button.addEventListener('click', e => {
+      e.stopPropagation();
     });
   });
 
+  // L'écouteur principal pour ouvrir/fermer la carte
   clickableWrap.addEventListener('click', event => {
-    // On vérifie si le clic provient d'un bouton ou d'un élément interactif à l'intérieur de la carte
-    if (event.target.closest('a.button, button, .centre-card_button-holder a, .tag_holder a')) {
-      // Si c'est un bouton ou lien, on laisse le comportement par défaut sans fermer la carte
-      return;
-    }
-    
     event.preventDefault();
     event.stopPropagation();
     toggleCard(card);
