@@ -1,5 +1,5 @@
-// Version: 2.3.1 - Fix invisible content on open animation.
-console.log('🚀 centre-card.js v2.3.1 chargé - Correctif animation');
+// Version: 2.4.0 - Smooth container animation.
+console.log('🚀 centre-card.js v2.4.0 chargé - Animation douce du conteneur');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
@@ -11,49 +11,47 @@ const SELECTORS = {
 const initializedCards = new WeakSet();
 let isAnimating = false;
 
-function animateCard(element, isOpen) {
-    return new Promise(resolve => {
-        const originalDisplay = element.dataset.originalDisplay || 'block';
-
-        if (isOpen) { // Animation de fermeture (simple et rapide)
-            gsap.to(element, {
-                opacity: 0,
-                duration: 0.3,
-                ease: 'power2.inOut',
-                onComplete: () => {
-                    gsap.set(element, { display: 'none' });
-                    resolve();
-                }
-            });
-        } else { // Animation d'ouverture (avec un effet "bouncy")
-            gsap.set(element, { display: originalDisplay, opacity: 0 }); // Préparer l'élément
-            gsap.fromTo(element, {
-                opacity: 0,
-                y: -20, // Arriver du haut
-            }, {
-                opacity: 1,
-                y: 0,
-                duration: 0.6,
-                ease: 'back.out(1.7)', // L'effet bouncy !
-                onComplete: resolve
-            });
-        }
-    });
-}
-
 async function closeCard(cardElement) {
     if (!cardElement || !cardElement.classList.contains('is-open')) return;
 
-    cardElement.classList.remove('is-open');
     const elementsToAnimate = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
     const arrow = cardElement.querySelector(SELECTORS.ARROW);
 
+    const tl = gsap.timeline({
+        onComplete: () => {
+            gsap.set(elementsToAnimate, { display: 'none' });
+            gsap.set(cardElement, { height: 'auto' });
+            cardElement.classList.remove('is-open');
+        }
+    });
+
+    const startHeight = cardElement.offsetHeight;
+    gsap.set(elementsToAnimate, { display: 'none' });
+    const endHeight = cardElement.offsetHeight;
+    gsap.set(elementsToAnimate, { display: el => el.dataset.originalDisplay || 'block' });
+    gsap.set(cardElement, { height: startHeight });
+
+    tl.to(elementsToAnimate, {
+        opacity: 0,
+        duration: 0.2,
+        ease: 'power2.out'
+    });
+
+    tl.to(cardElement, {
+        height: endHeight,
+        duration: 0.5,
+        ease: 'expo.inOut'
+    }, '<');
+
     if (arrow) {
-        gsap.to(arrow, { rotation: 0, duration: 0.3, ease: 'power2.inOut' });
+        tl.to(arrow, {
+            rotation: 0,
+            duration: 0.3,
+            ease: 'power2.inOut'
+        }, '<');
     }
 
-    const promises = Array.from(elementsToAnimate).map(el => animateCard(el, true));
-    await Promise.all(promises);
+    await tl;
 }
 
 async function openCard(cardElement) {
@@ -63,12 +61,45 @@ async function openCard(cardElement) {
     const elementsToAnimate = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
     const arrow = cardElement.querySelector(SELECTORS.ARROW);
 
+    const tl = gsap.timeline({
+        onComplete: () => {
+            gsap.set(cardElement, { height: 'auto' });
+        }
+    });
+
+    const startHeight = cardElement.offsetHeight;
+    gsap.set(elementsToAnimate, { display: el => el.dataset.originalDisplay || 'block', opacity: 1 });
+    const endHeight = cardElement.offsetHeight;
+    gsap.set(elementsToAnimate, { opacity: 0 });
+    gsap.set(cardElement, { height: startHeight });
+
+    tl.to(cardElement, {
+        height: endHeight,
+        duration: 0.7,
+        ease: 'expo.out'
+    });
+
     if (arrow) {
-        gsap.to(arrow, { rotation: 180, duration: 0.6, ease: 'back.out(1.7)' });
+        tl.to(arrow, {
+            rotation: 180,
+            duration: 0.6,
+            ease: 'back.out(1.7)'
+        }, '<');
     }
 
-    const promises = Array.from(elementsToAnimate).map(el => animateCard(el, false));
-    await Promise.all(promises);
+    gsap.set(elementsToAnimate, { display: el => el.dataset.originalDisplay || 'block' });
+    tl.fromTo(elementsToAnimate, {
+        opacity: 0,
+        y: -20,
+    }, {
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        ease: 'back.out(1.7)',
+        stagger: 0.05
+    }, '<0.15');
+
+    await tl;
 }
 
 async function toggleCard(cardElement) {
