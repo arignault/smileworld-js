@@ -1,5 +1,5 @@
-// Version : 3.2.1 – Lift fluide, easing plus doux, bounce réduit
-console.log('🚀 centre-card.js v3.2.1 chargé – Effet de soulèvement optimisé et animation des tags fluide');
+// Version : 3.2.2 – Animation beaucoup plus rapide
+console.log('🚀 centre-card.js v3.2.2 chargé – Effet de soulèvement optimisé et animation des tags très rapide');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
@@ -36,23 +36,23 @@ async function closeCard(cardElement) {
         y: 0,
         scale: 1,
         boxShadow: '0px 2px 4px rgba(0,0,0,0.12)',
-        duration: 0.3,
+        duration: 0.15,
         ease: 'power2.inOut'
     }, 0);
 
     tl.to(elementsToAnimate, {
         y: -10,
         opacity: 0,
-        duration: 0.25,
+        duration: 0.12,
         ease: 'power1.in'
     }, '<');
 
     if (arrow) {
         tl.to(arrow, {
             rotation: 0,
-            duration: 0.3,
+            duration: 0.15,
             ease: 'power2.inOut'
-        }, '<0.05');
+        }, '<0.03');
     }
 
     await tl;
@@ -83,14 +83,14 @@ async function openCard(cardElement) {
         y: -8,
         scale: 1.02,
         boxShadow: '0px 12px 24px rgba(0,0,0,0.15)',
-        duration: 0.35,
+        duration: 0.18,
         ease: 'power2.out'
     }, 0);
 
     if (arrow) {
         tl.to(arrow, {
             rotation: 180,
-            duration: 0.5,
+            duration: 0.25,
             ease: 'back.out(1.7)'
         }, '<');
     }
@@ -98,13 +98,13 @@ async function openCard(cardElement) {
     tl.to(elementsToAnimate, {
         y: 0,
         opacity: 1,
-        duration: 0.6,
+        duration: 0.3,
         ease: 'power2.out',
         stagger: {
-            each: 0.07,
+            each: 0.035,
             from: 'start'
         }
-    }, '<0.1');
+    }, '<0.05');
 
     await tl;
 }
