@@ -1,5 +1,5 @@
-// Version: 2.4.0 - Smooth container animation.
-console.log('🚀 centre-card.js v2.4.0 chargé - Animation douce du conteneur');
+// Version: 2.4.1 - Fix "originalDisplay" TypeError.
+console.log('🚀 centre-card.js v2.4.1 chargé - Correctif TypeError');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
@@ -28,7 +28,12 @@ async function closeCard(cardElement) {
     const startHeight = cardElement.offsetHeight;
     gsap.set(elementsToAnimate, { display: 'none' });
     const endHeight = cardElement.offsetHeight;
-    gsap.set(elementsToAnimate, { display: el => el.dataset.originalDisplay || 'block' });
+
+    // Correction: Appliquer le display original individuellement
+    elementsToAnimate.forEach(el => {
+        gsap.set(el, { display: el.dataset.originalDisplay || 'block' });
+    });
+    
     gsap.set(cardElement, { height: startHeight });
 
     tl.to(elementsToAnimate, {
@@ -68,9 +73,14 @@ async function openCard(cardElement) {
     });
 
     const startHeight = cardElement.offsetHeight;
-    gsap.set(elementsToAnimate, { display: el => el.dataset.originalDisplay || 'block', opacity: 1 });
+    gsap.set(elementsToAnimate, { display: 'none' });
     const endHeight = cardElement.offsetHeight;
-    gsap.set(elementsToAnimate, { opacity: 0 });
+
+    // Correction: Appliquer le display original individuellement
+    elementsToAnimate.forEach(el => {
+        gsap.set(el, { display: el.dataset.originalDisplay || 'block', opacity: 1 });
+    });
+    
     gsap.set(cardElement, { height: startHeight });
 
     tl.to(cardElement, {
@@ -87,7 +97,11 @@ async function openCard(cardElement) {
         }, '<');
     }
 
-    gsap.set(elementsToAnimate, { display: el => el.dataset.originalDisplay || 'block' });
+    // Correction: Appliquer le display original individuellement
+    elementsToAnimate.forEach(el => {
+        gsap.set(el, { display: el.dataset.originalDisplay || 'block' });
+    });
+
     tl.fromTo(elementsToAnimate, {
         opacity: 0,
         y: -20,
