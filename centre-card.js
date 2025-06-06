@@ -1,5 +1,5 @@
-// Version: 2.1.2 - Fix: Improved animation to prevent layout jumps with images
-console.log('🚀 centre-card.js v2.1.2 chargé - Correctif animation layout');
+// Version: 2.2.0 - Hybrid: Performance optimizations with original animation logic
+console.log('🚀 centre-card.js v2.2.0 chargé - Logique hybride');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
@@ -11,84 +11,72 @@ const SELECTORS = {
 const initializedCards = new WeakSet();
 let isAnimating = false;
 
-function closeCard(cardElement) {
+function animateCard(element, isOpen) {
     return new Promise(resolve => {
-        if (!cardElement || !cardElement.classList.contains('is-open')) {
-            resolve();
-            return;
-        }
-
-        cardElement.classList.remove('is-open');
-
-        const arrow = cardElement.querySelector(SELECTORS.ARROW);
-        const elementsToToggle = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
-
-        const tl = gsap.timeline({
+        gsap.to(element, {
+            opacity: isOpen ? 0 : 1,
+            duration: 0.3,
+            ease: 'power2.inOut',
+            onStart: () => {
+                if (!isOpen) {
+                    gsap.set(element, { display: 'block' });
+                }
+            },
             onComplete: () => {
-                gsap.set(elementsToToggle, { display: 'none' }); // Hide it completely after animation
+                if (isOpen) {
+                    gsap.set(element, { display: 'none' });
+                }
                 resolve();
             }
         });
-
-        if (arrow) {
-            tl.to(arrow, { rotation: 0, duration: 0.3, ease: 'power2.inOut' }, 0);
-        }
-
-        // We animate TO height: 0
-        tl.to(elementsToToggle, {
-            height: 0,
-            opacity: 0,
-            overflow: 'hidden', // Ensure overflow is hidden during animation
-            duration: 0.3,
-            ease: 'power2.inOut'
-        }, 0);
     });
+}
+
+async function closeCard(cardElement) {
+    if (!cardElement || !cardElement.classList.contains('is-open')) return;
+
+    cardElement.classList.remove('is-open');
+    const elementsToAnimate = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
+    const arrow = cardElement.querySelector(SELECTORS.ARROW);
+
+    if (arrow) {
+        gsap.to(arrow, { rotation: 0, duration: 0.3, ease: 'power2.inOut' });
+    }
+
+    const promises = Array.from(elementsToAnimate).map(el => animateCard(el, true));
+    await Promise.all(promises);
 }
 
 async function openCard(cardElement) {
     if (!cardElement || cardElement.classList.contains('is-open')) return;
 
-    const otherOpenCards = document.querySelectorAll(`${SELECTORS.CARD}.is-open`);
-    await Promise.all(Array.from(otherOpenCards).map(card => closeCard(card)));
-
     cardElement.classList.add('is-open');
-
+    const elementsToAnimate = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
     const arrow = cardElement.querySelector(SELECTORS.ARROW);
-    const elementsToToggle = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
-
-    // Set initial state for animation
-    gsap.set(elementsToToggle, { display: 'block', opacity: 0, height: 0, overflow: 'hidden' });
-
-    const tl = gsap.timeline({
-        onComplete: () => {
-            // After animation, set height to auto to be responsive and restore overflow
-            gsap.set(elementsToToggle, { height: 'auto', overflow: 'visible' });
-        }
-    });
 
     if (arrow) {
-        tl.to(arrow, { rotation: 180, duration: 0.3, ease: 'power2.inOut' }, 0);
+        gsap.to(arrow, { rotation: 180, duration: 0.3, ease: 'power2.inOut' });
     }
 
-    // GSAP will calculate the 'auto' height and animate to it.
-    tl.to(elementsToToggle, {
-        height: 'auto',
-        opacity: 1,
-        duration: 0.4,
-        ease: 'power2.out'
-    }, 0);
+    const promises = Array.from(elementsToAnimate).map(el => animateCard(el, false));
+    await Promise.all(promises);
 }
 
 async function toggleCard(cardElement) {
     if (isAnimating) return;
     isAnimating = true;
-    
+
     try {
-        if (cardElement.classList.contains('is-open')) {
-            await closeCard(cardElement);
-        } else {
+        const isOpen = cardElement.classList.contains('is-open');
+        
+        if (!isOpen) {
+            // Close other cards first
+            const otherOpenCards = document.querySelectorAll(`${SELECTORS.CARD}.is-open`);
+            await Promise.all(Array.from(otherOpenCards).map(card => closeCard(card)));
             await openCard(cardElement);
-    }
+        } else {
+            await closeCard(cardElement);
+        }
     } finally {
         isAnimating = false;
     }
@@ -96,18 +84,13 @@ async function toggleCard(cardElement) {
 
 function initializeCard(card) {
     if (!card || initializedCards.has(card)) return;
-    
+
     const clickableWrap = card.querySelector(SELECTORS.CLICKABLE_WRAP);
     if (!clickableWrap) return;
-    
+
     const elementsToToggle = card.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
-    
-    card.classList.remove('is-open');
-    gsap.set(elementsToToggle, {
-        display: 'none',
-        overflow: 'hidden'
-    });
-    
+    gsap.set(elementsToToggle, { display: 'none', opacity: 0 });
+
     clickableWrap.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -135,21 +118,20 @@ function setupMutationObserver() {
                         node.querySelectorAll(SELECTORS.CARD).forEach(initializeCard);
                     }
                 });
-                    }
+            }
         }
     });
 
     observer.observe(cardsContainer, { childList: true, subtree: true });
-    console.log('👀 Observateur de mutations configuré pour les cartes.');
 }
 
 export async function initCentreCards() {
     console.log('🚀 Démarrage de l\'initialisation des cartes...');
     
-        await new Promise(resolve => {
+    await new Promise(resolve => {
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
-                resolve();
-    } else {
+            resolve();
+        } else {
             document.addEventListener('DOMContentLoaded', resolve, { once: true });
         }
     });
@@ -159,7 +141,7 @@ export async function initCentreCards() {
     cards.forEach(initializeCard);
 
     setupMutationObserver();
-
+    
     console.log('✅ Initialisation des cartes terminée.');
 }
 
