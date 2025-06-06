@@ -1,9 +1,9 @@
-// Version : 3.3.2 - Fix problème d'ouverture des cartes
-console.log('🚀 centre-card.js v3.3.2 chargé – correction ouverture des cartes');
+// Version : 3.3.4 - Correction du sélecteur CLICKABLE_WRAP
+console.log('🚀 centre-card.js v3.3.4 chargé – fix sélecteur cliquable');
 
 const SELECTORS = {
   CARD: '.centre-card_wrapper.effect-cartoon-shadow',
-  CLICKABLE_WRAP: '#data-card-toggle, [data-attribute="data-card-toggle"]',
+  CLICKABLE_WRAP: '.card-toggle-wrapper', // Simplifié pour cibler directement la classe
   TOGGLE_ELEMENTS: [
     '.centre-card_scroll_wrapper',
     '.centre-card_list',
@@ -181,9 +181,15 @@ export function initializeCard(card) {
   if (!card || initializedCards.has(card)) return;
 
   const clickableWrap = card.querySelector(SELECTORS.CLICKABLE_WRAP);
-  if (!clickableWrap) return;
+  if (!clickableWrap) {
+    console.warn('⚠️ Élément cliquable non trouvé dans la carte', card);
+    return;
+  }
 
+  console.log('✅ Initialisation carte avec élément cliquable:', clickableWrap);
+  
   const elementsToToggle = card.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
+  console.log(`🔍 Éléments à afficher/masquer trouvés: ${elementsToToggle.length}`);
   
   // Stocker le display initial, même si c'est souvent "block"
   elementsToToggle.forEach(el => {
@@ -195,14 +201,18 @@ export function initializeCard(card) {
 
   // Empêcher les boutons de propager les clics à la carte parent
   const buttons = card.querySelectorAll('a.button, button, .centre-card_button-holder a, .tag_holder a');
+  console.log(`🔍 Boutons trouvés dans la carte: ${buttons.length}`);
+  
   buttons.forEach(button => {
     button.addEventListener('click', e => {
+      console.log('🔘 Clic sur bouton dans la carte');
       e.stopPropagation();
     });
   });
 
   // L'écouteur principal pour ouvrir/fermer la carte
   clickableWrap.addEventListener('click', event => {
+    console.log('🔍 Clic sur la carte détecté');
     event.preventDefault();
     event.stopPropagation();
     toggleCard(card);
@@ -256,7 +266,12 @@ export async function initCentreCards() {
 
   // Initialisation des cartes présentes
   const cards = document.querySelectorAll(SELECTORS.CARD);
+  console.log(`🔍 ${cards.length} cartes trouvées pour initialisation`);
   cards.forEach(initializeCard);
+
+  // Vérification après initialisation
+  const openableElements = document.querySelectorAll(SELECTORS.CLICKABLE_WRAP);
+  console.log(`🔍 Après initialisation: ${openableElements.length} éléments cliquables trouvés`);
 
   // Observer pour les cartes ajoutées dynamiquement
   setupMutationObserver();
