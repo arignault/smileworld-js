@@ -1,5 +1,5 @@
-// Version: 1.0.24 - Synchronisation des animations et réduction des durées
-console.log('🎬 loading-screen.js chargé - Version 1.0.24');
+// Version: 1.0.25 - Fix: Removed WebkitBackdropFilter from GSAP animation to prevent warnings
+console.log('🎬 loading-screen.js chargé - Version 1.0.25');
 
 // État du loading screen
 let isLoadingScreenVisible = true;
@@ -89,7 +89,6 @@ function playLoadingAnimation(loadingScreen, logoWrap, onComplete) {
     // Animation du fond (blur et transparence) en même temps que le rebond
     tl.to(loadingScreen, {
         backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
         backgroundColor: 'transparent',
         duration: loadingConfig.dissolveDuration,
         ease: "power2.inOut"
@@ -111,7 +110,6 @@ function playLoadingAnimation(loadingScreen, logoWrap, onComplete) {
             gsap.to(loadingScreen, {
                 opacity: 0,
                 backdropFilter: 'blur(0px)',
-                WebkitBackdropFilter: 'blur(0px)',
                 duration: loadingConfig.fastDissolveDuration,
                 ease: "power2.inOut",
                 onComplete: () => {
@@ -149,7 +147,6 @@ function playTransitionAnimation(loadingScreen, logoWrap, onComplete) {
 
     tl.to(loadingScreen, {
         backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
         backgroundColor: 'white',
         duration: loadingConfig.dissolveDuration,
         ease: "power2.inOut"
@@ -203,7 +200,6 @@ export function showLoadingScreen(onComplete) {
     loadingScreen.style.pointerEvents = 'auto';
     loadingScreen.style.backgroundColor = 'transparent';
     loadingScreen.style.backdropFilter = 'blur(0px)';
-    loadingScreen.style.webkitBackdropFilter = 'blur(0px)';
     
     // S'assurer que le logo est dans l'état initial pour l'animation OUT
     gsap.set(logoWrap, {
