@@ -1,5 +1,5 @@
-// Version: 2.1.0 - Refactor for performance and reliability
-console.log('🚀 centre-card.js v2.1.0 chargé - Optimisé pour la performance');
+// Version: 2.1.1 - Fix: Corrected display and image loading issues
+console.log('🚀 centre-card.js v2.1.1 chargé - Correctif affichage');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
