@@ -1,5 +1,5 @@
-// Version: 3.0.0 - Stable Animation Rework.
-console.log('🚀 centre-card.js v3.0.0 chargé - Animation stable');
+// Version: 3.1.0 - Add subtle card animation.
+console.log('🚀 centre-card.js v3.1.0 chargé - Animation de carte subtile');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
@@ -15,10 +15,10 @@ let isAnimating = false;
 
 async function closeCard(cardElement) {
     if (!cardElement || !cardElement.classList.contains('is-open')) return;
-
+    
     const elementsToAnimate = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
     const arrow = cardElement.querySelector(SELECTORS.ARROW);
-
+    
     cardElement.classList.remove('is-open');
 
     const tl = gsap.timeline({
@@ -27,11 +27,18 @@ async function closeCard(cardElement) {
         }
     });
 
+    // Animer la carte et le contenu en même temps pour la fermeture
+    tl.to(cardElement, {
+        scale: 1,
+        duration: 0.3,
+        ease: 'power2.in'
+    }, 0);
+
     tl.to(elementsToAnimate, {
         opacity: 0,
         duration: 0.2,
         ease: 'power2.in'
-    });
+    }, '<'); // '<' démarre en même temps que l'animation précédente
 
     if (arrow) {
         tl.to(arrow, {
@@ -55,20 +62,29 @@ async function openCard(cardElement) {
     elementsToAnimate.forEach(el => {
         gsap.set(el, { 
             display: el.dataset.originalDisplay || 'block',
-            opacity: 0 // Assurer qu'ils sont invisibles avant l'animation
+            opacity: 0
         });
     });
 
     const tl = gsap.timeline();
 
+    // 1. Animer la carte elle-même
+    tl.to(cardElement, {
+        scale: 1.02,
+        duration: 0.4,
+        ease: 'power2.out'
+    }, 0);
+
+    // 2. Animer la flèche en même temps que la carte
     if (arrow) {
         tl.to(arrow, {
             rotation: 180,
             duration: 0.6,
             ease: 'back.out(1.7)'
-        });
+        }, '<');
     }
 
+    // 3. Animer l'apparition du contenu, légèrement décalé
     tl.fromTo(elementsToAnimate, {
         y: -20,
         opacity: 0,
@@ -78,7 +94,7 @@ async function openCard(cardElement) {
         duration: 0.6,
         ease: 'back.out(1.7)',
         stagger: 0.05
-    }, '<0.1');
+    }, '<0.1'); // Démarrer 0.1s après le début de la timeline
 
     await tl;
 }
@@ -90,9 +106,9 @@ async function toggleCard(cardElement) {
     isAnimating = true;
 
     try {
-        const isOpen = cardElement.classList.contains('is-open');
-        
-        if (!isOpen) {
+    const isOpen = cardElement.classList.contains('is-open');
+    
+    if (!isOpen) {
             const otherOpenCards = document.querySelectorAll(`${SELECTORS.CARD}.is-open`);
             await Promise.all(Array.from(otherOpenCards).map(card => closeCard(card)));
             await openCard(cardElement);
@@ -171,10 +187,10 @@ function setupMutationObserver() {
 export async function initCentreCards() {
     console.log('🚀 Démarrage de l\'initialisation des cartes...');
     
-    await new Promise(resolve => {
+        await new Promise(resolve => {
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
-            resolve();
-        } else {
+                resolve();
+    } else {
             document.addEventListener('DOMContentLoaded', resolve, { once: true });
         }
     });
