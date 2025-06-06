@@ -1,5 +1,5 @@
-// Version: 2.1.1 - Fix: Corrected display and image loading issues
-console.log('🚀 centre-card.js v2.1.1 chargé - Correctif affichage');
+// Version: 2.1.2 - Fix: Improved animation to prevent layout jumps with images
+console.log('🚀 centre-card.js v2.1.2 chargé - Correctif animation layout');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
@@ -25,7 +25,7 @@ function closeCard(cardElement) {
 
         const tl = gsap.timeline({
             onComplete: () => {
-                gsap.set(elementsToToggle, { display: 'none' });
+                gsap.set(elementsToToggle, { display: 'none' }); // Hide it completely after animation
                 resolve();
             }
         });
@@ -34,9 +34,11 @@ function closeCard(cardElement) {
             tl.to(arrow, { rotation: 0, duration: 0.3, ease: 'power2.inOut' }, 0);
         }
 
+        // We animate TO height: 0
         tl.to(elementsToToggle, {
             height: 0,
             opacity: 0,
+            overflow: 'hidden', // Ensure overflow is hidden during animation
             duration: 0.3,
             ease: 'power2.inOut'
         }, 0);
@@ -47,27 +49,31 @@ async function openCard(cardElement) {
     if (!cardElement || cardElement.classList.contains('is-open')) return;
 
     const otherOpenCards = document.querySelectorAll(`${SELECTORS.CARD}.is-open`);
-    const closingPromises = Array.from(otherOpenCards).map(card => closeCard(card));
-    await Promise.all(closingPromises);
-    
+    await Promise.all(Array.from(otherOpenCards).map(card => closeCard(card)));
+
     cardElement.classList.add('is-open');
 
     const arrow = cardElement.querySelector(SELECTORS.ARROW);
     const elementsToToggle = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
 
-    // Set display to block to allow for height calculation and make it visible for animation
-    gsap.set(elementsToToggle, { display: 'block', opacity: 1, height: 'auto' });
+    // Set initial state for animation
+    gsap.set(elementsToToggle, { display: 'block', opacity: 0, height: 0, overflow: 'hidden' });
 
-    const tl = gsap.timeline();
+    const tl = gsap.timeline({
+        onComplete: () => {
+            // After animation, set height to auto to be responsive and restore overflow
+            gsap.set(elementsToToggle, { height: 'auto', overflow: 'visible' });
+        }
+    });
 
     if (arrow) {
         tl.to(arrow, { rotation: 180, duration: 0.3, ease: 'power2.inOut' }, 0);
     }
-    
-    // Animate from height 0
-    tl.from(elementsToToggle, {
-        height: 0,
-        opacity: 0,
+
+    // GSAP will calculate the 'auto' height and animate to it.
+    tl.to(elementsToToggle, {
+        height: 'auto',
+        opacity: 1,
         duration: 0.4,
         ease: 'power2.out'
     }, 0);
