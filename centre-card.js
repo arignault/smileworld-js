@@ -1,10 +1,10 @@
-// Version: 3.1.0 - Add subtle card animation.
-console.log('🚀 centre-card.js v3.1.0 chargé - Animation de carte subtile');
+// Version: 3.2.0 - Lift effect and tag animation.
+console.log('🚀 centre-card.js v3.2.0 chargé - Effet de soulèvement et animation des tags');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
     CLICKABLE_WRAP: '#data-card-toggle, [data-attribute="data-card-toggle"]',
-    TOGGLE_ELEMENTS: ['.centre-card_scroll_wrapper', '.centre-card_list', '.centre-card_button-holder'],
+    TOGGLE_ELEMENTS: ['.centre-card_scroll_wrapper', '.centre-card_list', '.centre-card_button-holder', '.tag_holder_wrapper'],
     ARROW: '.svg-holder.arrow'
 };
 
@@ -29,7 +29,7 @@ async function closeCard(cardElement) {
 
     // Animer la carte et le contenu en même temps pour la fermeture
     tl.to(cardElement, {
-        scale: 1,
+        y: 0,
         duration: 0.3,
         ease: 'power2.in'
     }, 0);
@@ -68,9 +68,9 @@ async function openCard(cardElement) {
 
     const tl = gsap.timeline();
 
-    // 1. Animer la carte elle-même
+    // 1. Animer la carte elle-même avec un effet de soulèvement
     tl.to(cardElement, {
-        scale: 1.02,
+        y: -8,
         duration: 0.4,
         ease: 'power2.out'
     }, 0);
