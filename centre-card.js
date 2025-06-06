@@ -1,5 +1,5 @@
-// Version: 2.2.1 - Fix: Restore original display style for perfect layout.
-console.log('🚀 centre-card.js v2.2.1 chargé - Layout corrigé');
+// Version: 2.3.0 - Add bouncy opening animation.
+console.log('🚀 centre-card.js v2.3.0 chargé - Animation bouncy !');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
@@ -15,22 +15,26 @@ function animateCard(element, isOpen) {
     return new Promise(resolve => {
         const originalDisplay = element.dataset.originalDisplay || 'block';
 
-        gsap.to(element, {
-            opacity: isOpen ? 0 : 1,
-            duration: 0.3,
-            ease: 'power2.inOut',
-            onStart: () => {
-                if (!isOpen) {
-                    gsap.set(element, { display: originalDisplay });
-                }
-            },
-            onComplete: () => {
-                if (isOpen) {
+        if (isOpen) { // Animation de fermeture (simple et rapide)
+            gsap.to(element, {
+                opacity: 0,
+                duration: 0.3,
+                ease: 'power2.inOut',
+                onComplete: () => {
                     gsap.set(element, { display: 'none' });
+                    resolve();
                 }
-                resolve();
-            }
-        });
+            });
+        } else { // Animation d'ouverture (avec un effet "bouncy")
+            gsap.set(element, { display: originalDisplay }); // Rendre visible
+            gsap.from(element, {
+                opacity: 0,
+                y: -20, // Arriver du haut
+                duration: 0.6,
+                ease: 'back.out(1.7)', // L'effet bouncy !
+                onComplete: resolve
+            });
+        }
     });
 }
 
@@ -57,7 +61,7 @@ async function openCard(cardElement) {
     const arrow = cardElement.querySelector(SELECTORS.ARROW);
 
     if (arrow) {
-        gsap.to(arrow, { rotation: 180, duration: 0.3, ease: 'power2.inOut' });
+        gsap.to(arrow, { rotation: 180, duration: 0.6, ease: 'back.out(1.7)' });
     }
 
     const promises = Array.from(elementsToAnimate).map(el => animateCard(el, false));
