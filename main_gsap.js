@@ -1,4 +1,4 @@
-// Version: 1.0.9 - Nettoyage du code
+// Version: 1.0.10 - Correction de l'initialisation
 
 import { initLoadingScreen, hideLoadingScreen, forceHideLoadingScreen } from './loading-screen.js';
 import { initMenuMobile } from './menu-mobile.js';
@@ -115,23 +115,17 @@ async function initializeWithDelay() {
 
 // Démarre l'initialisation
 function startInitialization() {
-    modulesLoaded = {
-        menuMobile: true,
-        menuDesktop: true,
-        centreCards: true,
-        textAnimation: true,
-        menuDesktopHoverActivite: true
-    };
-    
-    initializeWithDelay().catch(error => {
-        isInitializing = false;
-        forceHideLoadingScreen();
-    });
+    setTimeout(() => {
+        initializeWithDelay().catch(error => {
+            isInitializing = false;
+            forceHideLoadingScreen();
+        });
+    }, 500);
 }
 
 // Démarre l'initialisation dès que possible
-if (typeof gsap !== 'undefined') {
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
     startInitialization();
 } else {
-    window.addEventListener('load', startInitialization);
+    document.addEventListener('DOMContentLoaded', startInitialization);
 }
