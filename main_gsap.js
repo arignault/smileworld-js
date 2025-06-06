@@ -1,4 +1,4 @@
-// Version: 1.0.10 - Correction de l'initialisation
+// Version: 1.0.11 - Correction de la durée du pré-chargeur
 
 import { initLoadingScreen, hideLoadingScreen, forceHideLoadingScreen } from './loading-screen.js';
 import { initMenuMobile } from './menu-mobile.js';
@@ -102,7 +102,6 @@ async function initializeWithDelay() {
         modulesLoaded.textAnimation = true;
 
         if (loadingScreen) {
-            await new Promise(resolve => setTimeout(resolve, 500));
             hideLoadingScreen();
         }
     } catch (error) {
@@ -115,12 +114,10 @@ async function initializeWithDelay() {
 
 // Démarre l'initialisation
 function startInitialization() {
-    setTimeout(() => {
-        initializeWithDelay().catch(error => {
-            isInitializing = false;
-            forceHideLoadingScreen();
-        });
-    }, 500);
+    initializeWithDelay().catch(error => {
+        isInitializing = false;
+        forceHideLoadingScreen();
+    });
 }
 
 // Démarre l'initialisation dès que possible
