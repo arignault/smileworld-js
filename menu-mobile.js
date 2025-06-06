@@ -1,12 +1,9 @@
-// Version: 1.0.2 - Use updateCardLayout to fix mobile display
-console.log('🚀 menu-mobile.js v1.0.2 chargé');
+// Version: 1.0.3 - Nettoyage du code
 
 import { updateCardLayout } from './centre-card.js';
 
-// Module Menu Mobile
+// Initialise le menu mobile
 export function initMenuMobile() {
-    console.log("menu-mobile.js chargé");
-    
     // Sélecteurs principaux
     const menuButton = document.querySelector('#hamburger-menu');
     const mainMenu = document.querySelector('#main-menu-mobile');
@@ -39,51 +36,41 @@ export function initMenuMobile() {
         menu.style.display = 'none';
     });
     
-    // Fonction pour désactiver le scroll
+    // Désactive le scroll
     function disableScroll() {
-        // Sauvegarder la position de scroll actuelle
         scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-        
-        // Désactiver le scroll tout en préservant la position
         body.style.overflow = 'hidden';
         body.style.position = 'fixed';
         body.style.width = '100%';
         body.style.top = `-${scrollPosition}px`;
     }
     
-    // Fonction pour réactiver le scroll
+    // Réactive le scroll
     function enableScroll() {
-        // Réactiver le scroll
         body.style.overflow = '';
         body.style.position = '';
         body.style.width = '';
         body.style.top = '';
-        
-        // Restaurer la position de scroll
         window.scrollTo(0, scrollPosition);
     }
     
-    // Fonction pour créer la timeline principale
+    // Crée la timeline principale
     function createMainTimeline() {
         return gsap.timeline({ paused: true })
-            // Étape 1: Ouverture du menu principal
             .add(() => {
                 mainMenu.style.display = 'flex';
                 [parcMenu, activiteMenu, offresMenu].forEach(menu => {
                     menu.style.display = 'none';
                 });
             }, "openMainMenu")
-            // Étape 2: Ouverture du menu parcs (sera utilisée plus tard)
             .add(() => {
                 mainMenu.style.display = 'none';
                 parcMenu.style.display = 'flex';
             }, "openParcMenu")
-            // Étape 3: Ouverture du menu activités (sera utilisée plus tard)
             .add(() => {
                 mainMenu.style.display = 'none';
                 activiteMenu.style.display = 'flex';
             }, "openActiviteMenu")
-            // Étape 4: Ouverture du menu offres (sera utilisée plus tard)
             .add(() => {
                 mainMenu.style.display = 'none';
                 offresMenu.style.display = 'flex';
@@ -93,82 +80,54 @@ export function initMenuMobile() {
     // Initialisation de la timeline
     mainTimeline = createMainTimeline();
     
-    // Fonction pour réinitialiser complètement tous les menus
+    // Réinitialise tous les menus
     function resetAllMenus() {
-        console.log("Reset des menus");
-        // Arrêter la timeline en cours
         if (mainTimeline) {
             mainTimeline.kill();
         }
-        
-        // Réinitialiser l'état
         isMenuOpen = false;
-        
-        // Cacher tous les menus
         [mainMenu, parcMenu, activiteMenu, offresMenu].forEach(menu => {
             menu.style.display = 'none';
         });
-        
-        // Réactiver le scroll
         enableScroll();
-        
-        // Recréer la timeline
         mainTimeline = createMainTimeline();
     }
     
-    // Fonction pour revenir au menu principal
+    // Revient au menu principal
     function backToMainMenu() {
-        // Cacher tous les sous-menus
         [parcMenu, activiteMenu, offresMenu].forEach(menu => {
             menu.style.display = 'none';
         });
-        
-        // Afficher le menu principal
         mainMenu.style.display = 'flex';
         isMenuOpen = true;
     }
     
-    // Fonction pour ouvrir un sous-menu
+    // Ouvre un sous-menu
     function openSubMenu(subMenu) {
-        // Cacher le menu principal
         mainMenu.style.display = 'none';
-        // On garde isMenuOpen à true car on est toujours dans le menu
         isMenuOpen = true;
-        
-        // Afficher le sous-menu
         subMenu.style.display = 'flex';
 
-        // Si le sous-menu des parcs est ouvert, ré-initialiser les cartes
         if (subMenu === parcMenu) {
-            console.log('🔄 Mise à jour du layout des cartes pour le mobile...');
             setTimeout(() => {
                 const cards = document.querySelectorAll('.centre-card_wrapper.effect-cartoon-shadow');
                 cards.forEach(card => {
                     updateCardLayout(card);
                 });
-                console.log(`✅ ${cards.length} cartes mises à jour.`);
-            }, 100); // Délai pour laisser le temps au menu de s'afficher
+            }, 100);
         }
     }
     
     // Gestion du clic sur le bouton burger
     menuButton.addEventListener('click', () => {
-        console.log("Clic sur burger, isMenuOpen:", isMenuOpen);
-        
         if (!isMenuOpen) {
-            // Premier clic : ouvrir le menu principal
-            console.log("Ouverture du menu principal");
             [parcMenu, activiteMenu, offresMenu].forEach(menu => {
                 menu.style.display = 'none';
             });
             mainMenu.style.display = 'flex';
             isMenuOpen = true;
-            
-            // Désactiver le scroll
             disableScroll();
         } else {
-            // Deuxième clic : tout fermer
-            console.log("Fermeture de tous les menus");
             resetAllMenus();
         }
     });
