@@ -1,5 +1,5 @@
-// Version: 3.2.0 - Lift effect and tag animation.
-console.log('🚀 centre-card.js v3.2.0 chargé - Effet de soulèvement et animation des tags');
+// Version : 3.2.0-Beta – Lift plus fluide, easing plus doux, correction de bugs
+console.log('🚀 centre-card.js v3.2.0-Beta chargé – Effet de soulèvement optimisé et animation des tags hyper fluide');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
@@ -11,8 +11,12 @@ const SELECTORS = {
 const initializedCards = new WeakSet();
 let isAnimating = false;
 
-// --- Animation Functions ---
+// --- Fonctions d'animation ---
 
+/**
+ * Ferme une carte en animant le contenu et la carte elle-même.
+ * @param {Element} cardElement 
+ */
 async function closeCard(cardElement) {
     if (!cardElement || !cardElement.classList.contains('is-open')) return;
     
@@ -24,33 +28,40 @@ async function closeCard(cardElement) {
     const tl = gsap.timeline({
         onComplete: () => {
             gsap.set(elementsToAnimate, { display: 'none' });
+            gsap.set(cardElement, { boxShadow: '', scale: 1 });
         }
     });
 
-    // Animer la carte et le contenu en même temps pour la fermeture
     tl.to(cardElement, {
         y: 0,
+        scale: 1,
+        boxShadow: '0px 2px 4px rgba(0,0,0,0.12)',
         duration: 0.3,
-        ease: 'power2.in'
+        ease: 'power2.inOut'
     }, 0);
 
     tl.to(elementsToAnimate, {
+        y: -10,
         opacity: 0,
-        duration: 0.2,
-        ease: 'power2.in'
-    }, '<'); // '<' démarre en même temps que l'animation précédente
+        duration: 0.25,
+        ease: 'power1.in'
+    }, '<');
 
     if (arrow) {
         tl.to(arrow, {
             rotation: 0,
             duration: 0.3,
             ease: 'power2.inOut'
-        }, '<');
+        }, '<0.05');
     }
 
     await tl;
 }
 
+/**
+ * Ouvre une carte en animant la carte, la flèche et le contenu.
+ * @param {Element} cardElement 
+ */
 async function openCard(cardElement) {
     if (!cardElement || cardElement.classList.contains('is-open')) return;
 
@@ -58,49 +69,51 @@ async function openCard(cardElement) {
     const elementsToAnimate = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
     const arrow = cardElement.querySelector(SELECTORS.ARROW);
     
-    // Rendre les éléments visibles pour l'animation
     elementsToAnimate.forEach(el => {
         gsap.set(el, { 
             display: el.dataset.originalDisplay || 'block',
-            opacity: 0
+            opacity: 0,
+            y: -20
         });
     });
 
     const tl = gsap.timeline();
 
-    // 1. Animer la carte elle-même avec un effet de soulèvement
     tl.to(cardElement, {
         y: -8,
-        duration: 0.4,
+        scale: 1.02,
+        boxShadow: '0px 12px 24px rgba(0,0,0,0.15)',
+        duration: 0.35,
         ease: 'power2.out'
     }, 0);
 
-    // 2. Animer la flèche en même temps que la carte
     if (arrow) {
         tl.to(arrow, {
             rotation: 180,
-            duration: 0.6,
+            duration: 0.5,
             ease: 'back.out(1.7)'
         }, '<');
     }
 
-    // 3. Animer l'apparition du contenu, légèrement décalé
-    tl.fromTo(elementsToAnimate, {
-        y: -20,
-        opacity: 0,
-    }, {
+    tl.to(elementsToAnimate, {
         y: 0,
         opacity: 1,
         duration: 0.6,
-        ease: 'back.out(1.7)',
-        stagger: 0.05
-    }, '<0.1'); // Démarrer 0.1s après le début de la timeline
+        ease: 'back.out(1.5)',
+        stagger: {
+            each: 0.07,
+            from: 'start'
+        }
+    }, '<0.1');
 
     await tl;
 }
 
-// --- Main Logic ---
-
+/**
+ * Bascule l'état ouvert/fermé d'une carte, en empêchant les animations simultanées.
+ * Ferme toutes les autres cartes ouvertes avant d'en ouvrir une nouvelle.
+ * @param {Element} cardElement 
+ */
 async function toggleCard(cardElement) {
     if (isAnimating) return;
     isAnimating = true;
@@ -120,24 +133,34 @@ async function toggleCard(cardElement) {
     }
 }
 
-// --- Initialization Functions ---
+// --- Fonctions d'initialisation ---
 
+/**
+ * Met à jour le layout des éléments à toggle pour stocker leur display d'origine
+ * et, si la carte n'est pas ouverte, cache directement les contenus.
+ * @param {Element} card 
+ */
 export function updateCardLayout(card) {
     if (!card) return;
     const elementsToToggle = card.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
     
     elementsToToggle.forEach(el => {
         const currentDisplay = window.getComputedStyle(el).display;
-        if (el.dataset.originalDisplay !== currentDisplay && currentDisplay !== 'none') {
+        if (currentDisplay !== 'none') {
             el.dataset.originalDisplay = currentDisplay;
         }
     });
 
     if (!card.classList.contains('is-open')) {
-        gsap.set(elementsToAnimate, { display: 'none', opacity: 0 });
+        gsap.set(elementsToToggle, { display: 'none', opacity: 0 });
     }
 }
 
+/**
+ * Initialise une carte : on stocke le display initial de chaque élément à animer,
+ * on les cache et on ajoute l'écouteur de clic pour toggle.
+ * @param {Element} card 
+ */
 export function initializeCard(card) {
     if (!card || initializedCards.has(card)) return;
 
@@ -148,7 +171,7 @@ export function initializeCard(card) {
     elementsToToggle.forEach(el => {
         el.dataset.originalDisplay = window.getComputedStyle(el).display;
     });
-    gsap.set(elementsToToggle, { display: 'none', opacity: 0 });
+    gsap.set(elementsToToggle, { display: 'none', opacity: 0, y: -20 });
 
     clickableWrap.addEventListener('click', (event) => {
         event.preventDefault();
