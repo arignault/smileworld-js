@@ -1,5 +1,5 @@
-// Version: 2.4.1 - Fix "originalDisplay" TypeError.
-console.log('🚀 centre-card.js v2.4.1 chargé - Correctif TypeError');
+// Version: 2.5.0 - GSAP Best Practices Rework.
+console.log('🚀 centre-card.js v2.5.0 chargé - Rework GSAP');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
@@ -11,38 +11,43 @@ const SELECTORS = {
 const initializedCards = new WeakSet();
 let isAnimating = false;
 
+// --- Helper Functions ---
+
+// Mesure la hauteur d'un élément après lui avoir appliqué des styles temporaires.
+function getTargetHeight(element, styles) {
+    const originalStyle = element.style.cssText;
+    // Appliquer les styles temporaires pour la mesure
+    Object.assign(element.style, styles);
+    const height = element.offsetHeight;
+    // Restaurer les styles originaux
+    element.style.cssText = originalStyle;
+    return height;
+}
+
+// --- Animation Functions ---
+
 async function closeCard(cardElement) {
     if (!cardElement || !cardElement.classList.contains('is-open')) return;
 
     const elementsToAnimate = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
     const arrow = cardElement.querySelector(SELECTORS.ARROW);
 
+    // Mesurer la hauteur finale (fermée)
+    const endHeight = getTargetHeight(cardElement, { height: 'auto', display: 'block' });
+    
     const tl = gsap.timeline({
         onComplete: () => {
-            gsap.set(elementsToAnimate, { display: 'none' });
             gsap.set(cardElement, { height: 'auto' });
             cardElement.classList.remove('is-open');
         }
     });
 
-    const startHeight = cardElement.offsetHeight;
-    gsap.set(elementsToAnimate, { display: 'none' });
-    const endHeight = cardElement.offsetHeight;
-
-    // Correction: Appliquer le display original individuellement
-    elementsToAnimate.forEach(el => {
-        gsap.set(el, { display: el.dataset.originalDisplay || 'block' });
-    });
-    
-    gsap.set(cardElement, { height: startHeight });
-
     tl.to(elementsToAnimate, {
         opacity: 0,
         duration: 0.2,
         ease: 'power2.out'
-    });
-
-    tl.to(cardElement, {
+    })
+    .to(cardElement, {
         height: endHeight,
         duration: 0.5,
         ease: 'expo.inOut'
@@ -65,6 +70,20 @@ async function openCard(cardElement) {
     cardElement.classList.add('is-open');
     const elementsToAnimate = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
     const arrow = cardElement.querySelector(SELECTORS.ARROW);
+    
+    const startHeight = cardElement.offsetHeight;
+
+    // Rendre les éléments visibles pour mesurer la hauteur finale
+    elementsToAnimate.forEach(el => {
+        el.style.display = el.dataset.originalDisplay || 'block';
+        el.style.opacity = '1';
+    });
+    const endHeight = cardElement.offsetHeight;
+
+    // Remettre les éléments à leur état initial pour l'animation
+    elementsToAnimate.forEach(el => {
+        el.style.opacity = '0';
+    });
 
     const tl = gsap.timeline({
         onComplete: () => {
@@ -72,18 +91,9 @@ async function openCard(cardElement) {
         }
     });
 
-    const startHeight = cardElement.offsetHeight;
-    gsap.set(elementsToAnimate, { display: 'none' });
-    const endHeight = cardElement.offsetHeight;
-
-    // Correction: Appliquer le display original individuellement
-    elementsToAnimate.forEach(el => {
-        gsap.set(el, { display: el.dataset.originalDisplay || 'block', opacity: 1 });
-    });
-    
-    gsap.set(cardElement, { height: startHeight });
-
-    tl.to(cardElement, {
+    tl.fromTo(cardElement, {
+        height: startHeight,
+    }, {
         height: endHeight,
         duration: 0.7,
         ease: 'expo.out'
@@ -97,15 +107,7 @@ async function openCard(cardElement) {
         }, '<');
     }
 
-    // Correction: Appliquer le display original individuellement
-    elementsToAnimate.forEach(el => {
-        gsap.set(el, { display: el.dataset.originalDisplay || 'block' });
-    });
-
-    tl.fromTo(elementsToAnimate, {
-        opacity: 0,
-        y: -20,
-    }, {
+    tl.to(elementsToAnimate, {
         opacity: 1,
         y: 0,
         duration: 0.6,
@@ -124,7 +126,6 @@ async function toggleCard(cardElement) {
         const isOpen = cardElement.classList.contains('is-open');
         
         if (!isOpen) {
-            // Close other cards first
             const otherOpenCards = document.querySelectorAll(`${SELECTORS.CARD}.is-open`);
             await Promise.all(Array.from(otherOpenCards).map(card => closeCard(card)));
             await openCard(cardElement);
@@ -136,20 +137,19 @@ async function toggleCard(cardElement) {
     }
 }
 
+// --- Initialization Functions ---
+
 export function updateCardLayout(card) {
     if (!card) return;
     const elementsToToggle = card.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
     
-    // Mettre à jour la propriété de display originale
     elementsToToggle.forEach(el => {
-        // On ne met à jour que si le style a changé et n'est pas 'none'
         const currentDisplay = window.getComputedStyle(el).display;
         if (el.dataset.originalDisplay !== currentDisplay && currentDisplay !== 'none') {
             el.dataset.originalDisplay = currentDisplay;
         }
     });
 
-    // S'assurer que les cartes fermées restent visuellement fermées
     if (!card.classList.contains('is-open')) {
         gsap.set(elementsToToggle, { display: 'none', opacity: 0 });
     }
