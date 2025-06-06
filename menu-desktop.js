@@ -1,5 +1,5 @@
-// Version: 1.0.4 - Fix: Changed menu wrapper display to 'block' to prevent 100vh height
-console.log('🚀 menu-desktop.js v1.0.4 chargé');
+// Version: 1.0.5 - Fix: Reverted to flex display with height auto for menu wrapper
+console.log('🚀 menu-desktop.js v1.0.5 chargé');
 
 // Variables globales
 let isInitialized = false;
@@ -219,7 +219,8 @@ export function initMenuDesktop() {
                     });
 
                     if (!isWrapperOpen) {
-                        menuWrapper.style.display = 'block';
+                        menuWrapper.style.display = 'flex';
+                        menuWrapper.style.height = 'auto';
                         tl.to(menuWrapper, {
                             opacity: 1,
                             duration: 0.3,
@@ -227,7 +228,6 @@ export function initMenuDesktop() {
                         });
                         isWrapperOpen = true;
                         console.log('🔓 Wrapper ouvert');
-                        // Activer la vérification des clics en dehors uniquement quand un menu est ouvert
                         enableClickOutsideCheck(menuWrapper);
                     }
 
