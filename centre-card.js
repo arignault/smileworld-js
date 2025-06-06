@@ -1,5 +1,5 @@
-// Version : 3.3.0 - Animation minimale, focus sur opacity & translateY
-console.log('🚀 centre-card.js v3.3.0 chargé – animation allégée (opacité + translateY)');
+// Version : 3.3.1 - Fix propagation boutons dans les cartes
+console.log('🚀 centre-card.js v3.3.1 chargé – fix boutons dans cartes ouvertes');
 
 const SELECTORS = {
   CARD: '.centre-card_wrapper.effect-cartoon-shadow',
@@ -17,7 +17,7 @@ const initializedCards = new WeakSet();
 let isAnimating = false;
 
 /**
- * Ferme une carte sans “push” les autres cartes,
+ * Ferme une carte sans "push" les autres cartes,
  * uniquement en jouant sur opacity / translateY des contenus.
  */
 async function closeCard(cardElement) {
@@ -27,16 +27,16 @@ async function closeCard(cardElement) {
   const arrow = cardElement.querySelector(SELECTORS.ARROW);
 
   // On retire la classe « is-open » immédiatement pour que, si vous avez un CSS basé sur cette classe,
-  // le layout repasse en “état fermé” (par exemple, height: auto → height: 0 en CSS).
+  // le layout repasse en "état fermé" (par exemple, height: auto → height: 0 en CSS).
   cardElement.classList.remove('is-open');
 
   // Timeline GSAP pour faire disparaître le contenu
   const tl = gsap.timeline({
     onStart: () => {
-      // Au moment du départ, on s’assure que tous les kids sont bien à leur place
+      // Au moment du départ, on s'assure que tous les kids sont bien à leur place
       elementsToAnimate.forEach(el => {
-        // Ici, on part de l’état affiché (opacity: 1, y: 0)
-        // donc on n’a pas besoin de setter quoi que ce soit d’autre.
+        // Ici, on part de l'état affiché (opacity: 1, y: 0)
+        // donc on n'a pas besoin de setter quoi que ce soit d'autre.
       });
     },
     onComplete: () => {
@@ -69,7 +69,7 @@ async function closeCard(cardElement) {
 
 /**
  * Ouvre une carte en affichant le contenu
- * avec un fade‐in + slide léger.
+ * avec un fade-in + slide léger.
  */
 async function openCard(cardElement) {
   if (!cardElement || cardElement.classList.contains('is-open')) return;
@@ -80,9 +80,9 @@ async function openCard(cardElement) {
   // On ajoute la classe is-open pour pouvoir, si besoin, appliquer un CSS spécifique.
   cardElement.classList.add('is-open');
 
-  // Avant d’animer, on s’assure que les éléments sont visibles (display) et en position “masquée“
+  // Avant d'animer, on s'assure que les éléments sont visibles (display) et en position "masquée"
   elementsToAnimate.forEach(el => {
-    // On récupère le display d’origine stocké dans data-original-display (voire "block" par défaut)
+    // On récupère le display d'origine stocké dans data-original-display (voire "block" par défaut)
     gsap.set(el, {
       display: el.dataset.originalDisplay || 'block',
       opacity: 0,
@@ -96,7 +96,7 @@ async function openCard(cardElement) {
       // Rien de spécial au démarrage
     },
     onComplete: () => {
-      // À la fin, on s’assure que tout est à y:0 et opacity:1 (normalement déjà fait)
+      // À la fin, on s'assure que tout est à y:0 et opacity:1 (normalement déjà fait)
       elementsToAnimate.forEach(el => {
         gsap.set(el, { y: 0, opacity: 1 });
       });
@@ -138,7 +138,7 @@ async function toggleCard(cardElement) {
     const isOpen = cardElement.classList.contains('is-open');
 
     if (!isOpen) {
-      // On ferme d’abord toutes les autres cartes ouvertes
+      // On ferme d'abord toutes les autres cartes ouvertes
       const otherOpenCards = document.querySelectorAll(`${SELECTORS.CARD}.is-open`);
       await Promise.all(Array.from(otherOpenCards).map(card => closeCard(card)));
 
@@ -154,8 +154,8 @@ async function toggleCard(cardElement) {
 }
 
 /**
- * Met à jour le layout des éléments (stocke leur display d’origine),
- * et si la carte n’est pas ouverte, on cache d’emblée le contenu.
+ * Met à jour le layout des éléments (stocke leur display d'origine),
+ * et si la carte n'est pas ouverte, on cache d'emblée le contenu.
  */
 export function updateCardLayout(card) {
   if (!card) return;
@@ -175,7 +175,7 @@ export function updateCardLayout(card) {
 
 /**
  * Initialise une carte : on mémorise le display initial de chaque enfant,
- * on les cache, et on ajoute l’écouteur de clic pour toggle.
+ * on les cache, et on ajoute l'écouteur de clic pour toggle.
  */
 export function initializeCard(card) {
   if (!card || initializedCards.has(card)) return;
@@ -184,15 +184,30 @@ export function initializeCard(card) {
   if (!clickableWrap) return;
 
   const elementsToToggle = card.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
-
+  
+  // Stocker le display initial, même si c'est souvent "block"
   elementsToToggle.forEach(el => {
-    // Stocker le display initial, même si c’est souvent "block"
     el.dataset.originalDisplay = window.getComputedStyle(el).display;
   });
-  // On cache tout dès l’initialisation
+  
+  // On cache tout dès l'initialisation
   gsap.set(elementsToToggle, { display: 'none', opacity: 0, y: -15 });
 
+  // Empêcher les boutons à l'intérieur des cartes de fermer la carte quand on clique dessus
+  const buttons = card.querySelectorAll('a.button, button, .centre-card_button-holder a');
+  buttons.forEach(button => {
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+    });
+  });
+
   clickableWrap.addEventListener('click', event => {
+    // On vérifie si le clic provient d'un bouton ou d'un élément interactif à l'intérieur de la carte
+    if (event.target.closest('a.button, button, .centre-card_button-holder a, .tag_holder a')) {
+      // Si c'est un bouton ou lien, on laisse le comportement par défaut sans fermer la carte
+      return;
+    }
+    
     event.preventDefault();
     event.stopPropagation();
     toggleCard(card);
@@ -208,7 +223,7 @@ export function initializeCard(card) {
 function setupMutationObserver() {
   const cardsContainer = document.querySelector('.collection-list-centre-wrapper');
   if (!cardsContainer) {
-    console.warn('⚠️ Conteneur de cartes (.collection-list-centre-wrapper) non trouvé pour l’observateur.');
+    console.warn('⚠️ Conteneur de cartes (.collection-list-centre-wrapper) non trouvé pour l\'observateur.');
     return;
   }
 
@@ -235,7 +250,7 @@ function setupMutationObserver() {
  * les cartes existantes et on déclenche le MutationObserver.
  */
 export async function initCentreCards() {
-  // On s’assure que le DOM est prêt
+  // On s'assure que le DOM est prêt
   await new Promise(resolve => {
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
       resolve();
