@@ -84,7 +84,26 @@ async function toggleCard(cardElement) {
     }
 }
 
-function initializeCard(card) {
+export function updateCardLayout(card) {
+    if (!card) return;
+    const elementsToToggle = card.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
+    
+    // Mettre à jour la propriété de display originale
+    elementsToToggle.forEach(el => {
+        // On ne met à jour que si le style a changé et n'est pas 'none'
+        const currentDisplay = window.getComputedStyle(el).display;
+        if (el.dataset.originalDisplay !== currentDisplay && currentDisplay !== 'none') {
+            el.dataset.originalDisplay = currentDisplay;
+        }
+    });
+
+    // S'assurer que les cartes fermées restent visuellement fermées
+    if (!card.classList.contains('is-open')) {
+        gsap.set(elementsToToggle, { display: 'none', opacity: 0 });
+    }
+}
+
+export function initializeCard(card) {
     if (!card || initializedCards.has(card)) return;
 
     const clickableWrap = card.querySelector(SELECTORS.CLICKABLE_WRAP);

@@ -1,5 +1,7 @@
-// Version: 1.0.0 - Version initiale
-console.log('🚀 menu-mobile.js v1.0.0 chargé');
+// Version: 1.0.2 - Use updateCardLayout to fix mobile display
+console.log('🚀 menu-mobile.js v1.0.2 chargé');
+
+import { updateCardLayout } from './centre-card.js';
 
 // Module Menu Mobile
 export function initMenuMobile() {
@@ -135,6 +137,18 @@ export function initMenuMobile() {
         
         // Afficher le sous-menu
         subMenu.style.display = 'flex';
+
+        // Si le sous-menu des parcs est ouvert, ré-initialiser les cartes
+        if (subMenu === parcMenu) {
+            console.log('🔄 Mise à jour du layout des cartes pour le mobile...');
+            setTimeout(() => {
+                const cards = document.querySelectorAll('.centre-card_wrapper.effect-cartoon-shadow');
+                cards.forEach(card => {
+                    updateCardLayout(card);
+                });
+                console.log(`✅ ${cards.length} cartes mises à jour.`);
+            }, 100); // Délai pour laisser le temps au menu de s'afficher
+        }
     }
     
     // Gestion du clic sur le bouton burger
