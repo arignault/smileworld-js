@@ -1,5 +1,5 @@
-// Version: 1.1.0 - New animation engine for better performance
-console.log('🎬 loading-screen.js chargé - Version 1.1.0');
+// Version: 1.1.1 - Graceful failure when loading screen elements are not present
+console.log('🎬 loading-screen.js chargé - Version 1.1.1');
 
 // Configuration de l'animation
 const config = {
@@ -29,8 +29,9 @@ export function initLoadingScreen() {
     const logoWrap = document.querySelector('.loading_logo_wrap');
 
     if (!loadingScreen || !logoWrap) {
-        console.error('❌ Éléments du loading screen non trouvés (.loadingscreen or .loading_logo_wrap)');
-        return Promise.reject('Elements not found');
+        console.log('ℹ️ Éléments du loading screen non trouvés sur cette page, initialisation ignorée.');
+        isInitialized = false; // Important: marquer comme non initialisé
+        return Promise.resolve(null); // Renvoyer une promesse résolue pour ne pas bloquer
     }
 
     // Set initial styles for a clean start
