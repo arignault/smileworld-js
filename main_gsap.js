@@ -126,9 +126,6 @@ async function initializeWithDelay() {
         // Initialiser le loading screen en premier
         console.log('🔄 Initialisation du loading screen...');
         const loadingScreen = await initLoadingScreen();
-        if (!loadingScreen) {
-            throw new Error('Loading screen non initialisé correctement');
-        }
 
         // Définir les états initiaux
         setInitialStates();
@@ -193,9 +190,13 @@ async function initializeWithDelay() {
             checkDOMState();
             
             // Masquer le loading screen une fois que tout est initialisé
-            console.log('\n🔄 Masquage du loading screen...');
-            await new Promise(resolve => setTimeout(resolve, 500)); // Petit délai pour s'assurer que tout est bien initialisé
-            hideLoadingScreen();
+            if (loadingScreen) {
+                console.log('\n🔄 Masquage du loading screen...');
+                await new Promise(resolve => setTimeout(resolve, 500)); // Petit délai pour s'assurer que tout est bien initialisé
+                hideLoadingScreen();
+            } else {
+                console.log('ℹ️ Pas de loading screen à masquer.');
+            }
             
         } catch (error) {
             console.error("\n❌ Erreur lors de l'initialisation des modules:", error);
@@ -207,7 +208,12 @@ async function initializeWithDelay() {
     } catch (error) {
         console.error("\n❌ Erreur fatale lors de l'initialisation:", error);
         console.error("Stack trace:", error.stack);
-        forceHideLoadingScreen();
+        // On ne force le masquage que si l'erreur ne vient pas du loading screen lui-même
+        if (error.message.includes('Loading screen')) {
+             console.log('ℹ️ Masquage forcé du loading screen déjà géré ou non nécessaire.');
+        } else {
+            forceHideLoadingScreen();
+        }
     } finally {
         isInitializing = false;
     }
