@@ -29,6 +29,7 @@ build/
 # Fichiers de logs et temporaires
 watch-js.log
 .file_hashes
+.cursor/
 
 # Fichiers de backup
 Autre/centre-card-backup 

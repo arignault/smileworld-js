@@ -1,12 +1,10 @@
-// Version: 1.0.3 - Optimisation de la gestion des clics en dehors
-console.log('🚀 menu-desktop.js v1.0.3 chargé et oh');
+// Version: 1.1.0 - Removed console logs for cleaner execution
+console.log('🚀 menu-desktop.js v1.1.0 chargé');
 
 // Variables globales
 let isInitialized = false;
-let isWrapperOpen = false;
 let isAnimating = false;
-let menuButtons = new Map(); // Stockage des boutons
-let clickOutsideListener = null; // Référence au listener de clic en dehors
+let clickOutsideListener = null;
 
 // Configuration des menus avec les IDs des boutons
 const menuConfig = [
@@ -27,265 +25,138 @@ const menuConfig = [
     }
 ];
 
-// Fonction pour initialiser les boutons une seule fois
-function initializeMenuButtons() {
-    console.log('🔍 Initialisation des boutons de menu...');
-    menuConfig.forEach(menu => {
-        const button = document.getElementById(menu.buttonId);
-        if (button) {
-            menuButtons.set(menu.buttonId, button);
-            console.log(`✅ Bouton initialisé pour l'ID: ${menu.buttonId}`);
-        } else {
-            console.log(`❌ Bouton non trouvé pour l'ID: ${menu.buttonId}`);
+// Fonction pour fermer tous les menus
+function closeAllMenus(menuWrapper, onComplete = () => {}) {
+    if (isAnimating) return;
+    isAnimating = true;
+
+    const tl = gsap.timeline({
+        onComplete: () => {
+            gsap.set(menuWrapper, { display: 'none' });
+            menuConfig.forEach(menu => menu.isOpen = false);
+            disableClickOutsideCheck();
+            isAnimating = false;
+            onComplete();
         }
     });
-}
 
-// Fonction pour obtenir un bouton (utilise le cache)
-function getMenuButton(buttonId) {
-    return menuButtons.get(buttonId);
-}
-
-// Fonction pour vérifier si un élément est visible dans le DOM
-function isElementVisible(element) {
-    if (!element) return false;
-    const style = window.getComputedStyle(element);
-    return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
-}
-
-// Fonction pour obtenir le display calculé par Webflow
-function getComputedDisplay(element) {
-    if (!element) return 'none';
-    return window.getComputedStyle(element).display;
-}
-
-// Fonction pour fermer tous les menus et le wrapper
-function closeAllMenusAndWrapper(menuWrapper) {
-    if (!menuWrapper || isAnimating) {
-        console.log('⚠️ Animation en cours ou wrapper invalide, fermeture ignorée');
-        return;
-    }
-
-    isAnimating = true;
-    console.log('🔄 Début de la fermeture...');
-
-    try {
-        const tl = gsap.timeline({
-            onComplete: () => {
-                if (menuWrapper) {
-                    menuWrapper.style.display = 'none';
-                }
-                isWrapperOpen = false;
-                isAnimating = false;
-                console.log('✅ Fermeture terminée');
-            }
-        });
-
-        menuConfig.forEach(menu => {
-            const menuButton = getMenuButton(menu.buttonId);
-            const menuContainer = document.querySelector(menu.containerSelector);
-            
-            if (menuButton && isElementVisible(menuButton)) {
-                tl.to(menuButton, {
-                    opacity: 0,
-                    duration: 0.2,
-                    ease: "power2.out"
-                }, 0);
-            }
-            
-            if (menuContainer && isElementVisible(menuContainer)) {
-                tl.to(menuContainer, {
-                    opacity: 0,
-                    duration: 0.2,
-                    ease: "power2.out",
-                    onComplete: () => {
-                        menuContainer.style.display = 'none';
-                        menu.isOpen = false;
-                    }
-                }, 0);
-            }
-        });
-
-        if (isElementVisible(menuWrapper)) {
-            tl.to(menuWrapper, {
-                opacity: 0,
-                duration: 0.3,
-                ease: "power2.out"
-            }, 0);
-        }
-
-    } catch (error) {
-        console.error('❌ Erreur lors de la fermeture:', error);
-        isAnimating = false;
-    }
+    tl.to([menuWrapper, ...document.querySelectorAll('.parc_menu_desktop, .activites_menu_desktop, .offres_menu_desktop')], {
+        opacity: 0,
+        duration: 0.3,
+        ease: "power2.out"
+    });
 }
 
 // Fonction pour activer la vérification des clics en dehors
 function enableClickOutsideCheck(menuWrapper) {
-    // Supprimer l'ancien listener s'il existe
-    if (clickOutsideListener) {
-        document.removeEventListener('click', clickOutsideListener);
-    }
-
-    // Créer et stocker le nouveau listener
+    if (clickOutsideListener) return;
     clickOutsideListener = (e) => {
         if (isAnimating) return;
-
-        const isClickOutside = !menuConfig.some(menu => {
-            const button = getMenuButton(menu.buttonId);
-            const container = document.querySelector(menu.containerSelector);
-            return (button && e.target === button) || 
-                   (container && e.target.closest(menu.containerSelector));
-        }) && !e.target.closest('.desktop_menu_wrapper');
         
-        if (isClickOutside && isWrapperOpen && isElementVisible(menuWrapper)) {
-            closeAllMenusAndWrapper(menuWrapper);
-            // Désactiver la vérification une fois le menu fermé
-            disableClickOutsideCheck();
+        const isClickInside = e.target.closest('.desktop_menu_wrapper') || menuConfig.some(menu => e.target.closest(`#${menu.buttonId}`));
+        
+        if (!isClickInside) {
+            closeAllMenus(menuWrapper);
         }
     };
-
-    document.addEventListener('click', clickOutsideListener);
-    console.log('🔍 Vérification des clics en dehors activée');
+    document.addEventListener('click', clickOutsideListener, true);
 }
 
 // Fonction pour désactiver la vérification des clics en dehors
 function disableClickOutsideCheck() {
     if (clickOutsideListener) {
-        document.removeEventListener('click', clickOutsideListener);
+        document.removeEventListener('click', clickOutsideListener, true);
         clickOutsideListener = null;
-        console.log('🔒 Vérification des clics en dehors désactivée');
     }
 }
 
 // Fonction pour initialiser le menu desktop
 export function initMenuDesktop() {
-    if (isInitialized) {
-        console.log('⚠️ Menu desktop déjà initialisé');
-        return;
-    }
-
-    console.log('🚀 Initialisation du menu desktop...');
-
-    // Initialiser les boutons une seule fois
-    initializeMenuButtons();
+    if (isInitialized) return;
+    isInitialized = true;
 
     const menuWrapper = document.querySelector('.desktop_menu_wrapper');
     if (!menuWrapper) {
-        console.warn('⚠️ Menu wrapper non trouvé');
+        console.warn('⚠️ Menu desktop wrapper not found');
         return;
     }
 
-    // Initialisation de chaque menu
     menuConfig.forEach(menu => {
-        console.log(`\n🔍 Initialisation du menu: ${menu.containerSelector}`);
-        
-        const menuButton = getMenuButton(menu.buttonId);
+        const menuButton = document.getElementById(menu.buttonId);
         const menuContainer = document.querySelector(menu.containerSelector);
 
         if (!menuButton || !menuContainer) {
-            console.warn(`⚠️ Menu desktop: éléments non trouvés pour ${menu.containerSelector}`);
+            console.warn(`⚠️ Menu desktop elements not found for ${menu.containerSelector}`);
             return;
         }
 
-        // Fermer le menu au démarrage
-        menuContainer.style.display = 'none';
-        menuContainer.style.opacity = '0';
-        console.log(`🔒 Menu fermé au démarrage: ${menu.containerSelector}`);
+        gsap.set(menuContainer, { opacity: 0, display: 'none' });
 
         menuButton.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-
-            if (isAnimating) {
-                console.log('⚠️ Animation en cours, clic ignoré');
-                return;
-            }
-
-            console.log(`🖱️ Clic sur le bouton du menu: ${menu.containerSelector}`);
-
+            
             if (menu.isOpen) {
-                closeAllMenusAndWrapper(menuWrapper);
-                disableClickOutsideCheck();
+                closeAllMenus(menuWrapper);
             } else {
-                isAnimating = true;
-
-                try {
-                    const tl = gsap.timeline({
-                        onComplete: () => {
-                            isAnimating = false;
-                            console.log('✅ Ouverture terminée');
-                        }
-                    });
-
-                    if (!isWrapperOpen) {
-                        menuWrapper.style.display = 'flex';
-                        tl.to(menuWrapper, {
-                            opacity: 1,
-                            duration: 0.3,
-                            ease: "power2.out"
-                        });
-                        isWrapperOpen = true;
-                        console.log('🔓 Wrapper ouvert');
-                        // Activer la vérification des clics en dehors uniquement quand un menu est ouvert
-                        enableClickOutsideCheck(menuWrapper);
-                    }
-
-                    menuConfig.forEach(otherMenu => {
-                        if (otherMenu !== menu) {
-                            const otherContainer = document.querySelector(otherMenu.containerSelector);
-                            const otherButton = getMenuButton(otherMenu.buttonId);
-                            
-                            if (otherContainer && isElementVisible(otherContainer)) {
-                                tl.to(otherContainer, {
-                                    opacity: 0,
-                                    duration: 0.2,
-                                    ease: "power2.out",
-                                    onComplete: () => {
-                                        otherContainer.style.display = 'none';
-                                        otherMenu.isOpen = false;
-                                    }
-                                }, 0);
-                                console.log(`🔒 Menu fermé: ${otherMenu.containerSelector}`);
-                            }
-                            
-                            if (otherButton) {
-                                tl.to(otherButton, {
-                                    opacity: 0,
-                                    duration: 0.2,
-                                    ease: "power2.out"
-                                }, 0);
-                            }
-                        }
-                    });
-
-                    menuContainer.style.display = 'block';
-                    tl.to(menuContainer, {
-                        opacity: 1,
-                        duration: 0.3,
-                        ease: "power2.out"
-                    });
-
-                    tl.to(menuButton, {
-                        opacity: 1,
-                        duration: 0.3,
-                        ease: "power2.out"
-                    });
-
-                    menu.isOpen = true;
-                    console.log(`🔓 Menu ouvert: ${menu.containerSelector}`);
-
-                } catch (error) {
-                    console.error('❌ Erreur lors de l\'ouverture:', error);
-                    isAnimating = false;
-                }
+                openMenu(menu, menuContainer, menuWrapper);
             }
         });
     });
 
-    isInitialized = true;
-    console.log('✅ Initialisation du menu desktop terminée');
+    console.log('✅ Menu desktop initialisé.');
 }
 
-// Suppression de l'auto-initialisation pour éviter la double initialisation
-// L'initialisation se fait maintenant uniquement via main_gsap.js
+// Fonction pour obtenir le display calculé par Webflow
+function getComputedDisplay(element) {
+    return element ? window.getComputedStyle(element).display : 'none';
+}
+
+// Fonction pour ouvrir un menu
+function openMenu(menu, menuContainer, menuWrapper) {
+    if (isAnimating) return;
+    isAnimating = true;
+
+    // First, close any other open menus
+    const otherOpenMenus = menuConfig.filter(m => m.isOpen && m !== menu);
+    const closePromises = otherOpenMenus.map(m => {
+        const container = document.querySelector(m.containerSelector);
+        if (container) {
+            return new Promise(resolve => {
+                gsap.to(container, {
+                    opacity: 0,
+                    duration: 0.2,
+                    ease: "power2.out",
+                    onComplete: () => {
+                        gsap.set(container, { display: 'none' });
+                        m.isOpen = false;
+                        resolve();
+                    }
+                });
+            });
+        }
+        return Promise.resolve();
+    });
+
+    Promise.all(closePromises).then(() => {
+        // Now open the target menu
+        const tl = gsap.timeline({
+            onComplete: () => {
+                isAnimating = false;
+            }
+        });
+
+        // Ensure wrapper is visible
+        if (window.getComputedStyle(menuWrapper).display === 'none') {
+            gsap.set(menuWrapper, { display: 'flex' });
+            tl.to(menuWrapper, { opacity: 1, duration: 0.3, ease: "power2.out" }, 0);
+        }
+
+        gsap.set(menuContainer, { display: getComputedDisplay(menuContainer) });
+        tl.to(menuContainer, { opacity: 1, duration: 0.2, ease: "power2.out" }, 0);
+        
+        menu.isOpen = true;
+        enableClickOutsideCheck(menuWrapper);
+    });
+}
+
