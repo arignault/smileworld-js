@@ -1,5 +1,5 @@
-// Version: 1.0.3 - Optimisation de la gestion des clics en dehors
-console.log('🚀 menu-desktop.js v1.0.3 chargé et oh');
+// Version: 1.0.4 - Fix: Changed menu wrapper display to 'block' to prevent 100vh height
+console.log('🚀 menu-desktop.js v1.0.4 chargé');
 
 // Variables globales
 let isInitialized = false;
@@ -219,7 +219,7 @@ export function initMenuDesktop() {
                     });
 
                     if (!isWrapperOpen) {
-                        menuWrapper.style.display = 'flex';
+                        menuWrapper.style.display = 'block';
                         tl.to(menuWrapper, {
                             opacity: 1,
                             duration: 0.3,
