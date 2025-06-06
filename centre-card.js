@@ -1,5 +1,5 @@
-// Version: 2.2.0 - Hybrid: Performance optimizations with original animation logic
-console.log('🚀 centre-card.js v2.2.0 chargé - Logique hybride');
+// Version: 2.2.1 - Fix: Restore original display style for perfect layout.
+console.log('🚀 centre-card.js v2.2.1 chargé - Layout corrigé');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
@@ -13,13 +13,15 @@ let isAnimating = false;
 
 function animateCard(element, isOpen) {
     return new Promise(resolve => {
+        const originalDisplay = element.dataset.originalDisplay || 'block';
+
         gsap.to(element, {
             opacity: isOpen ? 0 : 1,
             duration: 0.3,
             ease: 'power2.inOut',
             onStart: () => {
                 if (!isOpen) {
-                    gsap.set(element, { display: 'block' });
+                    gsap.set(element, { display: originalDisplay });
                 }
             },
             onComplete: () => {
@@ -89,6 +91,9 @@ function initializeCard(card) {
     if (!clickableWrap) return;
 
     const elementsToToggle = card.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
+    elementsToToggle.forEach(el => {
+        el.dataset.originalDisplay = window.getComputedStyle(el).display;
+    });
     gsap.set(elementsToToggle, { display: 'none', opacity: 0 });
 
     clickableWrap.addEventListener('click', (event) => {
@@ -101,9 +106,9 @@ function initializeCard(card) {
 }
 
 function setupMutationObserver() {
-    const cardsContainer = document.querySelector('.centre_list_wrapper');
+    const cardsContainer = document.querySelector('.collection-list-centre-wrapper');
     if (!cardsContainer) {
-        console.warn('⚠️ Conteneur de cartes (.centre_list_wrapper) non trouvé pour l\'observateur.');
+        console.warn('⚠️ Conteneur de cartes (.collection-list-centre-wrapper) non trouvé pour l\'observateur.');
         return;
     }
 
