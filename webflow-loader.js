@@ -7,7 +7,7 @@
     // Configuration des serveurs
     const PORT = 8080;  // Port HTTP standard
     const LOCAL_SERVER = `http://127.0.0.1:${PORT}`;
-    const GITHUB_BASE_URL = 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js@main';
+    const GITHUB_BASE_URL = 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js@main/';
     const LOAD_DELAY = 100; // Délai entre chaque chargement en ms
     
     console.log('🌐 Serveurs configurés:', {
@@ -31,6 +31,7 @@
             
             const module = await import(localUrl, importOptions);
             console.log('✅ Module chargé depuis le serveur local:', scriptPath);
+            console.log('📦 Exports du module:', Object.keys(module));
             return module;
         } catch (localError) {
             console.warn('⚠️ Échec du chargement local, tentative via GitHub:', scriptPath);
@@ -44,6 +45,7 @@
                 
                 const module = await import(githubUrl);
                 console.log('✅ Module chargé depuis GitHub:', scriptPath);
+                console.log('📦 Exports du module:', Object.keys(module));
                 return module;
             } catch (githubError) {
                 console.error('❌ Échec du chargement pour le module:', scriptPath);
@@ -55,6 +57,8 @@
     };
 
     const loadAllModules = async () => {
+        console.log('🚀 Début du chargement des modules');
+        
         // Liste réduite aux modules essentiels uniquement
         const modules = [
             'main_gsap.js',
@@ -84,6 +88,29 @@
             console.error('❌ Modules manquants:', missingModules);
         } else {
             console.log('✅ Tous les modules sont chargés');
+            
+            // Initialiser les modules
+            try {
+                console.log('🎬 Démarrage de l\'initialisation des modules');
+                
+                // Initialiser main_gsap.js qui gère l'initialisation des autres modules
+                const mainModule = loadedModules['main_gsap.js'];
+                if (mainModule) {
+                    console.log('📦 Contenu du module main_gsap.js:', Object.keys(mainModule));
+                    if (typeof mainModule.startInitialization === 'function') {
+                        console.log('⚡ Appel de l\'initialisation principale');
+                        mainModule.startInitialization();
+                    } else {
+                        console.error('❌ Fonction startInitialization non trouvée dans main_gsap.js');
+                        console.log('Contenu disponible:', mainModule);
+                    }
+                } else {
+                    console.error('❌ Module main_gsap.js non trouvé');
+                }
+            } catch (error) {
+                console.error('❌ Erreur lors de l\'initialisation:', error);
+                console.error('Stack trace:', error.stack);
+            }
         }
     };
 
@@ -99,4 +126,4 @@
             wait(LOAD_DELAY).then(() => loadAllModules());
         });
     }
-</script> 
+</script>

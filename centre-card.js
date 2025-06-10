@@ -1,11 +1,13 @@
 // Version : 3.2.2 – Animation beaucoup plus rapide
-console.log('🚀 centre-card.js v3.2.2 chargé – Effet de soulèvement optimisé et animation des tags très rapide');
+console.log('🚀 centre-card.js v4.2.2 chargé – Alex modif Effet de soulèvement optimisé et animation des tags très rapide');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
-    CLICKABLE_WRAP: '#data-card-toggle, [data-attribute="data-card-toggle"]',
+    CLICKABLE_WRAP: '.clickable_wrap[data-attribute="data-card-toggle"]',
     TOGGLE_ELEMENTS: ['.centre-card_scroll_wrapper', '.centre-card_list', '.centre-card_button-holder', '.tag_holder_wrapper'],
-    ARROW: '.svg-holder.arrow'
+    ARROW: '.svg-holder.arrow',
+    CARD_BUTTONS: '.centre-card_button-holder',
+    INTERNAL_LINKS: '.centre-card_button-holder a, .centre-card_button-holder button'
 };
 
 const initializedCards = new WeakSet();
@@ -35,7 +37,6 @@ async function closeCard(cardElement) {
     tl.to(cardElement, {
         y: 0,
         scale: 1,
-        boxShadow: '0px 2px 4px rgba(0,0,0,0.12)',
         duration: 0.15,
         ease: 'power2.inOut'
     }, 0);
@@ -80,16 +81,22 @@ async function openCard(cardElement) {
     const tl = gsap.timeline();
 
     tl.to(cardElement, {
+        y: 0,
+        scale: 1,
+        duration: 0.15,
+        ease: 'power2.inOut'
+    }, 0);
+
+    tl.to(cardElement, {
         y: -8,
         scale: 1.02,
-        boxShadow: '0px 12px 24px rgba(0,0,0,0.15)',
         duration: 0.18,
         ease: 'power2.out'
     }, 0);
 
     if (arrow) {
         tl.to(arrow, {
-            rotation: 180,
+            rotation: 90,
             duration: 0.25,
             ease: 'back.out(1.7)'
         }, '<');
@@ -115,21 +122,32 @@ async function openCard(cardElement) {
  * @param {Element} cardElement 
  */
 async function toggleCard(cardElement) {
-    if (isAnimating) return;
+    console.log('🔄 Début du toggle de la carte');
+    if (isAnimating) {
+        console.log('⏳ Animation en cours, toggle ignoré');
+        return;
+    }
     isAnimating = true;
 
     try {
-    const isOpen = cardElement.classList.contains('is-open');
-    
-    if (!isOpen) {
+        const isOpen = cardElement.classList.contains('is-open');
+        console.log('📊 État actuel de la carte:', isOpen ? 'ouverte' : 'fermée');
+        
+        if (!isOpen) {
+            console.log('🔓 Tentative d\'ouverture de la carte');
             const otherOpenCards = document.querySelectorAll(`${SELECTORS.CARD}.is-open`);
+            console.log('📦 Autres cartes ouvertes:', otherOpenCards.length);
             await Promise.all(Array.from(otherOpenCards).map(card => closeCard(card)));
             await openCard(cardElement);
         } else {
+            console.log('🔒 Tentative de fermeture de la carte');
             await closeCard(cardElement);
         }
+    } catch (error) {
+        console.error('❌ Erreur lors du toggle:', error);
     } finally {
         isAnimating = false;
+        console.log('✅ Toggle terminé');
     }
 }
 
@@ -162,23 +180,70 @@ export function updateCardLayout(card) {
  * @param {Element} card 
  */
 export function initializeCard(card) {
-    if (!card || initializedCards.has(card)) return;
+    console.log('🎯 Début de l\'initialisation de la carte:', card);
+    
+    if (!card || initializedCards.has(card)) {
+        console.log('❌ Carte déjà initialisée ou invalide');
+        return;
+    }
 
-    const clickableWrap = card.querySelector(SELECTORS.CLICKABLE_WRAP);
-    if (!clickableWrap) return;
+    // On cherche le wrapper cliquable principal (celui qui est en dehors de la carte)
+    const clickableWrap = card.parentElement.querySelector(SELECTORS.CLICKABLE_WRAP);
+    if (!clickableWrap) {
+        console.warn('⚠️ Élément clickableWrap principal non trouvé');
+        return;
+    }
+    console.log('✅ Élément clickableWrap principal trouvé:', clickableWrap);
 
     const elementsToToggle = card.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
+    console.log('📦 Éléments à toggle trouvés:', elementsToToggle.length);
+    
     elementsToToggle.forEach(el => {
         el.dataset.originalDisplay = window.getComputedStyle(el).display;
     });
     gsap.set(elementsToToggle, { display: 'none', opacity: 0, y: -20 });
 
-    clickableWrap.addEventListener('click', (event) => {
+    // Fonction pour gérer le toggle de la carte
+    const handleCardToggle = (event) => {
+        // Si on clique sur un lien ou un bouton interne, on ne fait rien
+        if (event.target.closest(SELECTORS.INTERNAL_LINKS)) {
+            console.log('⏭️ Clic sur un lien/bouton interne, on laisse passer');
+            return;
+        }
+
+        // Si la carte est ouverte et qu'on clique en dehors des boutons, on ferme
+        if (card.classList.contains('is-open')) {
+            const isClickingOutsideButtons = !event.target.closest(SELECTORS.CARD_BUTTONS);
+            if (isClickingOutsideButtons) {
+                console.log('🔒 Fermeture de la carte (clic en dehors des boutons)');
+                event.preventDefault();
+                event.stopPropagation();
+                toggleCard(card);
+            }
+            return;
+        }
+
+        // Si on arrive ici, on ouvre la carte
+        console.log('🔄 Ouverture de la carte');
         event.preventDefault();
         event.stopPropagation();
         toggleCard(card);
+    };
+
+    // On ajoute l'événement sur le wrapper principal uniquement
+    clickableWrap.addEventListener('click', handleCardToggle);
+
+    // On s'assure que les liens et boutons internes fonctionnent correctement
+    const internalElements = card.querySelectorAll(SELECTORS.INTERNAL_LINKS);
+    internalElements.forEach(element => {
+        element.addEventListener('click', (event) => {
+            console.log('🖱️ Clic sur un élément interne:', element);
+            // On laisse l'événement se propager normalement
+            event.stopPropagation(); // On empêche juste la propagation vers le wrapper
+        });
     });
 
+    console.log('✅ Carte initialisée avec succès');
     initializedCards.add(card);
 }
 

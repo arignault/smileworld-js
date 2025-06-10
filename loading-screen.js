@@ -15,16 +15,30 @@ let isHiding = false;
 
 // Initialise l'écran de chargement
 export function initLoadingScreen() {
-    if (isInitialized) return Promise.resolve();
+    console.log('🎬 initLoadingScreen - Début de l\'initialisation');
+    if (isInitialized) {
+        console.log('ℹ️ Écran de chargement déjà initialisé');
+        return Promise.resolve();
+    }
     
     const loadingScreen = document.querySelector('.loadingscreen');
     const logoWrap = document.querySelector('.loading_logo_wrap');
 
+    console.log('🔍 Éléments trouvés:', {
+        loadingScreen: !!loadingScreen,
+        logoWrap: !!logoWrap
+    });
+
     if (!loadingScreen || !logoWrap) {
+        console.warn('⚠️ Éléments manquants:', {
+            loadingScreen: !loadingScreen ? 'Non trouvé' : 'OK',
+            logoWrap: !logoWrap ? 'Non trouvé' : 'OK'
+        });
         isInitialized = false;
         return Promise.resolve(null);
     }
 
+    console.log('🎨 Configuration des styles initiaux');
     gsap.set(loadingScreen, { 
         opacity: 1, 
         display: 'flex',
@@ -34,21 +48,41 @@ export function initLoadingScreen() {
 
     setupInternalLinkListener();
     isInitialized = true;
+    console.log('✅ Écran de chargement initialisé avec succès');
     return Promise.resolve(loadingScreen);
 }
 
 // Masque l'écran de chargement
 export function hideLoadingScreen() {
-    if (!isInitialized || isHiding) return;
+    console.log('🎬 hideLoadingScreen - Début du masquage');
+    if (!isInitialized) {
+        console.warn('⚠️ Écran de chargement non initialisé');
+        return;
+    }
+    if (isHiding) {
+        console.log('ℹ️ Masquage déjà en cours');
+        return;
+    }
+    
     isHiding = true;
-
     const loadingScreen = document.querySelector('.loadingscreen');
     const logoWrap = document.querySelector('.loading_logo_wrap');
     
-    if (!loadingScreen || !logoWrap) return;
+    console.log('🔍 Éléments trouvés pour le masquage:', {
+        loadingScreen: !!loadingScreen,
+        logoWrap: !!logoWrap
+    });
 
+    if (!loadingScreen || !logoWrap) {
+        console.warn('⚠️ Éléments manquants pour le masquage');
+        isHiding = false;
+        return;
+    }
+
+    console.log('🎬 Démarrage de l\'animation de masquage');
     const tl = gsap.timeline({
         onComplete: () => {
+            console.log('✅ Animation de masquage terminée');
             gsap.set(loadingScreen, { display: 'none' });
             isHiding = false;
         }

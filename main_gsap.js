@@ -1,11 +1,15 @@
 // Version: 1.0.11 - Correction de la durée du pré-chargeur
 
+console.log('🔍 main_gsap.js - Module chargé et exécution commencée');
+
 import { initLoadingScreen, hideLoadingScreen, forceHideLoadingScreen } from './loading-screen.js';
 import { initMenuMobile } from './menu-mobile.js';
 import { initMenuDesktop } from './menu-desktop.js';
 import { initCentreCards } from './centre-card.js';
 import { initMenuDesktopHoverActivite } from './menu-desktop-hover-activite.js';
 import { initTextAnimation } from './text-animation.js';
+
+console.log('📦 main_gsap.js - Début du chargement');
 
 // Variable globale pour suivre l'état d'initialisation
 let isInitializing = false;
@@ -53,76 +57,120 @@ function isDOMReady() {
 
 // Initialise avec un délai
 async function initializeWithDelay() {
-    if (isInitializing || initializationAttempted) return;
+    console.log('🔄 initializeWithDelay - Début de l\'initialisation');
+    
+    if (isInitializing || initializationAttempted) {
+        console.log('⚠️ Initialisation déjà en cours ou tentée');
+        return;
+    }
 
     initializationAttempted = true;
     isInitializing = true;
 
-    if (!isDOMReady()) {
-        await new Promise(resolve => {
-            const checkDOM = setInterval(() => {
-                if (isDOMReady()) {
-                    clearInterval(checkDOM);
-                    resolve();
-                }
-            }, 100);
-        });
-    }
-
     try {
+        // Vérification de GSAP
+        if (!window.gsap) {
+            throw new Error('GSAP n\'est pas chargé');
+        }
+        console.log('✅ GSAP est disponible');
+
+        // Vérification du DOM
+        if (!isDOMReady()) {
+            console.log('⏳ Attente du chargement du DOM...');
+            await new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error('Timeout: Le DOM n\'a pas été chargé après 10 secondes'));
+                }, 10000);
+
+                const checkDOM = setInterval(() => {
+                    if (isDOMReady()) {
+                        console.log('✅ DOM chargé');
+                        clearInterval(checkDOM);
+                        clearTimeout(timeout);
+                        resolve();
+                    }
+                }, 100);
+            });
+        }
+
+        console.log('🎬 Début de l\'initialisation des modules');
         const loadingScreen = await initLoadingScreen();
+        console.log('✅ Écran de chargement initialisé:', !!loadingScreen);
+        
+        // Vérification des éléments essentiels
+        const essentialElements = {
+            menuWrapper: document.querySelector('.desktop_menu_wrapper'),
+            menuMobile: document.querySelector('.menu-mobile'),
+            centreCards: document.querySelectorAll('.centre-card_wrapper.effect-cartoon-shadow'),
+            textAnimation: document.querySelector('.span_mover')
+        };
+
+        console.log('🔍 Éléments essentiels trouvés:', {
+            menuWrapper: !!essentialElements.menuWrapper,
+            menuMobile: !!essentialElements.menuMobile,
+            centreCards: essentialElements.centreCards.length,
+            textAnimation: !!essentialElements.textAnimation
+        });
+
         setInitialStates();
+        console.log('✅ États initiaux définis');
 
-        let loadAttempts = 0;
-        const maxLoadAttempts = 50;
+        // Initialisation des modules avec gestion d'erreur individuelle
+        const initModule = async (name, initFn) => {
+            try {
+                console.log(`🚀 Initialisation de ${name}...`);
+                await initFn();
+                console.log(`✅ ${name} initialisé avec succès`);
+                return true;
+            } catch (error) {
+                console.error(`❌ Erreur lors de l'initialisation de ${name}:`, error);
+                return false;
+            }
+        };
 
-        while (!checkModulesLoaded() && loadAttempts < maxLoadAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            loadAttempts++;
-        }
+        const results = await Promise.all([
+            initModule('Menu Mobile', initMenuMobile),
+            initModule('Menu Desktop', initMenuDesktop),
+            initModule('Cartes', initCentreCards),
+            initModule('Hover Activités', initMenuDesktopHoverActivite),
+            initModule('Animation Texte', initTextAnimation)
+        ]);
 
-        if (loadAttempts >= maxLoadAttempts) {
-            forceHideLoadingScreen();
-            return;
-        }
-
-        await initMenuMobile();
-        modulesLoaded.menuMobile = true;
-
-        await initMenuDesktop();
-        modulesLoaded.menuDesktop = true;
-
-        await initCentreCards();
-        modulesLoaded.centreCards = true;
-
-        await initMenuDesktopHoverActivite();
-        modulesLoaded.menuDesktopHoverActivite = true;
-
-        await initTextAnimation();
-        modulesLoaded.textAnimation = true;
-
-        if (loadingScreen) {
-            hideLoadingScreen();
+        const allSuccessful = results.every(result => result);
+        
+        if (allSuccessful) {
+            console.log('✨ Tous les modules ont été initialisés avec succès');
+            if (loadingScreen) {
+                console.log('🎬 Fermeture de l\'écran de chargement');
+                hideLoadingScreen();
+            }
+        } else {
+            console.warn('⚠️ Certains modules n\'ont pas été initialisés correctement');
+            if (loadingScreen) {
+                console.log('🔄 Tentative de fermeture forcée de l\'écran de chargement');
+                forceHideLoadingScreen();
+            }
         }
     } catch (error) {
+        console.error('❌ Erreur fatale lors de l\'initialisation:', error);
+        console.error('Stack trace:', error.stack);
         forceHideLoadingScreen();
         throw error;
     } finally {
         isInitializing = false;
+        console.log('🏁 Fin du processus d\'initialisation');
     }
 }
 
 // Démarre l'initialisation
-function startInitialization() {
+export function startInitialization() {
+    console.log('🎬 Démarrage de l\'initialisation');
     initializeWithDelay().catch(error => {
+        console.error('❌ Erreur fatale lors de l\'initialisation:', error);
         isInitializing = false;
         forceHideLoadingScreen();
     });
 }
 
-// Démarre l'initialisation dès que possible
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    startInitialization();
-} else {
-    document.addEventListener('DOMContentLoaded', startInitialization);
-}
+// Ne pas démarrer automatiquement l'initialisation
+// L'initialisation sera déclenchée par webflow-loader.js
