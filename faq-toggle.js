@@ -27,43 +27,50 @@ async function closeCard(faqItem) {
     
     const elementsToAnimate = faqItem.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
     const arrow = faqItem.querySelector(SELECTORS.ARROW);
+    const respondElement = faqItem.querySelector('.faq_respond');
     
     console.log('📦 Éléments à animer trouvés:', {
         elementsCount: elementsToAnimate.length,
-        hasArrow: !!arrow
+        hasArrow: !!arrow,
+        hasRespond: !!respondElement
     });
     
     faqItem.classList.remove('is-open');
     
     const tl = gsap.timeline({
         onComplete: () => {
+            gsap.set(respondElement, { height: 0 });
             console.log('✅ Animation de fermeture terminée');
-            gsap.set(elementsToAnimate, { display: 'none' });
-            gsap.set(faqItem, { boxShadow: '', scale: 1 });
         }
     });
 
-    tl.to(faqItem, {
-        y: 0,
-        scale: 1,
-        duration: 0.15,
-        ease: 'power2.inOut'
+    // Animation de la hauteur (inversée)
+    tl.to(respondElement, {
+        height: 0,
+        duration: 0.7,
+        ease: 'elastic.inOut(1.2, 0.4)'
     }, 0);
 
-    tl.to(elementsToAnimate, {
-        y: -10,
-        opacity: 0,
-        duration: 0.12,
-        ease: 'power1.in'
-    }, '<');
-
+    // Animation de la flèche (inversée)
     if (arrow) {
         tl.to(arrow, {
             rotation: 0,
-            duration: 0.15,
-            ease: 'power2.inOut'
-        }, '<0.03');
+            duration: 0.7,
+            ease: 'elastic.inOut(1.2, 0.4)'
+        }, 0);
     }
+
+    // Animation de l'opacité (inversée)
+    elementsToAnimate.forEach(el => {
+        tl.to(el, {
+            opacity: 0,
+            duration: 0.7,
+            ease: 'elastic.inOut(1.2, 0.4)',
+            onComplete: () => {
+                gsap.set(el, { display: 'none' });
+            }
+        }, 0);
+    });
 
     await tl;
 }
@@ -82,54 +89,60 @@ async function openCard(faqItem) {
     faqItem.classList.add('is-open');
     const elementsToAnimate = faqItem.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
     const arrow = faqItem.querySelector(SELECTORS.ARROW);
+    const respondElement = faqItem.querySelector('.faq_respond');
     
     console.log('📦 Éléments à animer trouvés:', {
         elementsCount: elementsToAnimate.length,
-        hasArrow: !!arrow
+        hasArrow: !!arrow,
+        hasRespond: !!respondElement
     });
 
+    // On prépare les éléments
     elementsToAnimate.forEach(el => {
+        const display = el.dataset.originalDisplay || 'block';
         gsap.set(el, { 
-            display: el.dataset.originalDisplay || 'block',
-                    opacity: 0,
-            y: -20
+            display: display,
+            opacity: 0
         });
     });
+    
+    // On mesure la hauteur finale
+    const finalHeight = respondElement.scrollHeight;
+    gsap.set(respondElement, { height: 0 });
 
     const tl = gsap.timeline();
 
-    tl.to(faqItem, {
-        y: 0,
-        scale: 1,
-        duration: 0.15,
-        ease: 'power2.inOut'
+    // Animation de la hauteur
+    tl.to(respondElement, {
+        height: finalHeight * 1.05,
+        duration: 0.7,
+        ease: 'elastic.out(1.2, 0.4)'
     }, 0);
 
-    tl.to(faqItem, {
-        y: -8,
-        scale: 1.02,
-        duration: 0.18,
-        ease: 'power2.out'
-    }, 0);
-
+    // Animation de la flèche
     if (arrow) {
         tl.to(arrow, {
             rotation: 90,
-            duration: 0.25,
-            ease: 'back.out(1.7)'
-        }, '<');
+            duration: 0.7,
+            ease: 'elastic.out(1.2, 0.4)'
+        }, 0);
     }
 
-    tl.to(elementsToAnimate, {
-        y: 0,
-        opacity: 1,
-        duration: 0.3,
-        ease: 'power2.out',
-        stagger: {
-            each: 0.035,
-            from: 'start'
-        }
-    }, '<0.05');
+    // Animation de l'opacité
+    elementsToAnimate.forEach(el => {
+        tl.to(el, {
+            opacity: 1,
+            duration: 0.7,
+            ease: 'elastic.out(1.2, 0.4)'
+        }, 0);
+    });
+
+    // Deuxième phase : retour à la hauteur normale
+    tl.to(respondElement, {
+        height: finalHeight,
+        duration: 0.4,
+        ease: 'power2.out'
+    });
 
     await tl;
 }
@@ -219,7 +232,13 @@ export function initializeFaq(faqItem) {
     elementsToToggle.forEach(el => {
         el.dataset.originalDisplay = window.getComputedStyle(el).display;
     });
-    gsap.set(elementsToToggle, { display: 'none', opacity: 0, y: -20 });
+    
+    // On cache le contenu en mettant la hauteur à 0
+    const respondElement = faqItem.querySelector('.faq_respond');
+    if (respondElement) {
+        gsap.set(respondElement, { height: 0 });
+    }
+    gsap.set(elementsToToggle, { display: 'none', opacity: 0 });
 
     // Fonction pour gérer le toggle de la FAQ
     const handleFaqToggle = (event) => {

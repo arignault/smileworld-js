@@ -8,6 +8,7 @@ import { initMenuDesktop } from './menu-desktop.js';
 import { initCentreCards } from './centre-card.js';
 import { initMenuDesktopHoverActivite } from './menu-desktop-hover-activite.js';
 import { initTextAnimation } from './text-animation.js';
+import { initFaqItems } from './faq-toggle.js';
 
 console.log('📦 main_gsap.js - Début du chargement');
 
@@ -19,7 +20,8 @@ let modulesLoaded = {
     menuDesktop: false,
     centreCards: false,
     textAnimation: false,
-    menuDesktopHoverActivite: false
+    menuDesktopHoverActivite: false,
+    faqItems: false
 };
 
 // Définit les états initiaux
@@ -133,7 +135,8 @@ async function initializeWithDelay() {
             initModule('Menu Desktop', initMenuDesktop),
             initModule('Cartes', initCentreCards),
             initModule('Hover Activités', initMenuDesktopHoverActivite),
-            initModule('Animation Texte', initTextAnimation)
+            initModule('Animation Texte', initTextAnimation),
+            initModule('FAQ', initFaqItems)
         ]);
 
         const allSuccessful = results.every(result => result);
@@ -149,7 +152,7 @@ async function initializeWithDelay() {
             if (loadingScreen) {
                 console.log('🔄 Tentative de fermeture forcée de l\'écran de chargement');
                 forceHideLoadingScreen();
-            }
+            } 
         }
     } catch (error) {
         console.error('❌ Erreur fatale lors de l\'initialisation:', error);

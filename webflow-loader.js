@@ -7,7 +7,7 @@
     // Configuration des serveurs
     const PORT = 8080;  // Port HTTP standard
     const LOCAL_SERVER = `http://127.0.0.1:${PORT}`;
-    const GITHUB_BASE_URL = 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js@main/';
+    const GITHUB_BASE_URL = 'https://cdn.jsdelivr.net/gh/arignault/smileworld-js@Alex-Modif/';
     const LOAD_DELAY = 100; // Délai entre chaque chargement en ms
     
     console.log('🌐 Serveurs configurés:', {
@@ -19,45 +19,109 @@
     const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
     
     const loadScript = async (scriptPath) => {
+        console.log(`📦 Tentative de chargement du module: ${scriptPath}`);
+        
         // Essai d'abord avec le serveur local
+        const localUrl = `${LOCAL_SERVER}/${scriptPath}`;
+        console.log('🔄 Tentative de chargement local:', localUrl);
+        
         try {
-            const localUrl = `${LOCAL_SERVER}/${scriptPath}`;
-            console.log('🔄 Tentative de chargement local:', scriptPath);
-            
-            const importOptions = {
-                credentials: 'same-origin',
-                mode: 'cors'
-            };
-            
-            const module = await import(localUrl, importOptions);
-            console.log('✅ Module chargé depuis le serveur local:', scriptPath);
-            console.log('📦 Exports du module:', Object.keys(module));
-            return module;
+            const response = await fetch(localUrl);
+            if (response.ok) {
+                const moduleContent = await response.text();
+                console.log('✅ Module chargé depuis le serveur local:', scriptPath);
+                
+                // Remplacer les imports relatifs par des imports locaux
+                const processedContent = moduleContent.replace(
+                    /from\s+['"](\.\/[^'"]+)['"]/g,
+                    (match, importPath) => {
+                        const localImportPath = `${LOCAL_SERVER}/${importPath}`;
+                        console.log(`🔄 Remplacement de l'import local: ${importPath} -> ${localImportPath}`);
+                        return `from "${localImportPath}"`;
+                    }
+                );
+                
+                // Créer et exécuter le module
+                const moduleBlob = new Blob([processedContent], { type: 'text/javascript' });
+                const moduleUrl = URL.createObjectURL(moduleBlob);
+                const module = await import(moduleUrl);
+                URL.revokeObjectURL(moduleUrl);
+                
+                console.log(`✨ Module ${scriptPath} initialisé depuis local:`, {
+                    exports: Object.keys(module),
+                    hasInitFunction: typeof module.initFaqItems === 'function' || 
+                                   typeof module.initCentreCards === 'function' ||
+                                   typeof module.initMenuMobile === 'function'
+                });
+                
+                return module;
+            }
         } catch (localError) {
             console.warn('⚠️ Échec du chargement local, tentative via GitHub:', scriptPath);
-            
-            // Attendre un peu avant d'essayer GitHub
-            await wait(LOAD_DELAY);
-            
-            try {
-                const githubUrl = `${GITHUB_BASE_URL}/${scriptPath}`;
-                console.log('🔄 Tentative de chargement GitHub:', scriptPath);
-                
-                const module = await import(githubUrl);
-                console.log('✅ Module chargé depuis GitHub:', scriptPath);
-                console.log('📦 Exports du module:', Object.keys(module));
-                return module;
-            } catch (githubError) {
-                console.error('❌ Échec du chargement pour le module:', scriptPath);
-                console.error('Erreur locale:', localError);
-                console.error('Erreur GitHub:', githubError);
+        }
+        
+        // Si le chargement local échoue, essayer avec GitHub
+        const githubUrl = `${GITHUB_BASE_URL}${scriptPath}`;
+        console.log('🔄 Tentative de chargement GitHub:', githubUrl);
+        
+        try {
+            const response = await fetch(githubUrl);
+            if (!response.ok) {
+                console.error(`❌ Erreur lors du chargement de ${scriptPath}:`, {
+                    status: response.status,
+                    statusText: response.statusText,
+                    url: githubUrl
+                });
                 return null;
             }
+            const moduleContent = await response.text();
+            console.log(`✅ Module ${scriptPath} chargé depuis GitHub`);
+            
+            // Remplacer les imports relatifs par des imports GitHub
+            const processedContent = moduleContent.replace(
+                /from\s+['"](\.\/[^'"]+)['"]/g,
+                (match, importPath) => {
+                    const githubImportPath = `${GITHUB_BASE_URL}${importPath}`;
+                    console.log(`🔄 Remplacement de l'import GitHub: ${importPath} -> ${githubImportPath}`);
+                    return `from "${githubImportPath}"`;
+                }
+            );
+            
+            // Créer et exécuter le module
+            const moduleBlob = new Blob([processedContent], { type: 'text/javascript' });
+            const moduleUrl = URL.createObjectURL(moduleBlob);
+            const module = await import(moduleUrl);
+            URL.revokeObjectURL(moduleUrl);
+            
+            console.log(`✨ Module ${scriptPath} initialisé depuis GitHub:`, {
+                exports: Object.keys(module),
+                hasInitFunction: typeof module.initFaqItems === 'function' || 
+                               typeof module.initCentreCards === 'function' ||
+                               typeof module.initMenuMobile === 'function'
+            });
+            
+            return module;
+        } catch (error) {
+            console.error(`❌ Erreur lors du chargement de ${scriptPath}:`, error);
+            console.error('Stack trace:', error.stack);
+            return null;
         }
     };
 
     const loadAllModules = async () => {
         console.log('🚀 Début du chargement des modules');
+        console.log('🌐 Configuration:', {
+            baseUrl: GITHUB_BASE_URL,
+            loadDelay: LOAD_DELAY,
+            modules: [
+                'main_gsap.js',
+                'centre-card.js',
+                'menu-mobile.js',
+                'menu-desktop.js',
+                'text-animation.js',
+                'faq-toggle.js'
+            ]
+        });
         
         // Liste réduite aux modules essentiels uniquement
         const modules = [
@@ -65,7 +129,8 @@
             'centre-card.js',
             'menu-mobile.js',
             'menu-desktop.js',
-            'text-animation.js'
+            'text-animation.js',
+            'faq-toggle.js'
         ];
 
         const loadedModules = {};
