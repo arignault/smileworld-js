@@ -22,7 +22,7 @@
         console.log(`📦 Tentative de chargement du module: ${scriptPath}`);
         
         // Essai d'abord avec le serveur local
-        const localUrl = `${LOCAL_SERVER}/${scriptPath}`;
+            const localUrl = `${LOCAL_SERVER}/${scriptPath}`;
         console.log('🔄 Tentative de chargement local:', localUrl);
         
         try {
@@ -54,16 +54,16 @@
                                    typeof module.initMenuMobile === 'function'
                 });
                 
-                return module;
+            return module;
             }
         } catch (localError) {
             console.warn('⚠️ Échec du chargement local, tentative via GitHub:', scriptPath);
         }
-        
+            
         // Si le chargement local échoue, essayer avec GitHub
         const githubUrl = `${GITHUB_BASE_URL}${scriptPath}`;
         console.log('🔄 Tentative de chargement GitHub:', githubUrl);
-        
+                
         try {
             const response = await fetch(githubUrl);
             if (!response.ok) {

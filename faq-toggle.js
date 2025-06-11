@@ -37,40 +37,52 @@ async function closeCard(faqItem) {
     
     faqItem.classList.remove('is-open');
     
+    // On prépare les éléments pour l'animation
+    gsap.set(elementsToAnimate, { 
+        willChange: 'transform, opacity',
+        backfaceVisibility: 'hidden'
+    });
+    
     const tl = gsap.timeline({
-        onComplete: () => {
-            gsap.set(respondElement, { height: 0 });
-            console.log('✅ Animation de fermeture terminée');
+        onStart: () => {
+            gsap.set(elementsToAnimate, { display: 'block' });
         }
     });
 
-    // Animation de la hauteur (inversée)
-    tl.to(respondElement, {
-        height: 0,
-        duration: 0.7,
-        ease: 'elastic.inOut(1.2, 0.4)'
+    // Animation de l'opacité d'abord (plus rapide)
+    tl.to(elementsToAnimate, {
+        opacity: 0,
+        y: -10,
+        duration: 0.2,
+        ease: 'power1.in',
+        stagger: {
+            each: 0.02,
+            from: 'start'
+        }
     }, 0);
 
-    // Animation de la flèche (inversée)
+    // Animation de la flèche en même temps
     if (arrow) {
         tl.to(arrow, {
             rotation: 0,
-            duration: 0.7,
-            ease: 'elastic.inOut(1.2, 0.4)'
+            duration: 0.25,
+            ease: 'power2.inOut'
         }, 0);
     }
 
-    // Animation de l'opacité (inversée)
-    elementsToAnimate.forEach(el => {
-        tl.to(el, {
-            opacity: 0,
-            duration: 0.7,
-            ease: 'elastic.inOut(1.2, 0.4)',
-            onComplete: () => {
-                gsap.set(el, { display: 'none' });
-            }
-        }, 0);
-    });
+    // Animation de la hauteur avec un effet bouncy au début et rapide à la fin
+    tl.to(respondElement, {
+        height: 0,
+        duration: 0.4,
+        ease: "back.in(1.7)",
+        onComplete: () => {
+            elementsToAnimate.forEach(el => {
+                el.style.display = 'none';
+            });
+            respondElement.style.display = 'none';
+            console.log('✅ Animation de fermeture terminée');
+        }
+    }, 0);
 
     await tl;
 }
@@ -102,7 +114,8 @@ async function openCard(faqItem) {
         const display = el.dataset.originalDisplay || 'block';
         gsap.set(el, { 
             display: display,
-            opacity: 0
+            opacity: 0,
+            y: -20
         });
     });
     
@@ -112,37 +125,33 @@ async function openCard(faqItem) {
 
     const tl = gsap.timeline();
 
-    // Animation de la hauteur
+    // Animation de la hauteur - Plus bouncy
     tl.to(respondElement, {
-        height: finalHeight * 1.05,
-        duration: 0.7,
-        ease: 'elastic.out(1.2, 0.4)'
+        height: finalHeight,
+        duration: 0.6,
+        ease: 'elastic.out(1.2, 0.5)'
     }, 0);
 
     // Animation de la flèche
     if (arrow) {
         tl.to(arrow, {
             rotation: 90,
-            duration: 0.7,
-            ease: 'elastic.out(1.2, 0.4)'
-        }, 0);
+            duration: 0.25,
+            ease: 'back.out(1.7)'
+        }, '<');
     }
 
     // Animation de l'opacité
-    elementsToAnimate.forEach(el => {
-        tl.to(el, {
-            opacity: 1,
-            duration: 0.7,
-            ease: 'elastic.out(1.2, 0.4)'
-        }, 0);
-    });
-
-    // Deuxième phase : retour à la hauteur normale
-    tl.to(respondElement, {
-        height: finalHeight,
-        duration: 0.4,
-        ease: 'power2.out'
-    });
+    tl.to(elementsToAnimate, {
+        opacity: 1,
+        y: 0,
+        duration: 0.3,
+        ease: 'power2.out',
+        stagger: {
+            each: 0.035,
+            from: 'start'
+        }
+    }, '<0.05');
 
     await tl;
 }
@@ -168,7 +177,15 @@ async function toggleCard(faqItem) {
             console.log('🔓 Tentative d\'ouverture de la FAQ');
             const otherOpenCards = document.querySelectorAll(`${SELECTORS.FAQ_ITEM}.is-open`);
             console.log('📦 Autres FAQ ouvertes:', otherOpenCards.length);
-            await Promise.all(Array.from(otherOpenCards).map(card => closeCard(card)));
+            
+            // On ferme d'abord toutes les autres FAQs
+            const closePromises = Array.from(otherOpenCards).map(card => closeCard(card));
+            await Promise.all(closePromises);
+            
+            // Petit délai pour assurer une transition fluide
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            // Puis on ouvre la nouvelle FAQ
             await openCard(faqItem);
         } else {
             console.log('🔒 Tentative de fermeture de la FAQ');
@@ -177,8 +194,11 @@ async function toggleCard(faqItem) {
     } catch (error) {
         console.error('❌ Erreur lors du toggle:', error);
     } finally {
-        isAnimating = false;
-        console.log('✅ Toggle terminé');
+        // Petit délai avant de réactiver les interactions
+        setTimeout(() => {
+            isAnimating = false;
+            console.log('✅ Toggle terminé');
+        }, 50);
     }
 }
 

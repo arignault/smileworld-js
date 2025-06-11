@@ -1,4 +1,4 @@
-// Version: 1.0.3 - Nettoyage du code
+// Version: 1.0.6 - Ajout de la rotation du bouton hamburger
 
 import { updateCardLayout } from './centre-card.js';
 
@@ -30,6 +30,15 @@ export function initMenuMobile() {
     
     // Timeline principale pour toute la navigation
     let mainTimeline = gsap.timeline({ paused: true });
+    
+    // Timeline pour l'animation du bouton hamburger
+    const hamburgerTimeline = gsap.timeline({ paused: true });
+    hamburgerTimeline.to(menuButton, {
+        rotation: 90,
+        duration: 0.4,
+        ease: "elastic.out(1, 0.5)",
+        transformOrigin: "center center"
+    });
     
     // Configuration initiale
     [mainMenu, parcMenu, activiteMenu, offresMenu].forEach(menu => {
@@ -80,7 +89,87 @@ export function initMenuMobile() {
     // Initialisation de la timeline
     mainTimeline = createMainTimeline();
     
-    // Réinitialise tous les menus
+    // Fonction pour gérer l'état des boutons
+    function updateButtonStates(activeButtonId = null) {
+        const allButtons = [
+            parcButton,
+            activitesButton,
+            formulesButton,
+            document.querySelector('#parcs-nav_button'),
+            document.querySelector('#activites-nav_button'),
+            document.querySelector('#formules-nav_button')
+        ];
+
+        allButtons.forEach(button => {
+            if (button) {
+                if (activeButtonId && button.id === activeButtonId) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            }
+        });
+    }
+    
+    // Fonction pour gérer l'animation du bouton hamburger
+    function updateHamburgerState(isOpen) {
+        if (isOpen) {
+            hamburgerTimeline.play();
+        } else {
+            hamburgerTimeline.reverse();
+        }
+    }
+    
+    // Modification de la fonction handleBottomNavClick
+    function handleBottomNavClick(buttonId) {
+        const buttonMap = {
+            'parcs-nav_button': parcMenu,
+            'activites-nav_button': activiteMenu,
+            'formules-nav_button': offresMenu,
+            'parcs-nav_button_mobile': parcMenu,
+            'activites-nav_button_mobile': activiteMenu,
+            'formules-nav_button_mobile': offresMenu
+        };
+
+        const targetMenu = buttonMap[buttonId];
+        if (!targetMenu) return;
+
+        // On force le display: none sur tous les menus de manière synchrone
+        mainMenu.style.display = 'none';
+        parcMenu.style.display = 'none';
+        activiteMenu.style.display = 'none';
+        offresMenu.style.display = 'none';
+
+        // Si le menu cible est déjà ouvert, on le ferme simplement
+        if (isMenuOpen && targetMenu.style.display === 'flex') {
+            isMenuOpen = false;
+            enableScroll();
+            updateButtonStates();
+            updateHamburgerState(false);
+            return;
+        }
+
+        // On s'assure que le menu cible est bien affiché
+        requestAnimationFrame(() => {
+            targetMenu.style.display = 'flex';
+            isMenuOpen = true;
+            disableScroll();
+            updateButtonStates(buttonId);
+            updateHamburgerState(true);
+
+            // Mise à jour spéciale pour le menu des parcs
+            if (targetMenu === parcMenu) {
+                setTimeout(() => {
+                    const cards = document.querySelectorAll('.centre-card_wrapper.effect-cartoon-shadow');
+                    cards.forEach(card => {
+                        updateCardLayout(card);
+                    });
+                }, 100);
+            }
+        });
+    }
+
+    // Modification de la fonction resetAllMenus
     function resetAllMenus() {
         if (mainTimeline) {
             mainTimeline.kill();
@@ -90,6 +179,8 @@ export function initMenuMobile() {
             menu.style.display = 'none';
         });
         enableScroll();
+        updateButtonStates();
+        updateHamburgerState(false);
         mainTimeline = createMainTimeline();
     }
     
@@ -118,7 +209,7 @@ export function initMenuMobile() {
         }
     }
     
-    // Gestion du clic sur le bouton burger
+    // Modification de la gestion du clic sur le bouton burger
     menuButton.addEventListener('click', () => {
         if (!isMenuOpen) {
             [parcMenu, activiteMenu, offresMenu].forEach(menu => {
@@ -127,6 +218,7 @@ export function initMenuMobile() {
             mainMenu.style.display = 'flex';
             isMenuOpen = true;
             disableScroll();
+            updateHamburgerState(true);
         } else {
             resetAllMenus();
         }
@@ -145,6 +237,14 @@ export function initMenuMobile() {
     // Gestion des boutons retour
     backButtons.forEach(button => {
         button.addEventListener('click', backToMainMenu);
+    });
+
+    // Ajout des écouteurs d'événements pour tous les boutons de navigation
+    document.querySelectorAll('#parcs-nav_button, #activites-nav_button, #formules-nav_button, #parcs-nav_button_mobile, #activites-nav_button_mobile, #formules-nav_button_mobile').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleBottomNavClick(button.id);
+        });
     });
 }
   
