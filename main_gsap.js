@@ -1,4 +1,4 @@
-// Version: 1.0.11 - Correction de la durée du pré-chargeur
+// Version: 1.0.2 - Ajout toggle FAQ
 
 console.log('🔍 main_gsap.js - Module chargé et exécution commencée');
 
