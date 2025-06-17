@@ -44,7 +44,16 @@ export function initLoadingScreen() {
         display: 'flex',
         backgroundColor: 'white'
     });
-    gsap.set(logoWrap, { opacity: 1, scale: 1 });
+    
+    // Animation d'entrée pour le logo
+    gsap.set(logoWrap, { opacity: 0, scale: 0.9 });
+    gsap.to(logoWrap, {
+        opacity: 1,
+        scale: 1,
+        duration: 0.5,
+        delay: 0.1,
+        ease: config.ease
+    });
 
     setupInternalLinkListener();
     isInitialized = true;
@@ -88,19 +97,12 @@ export function hideLoadingScreen() {
         }
     });
 
-    tl.to(logoWrap, {
-        scale: config.logoPopScale,
-        duration: config.logoPopDuration / 2,
-        ease: config.ease,
-        yoyo: true,
-        repeat: 1
-    });
-
+    // Animation de sortie simplifiée et unifiée
     tl.to(loadingScreen, {
         opacity: 0,
         duration: config.fadeOutDuration,
         ease: config.ease
-    }, `-=${config.logoPopDuration / 2}`);
+    });
 }
 
 // Masque immédiatement l'écran de chargement
