@@ -1,4 +1,4 @@
-// Version: 1.1.2 - Nettoyage du code
+// Version: 1.1.3 - Nettoyage du code
 
 // Configuration de l'animation
 const config = {
