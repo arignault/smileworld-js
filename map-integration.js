@@ -147,7 +147,7 @@ export function initMapIntegration() {
 
     console.log('🗺️ Chargement de l\'API Google Maps...');
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=mapManager.initMap`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&callback=mapManager.initMap`;
     script.async = true;
     document.head.appendChild(script);
 } 
