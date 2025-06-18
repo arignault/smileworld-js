@@ -1,7 +1,8 @@
 // Fichier : map-integration.js
-console.log('🗺️ map-integration.js v1.1.0 chargé');
+// Version : 2.0.0 - Découplé avec un système d'événements
+console.log('🗺️ map-integration.js v2.0.0 chargé');
 
-window.mapManager = {
+const mapManager = {
     map: null,
     markers: [],
     infoWindow: null,
@@ -32,6 +33,7 @@ window.mapManager = {
 
         // 2. Création des marqueurs pour chaque centre
         this.createMarkers();
+        this.listenForFocusEvents();
     },
 
     /**
@@ -119,8 +121,17 @@ window.mapManager = {
         this.infoWindow.close();
         this.map.panTo(this.initialCenter);
         this.map.setZoom(this.initialZoom);
+    },
+
+    listenForFocusEvents: function() {
+        document.addEventListener('map:focus', (e) => {
+            this.focusOnCenter(e.detail.placeId);
+        });
     }
 };
+
+// Expose uniquement la fonction initMap à window pour le callback de l'API Google
+window.initGoogleMap = mapManager.initMap.bind(mapManager);
 
 /**
  * Point d'entrée pour l'intégration de la carte.
@@ -147,7 +158,7 @@ export function initMapIntegration() {
 
     console.log('🗺️ Chargement de l\'API Google Maps...');
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&callback=mapManager.initMap`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&callback=initGoogleMap`;
     script.async = true;
     document.head.appendChild(script);
 } 

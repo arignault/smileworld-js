@@ -1,4 +1,6 @@
-// Version : 1.0.2 – Animation FAQ avec logs détaillés
+// Version : 2.0.0 – Utilise le module accordéon générique
+import { createAccordion } from './accordion.js';
+
 console.log('🚀 faq-toggle.js v1.0.2 chargé – Système de FAQ avec animations GSAP');
 
 const SELECTORS = {
@@ -313,47 +315,13 @@ function setupFaqMutationObserver() {
 }
 
 export async function initFaqItems() {
-    console.log('🚀 Démarrage de l\'initialisation des FAQ...');
-    console.log('🔍 Recherche des éléments FAQ dans le DOM...');
+    const faqConfig = {
+        itemSelector: '.faq_item.effect-cartoon-shadow',
+        triggerSelector: '.faq_wrapper',
+        contentSelector: '.faq_respond',
+        arrowSelector: '.svg-holder.medium'
+    };
     
-    await new Promise(resolve => {
-        if (document.readyState === 'complete' || document.readyState === 'interactive') {
-            console.log('✅ DOM déjà chargé');
-            resolve();
-        } else {
-            console.log('⏳ Attente du chargement du DOM...');
-            document.addEventListener('DOMContentLoaded', () => {
-                console.log('✅ DOM chargé via event listener');
-                resolve();
-            }, { once: true });
-        }
-    });
-
-    const faqItems = document.querySelectorAll(SELECTORS.FAQ_ITEM);
-    console.log(`🔍 ${faqItems.length} FAQ trouvées dans le DOM:`, {
-        selectors: SELECTORS.FAQ_ITEM,
-        items: Array.from(faqItems).map(item => ({
-            id: item.id,
-            classes: item.className,
-            hasWrapper: !!item.closest(SELECTORS.CLICKABLE_WRAP),
-            hasArrow: !!item.querySelector(SELECTORS.ARROW),
-            hasRespond: !!item.querySelector(SELECTORS.TOGGLE_ELEMENTS[0])
-        }))
-    });
-
-    if (faqItems.length === 0) {
-        console.warn('⚠️ Aucune FAQ trouvée avec le sélecteur:', SELECTORS.FAQ_ITEM);
-        console.log('🔍 Vérification des éléments disponibles:', {
-            faqWrappers: document.querySelectorAll('.faq_wrapper').length,
-            faqItems: document.querySelectorAll('.faq_item').length,
-            faqQuestions: document.querySelectorAll('.faq_question').length,
-            faqResponds: document.querySelectorAll('.faq_respond').length
-        });
-    }
-
-    faqItems.forEach(initializeFaq);
-    setupFaqMutationObserver();
-    
-    console.log('✅ Initialisation des FAQ terminée');
+    createAccordion(faqConfig);
 }
 
