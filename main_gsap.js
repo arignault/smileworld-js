@@ -5,9 +5,9 @@ console.log('🔍 main_gsap.js - Module chargé et exécution commencée');
 
 import { initLoadingScreen, hideLoadingScreen, forceHideLoadingScreen } from './loading-screen.js';
 import { initMenuMobile } from './menu-mobile.js';
-import { initMenuDesktop } from './menu-desktop.js';
+// import { initMenuDesktop } from './menu-desktop.js';
 import { initCentreCards } from './centre-card.js';
-import { initMenuDesktopHoverActivite } from './menu-desktop-hover-activite.js';
+// import { initMenuDesktopHoverActivite } from './menu-desktop-hover-activite.js';
 import { initTextAnimation } from './text-animation.js';
 import { initFaqItems } from './faq-toggle.js';
 import { initMapIntegration } from './map-integration.js';
