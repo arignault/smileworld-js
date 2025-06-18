@@ -175,7 +175,7 @@ async function toggleCard(cardElement) {
             await openCard(cardElement);
 
             // On notifie la carte de zoomer sur le bon centre
-            const placeId = cardElement.dataset.placeId;
+            const placeId = cardElement.closest('.w-dyn-item')?.dataset.placeId;
             if (window.mapManager && placeId) {
                 window.mapManager.focusOnCenter(placeId);
             }

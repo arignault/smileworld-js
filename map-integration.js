@@ -38,32 +38,35 @@ window.mapManager = {
      * Scanne le DOM pour les cartes de centre et crée un marqueur pour chacune.
      */
     createMarkers: function() {
-        const centreCards = document.querySelectorAll('.centre-card_wrapper');
-        console.log(`📍 ${centreCards.length} cartes trouvées pour la création des marqueurs.`);
+        const centreItems = document.querySelectorAll('.w-dyn-item[data-place-id]');
+        console.log(`📍 ${centreItems.length} cartes trouvées pour la création des marqueurs.`);
 
-        centreCards.forEach(card => {
-            const lat = parseFloat(card.dataset.lat);
-            const lng = parseFloat(card.dataset.lng);
-            const placeId = card.dataset.placeId;
-            const cardId = card.closest('.w-dyn-item')?.getAttribute('id'); // Un ID unique si possible
+        centreItems.forEach(item => {
+            const lat = parseFloat(item.dataset.lat);
+            const lng = parseFloat(item.dataset.lng);
+            const placeId = item.dataset.placeId;
+            const cardId = item.getAttribute('id');
 
             if (!lat || !lng || !placeId) {
-                console.warn('⚠️ Carte ignorée car il manque data-lat, data-lng ou data-place-id', card);
+                console.warn('⚠️ Carte ignorée car il manque data-lat, data-lng ou data-place-id', item);
                 return;
             }
 
             const marker = new google.maps.Marker({
                 position: { lat, lng },
                 map: this.map,
-                title: card.querySelector('h3')?.textContent || 'Centre Smile World',
+                title: item.querySelector('h3')?.textContent || 'Centre Smile World',
                 animation: google.maps.Animation.DROP
             });
 
             // Au clic sur un marqueur, on simule l'ouverture de la carte correspondante
             marker.addListener('click', () => {
-                const clickableElement = card.parentElement.querySelector('.clickable_wrap');
+                // Le clickable_wrap avec data-card-toggle est celui qui ouvre la carte
+                const clickableElement = item.querySelector('.clickable_wrap[data-attribute="data-card-toggle"]');
                 if (clickableElement) {
                     clickableElement.click();
+                } else {
+                    console.warn("Impossible de trouver l'élément cliquable pour ouvrir la carte", item);
                 }
             });
 
