@@ -380,10 +380,10 @@ export function initializeCard(card) {
         });
     });
 
-    // Ajout des événements de survol
-    clickableWrap.addEventListener('mousemove', (e) => handleCardEnter(e, card));
-    clickableWrap.addEventListener('mouseleave', () => handleCardLeave(card));
-    clickableWrap.addEventListener('mouseenter', () => {
+    // Ajout des événements de survol sur la carte visuelle elle-même
+    card.addEventListener('mousemove', (e) => handleCardEnter(e, card));
+    card.addEventListener('mouseleave', () => handleCardLeave(card));
+    card.addEventListener('mouseenter', () => {
         // Réinitialisation directe au survol initial
         card.style.boxShadow = 'var(--_ui-styles---stroke--s) var(--_ui-styles---stroke--s) 0 0 var(--colors--black)';
     });
