@@ -9,6 +9,7 @@ import { initCentreCards } from './centre-card.js';
 import { initMenuDesktopHoverActivite } from './menu-desktop-hover-activite.js';
 import { initTextAnimation } from './text-animation.js';
 import { initFaqItems } from './faq-toggle.js';
+import { initMapIntegration } from './map-integration.js';
 
 console.log('📦 main_gsap.js - Début du chargement');
 
@@ -136,7 +137,8 @@ async function initializeWithDelay() {
             initModule('Cartes', initCentreCards),
             initModule('Hover Activités', initMenuDesktopHoverActivite),
             initModule('Animation Texte', initTextAnimation),
-            initModule('FAQ', initFaqItems)
+            initModule('FAQ', initFaqItems),
+            initModule('Carte Google', initMapIntegration)
         ]);
 
         const allSuccessful = results.every(result => result);

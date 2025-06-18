@@ -1,5 +1,5 @@
 // Fichier : map-integration.js
-console.log('🗺️ map-integration.js v1.0.0 chargé');
+console.log('🗺️ map-integration.js v1.1.0 chargé');
 
 window.mapManager = {
     map: null,
@@ -118,4 +118,34 @@ window.mapManager = {
         this.map.panTo(this.initialCenter);
         this.map.setZoom(this.initialZoom);
     }
-}; 
+};
+
+/**
+ * Point d'entrée pour l'intégration de la carte.
+ * Lit la clé API depuis l'élément #map et charge le script Google Maps.
+ */
+export function initMapIntegration() {
+    const mapElement = document.getElementById('map');
+    if (!mapElement) {
+        console.warn('⚠️ L\'élément #map est introuvable, l\'intégration de la carte est annulée.');
+        return;
+    }
+
+    const apiKey = mapElement.dataset.apiKey;
+    if (!apiKey) {
+        console.error('❌ Clé API Google Maps manquante. Veuillez l\'ajouter dans l\'attribut "data-api-key" de la div #map.');
+        return;
+    }
+
+    if (window.google && window.google.maps) {
+        console.log('🗺️ Google Maps API déjà chargée.');
+        mapManager.initMap();
+        return;
+    }
+
+    console.log('🗺️ Chargement de l\'API Google Maps...');
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=mapManager.initMap`;
+    script.async = true;
+    document.head.appendChild(script);
+} 
