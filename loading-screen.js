@@ -1,4 +1,5 @@
 // Version: 1.1.3 - Nettoyage du code
+import { gsap } from 'gsap';
 
 // Configuration de l'animation
 const config = {

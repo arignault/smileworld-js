@@ -1,4 +1,5 @@
 // Version: 1.0.2 - Ajout toggle FAQ
+import { gsap } from 'gsap';
 
 console.log('🔍 main_gsap.js - Module chargé et exécution commencée');
 
@@ -28,11 +29,6 @@ async function initializeApp() {
     console.log('🎬 Début de l\'initialisation des modules');
 
     try {
-        if (!window.gsap) {
-            throw new Error('GSAP n\'est pas chargé');
-        }
-        console.log('✅ GSAP est disponible');
-
         setInitialStates();
         console.log('✅ États initiaux définis via classes CSS');
 
