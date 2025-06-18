@@ -1,4 +1,5 @@
-// Version: 1.0.6 - Nettoyage du code
+// Version: 2.0.0 - Refactorisation avec classes CSS
+import { gsap } from 'gsap';
 
 // Variables globales
 let isInitialized = false;
@@ -7,24 +8,13 @@ let isAnimating = false;
 let menuButtons = new Map();
 let clickOutsideListener = null;
 let originalBodyStyle = '';
+let openMenu = null;
 
 // Configuration des menus
 const menuConfig = [
-    {
-        buttonId: 'nav-link-desktop-parcs',
-        containerSelector: '.parc_menu_desktop',
-        isOpen: false
-    },
-    {
-        buttonId: 'nav-link-desktop-activites',
-        containerSelector: '.activites_menu_desktop',
-        isOpen: false
-    },
-    {
-        buttonId: 'nav-link-desktop-offres',
-        containerSelector: '.offres_menu_desktop',
-        isOpen: false
-    }
+    { buttonId: 'nav-link-desktop-parcs', containerSelector: '.parc_menu_desktop' },
+    { buttonId: 'nav-link-desktop-activites', containerSelector: '.activites_menu_desktop' },
+    { buttonId: 'nav-link-desktop-offres', containerSelector: '.offres_menu_desktop' }
 ];
 
 // Fonction pour gérer le scroll
@@ -70,44 +60,27 @@ function getComputedDisplay(element) {
 }
 
 // Ferme tous les menus et le wrapper
-function closeAllMenusAndWrapper(menuWrapper) {
-    if (!menuWrapper || isAnimating) return;
-
+function closeAllMenus(menuWrapper) {
+    if (isAnimating) return;
     isAnimating = true;
-    const tl = gsap.timeline({
-        onComplete: () => {
-            if (menuWrapper) {
-                menuWrapper.setAttribute('style', 'display: none !important;');
-            }
-            isWrapperOpen = false;
-            isAnimating = false;
-            toggleBodyScroll(false);
-        }
-    });
+    
+    document.body.classList.remove('scroll-lock');
+    menuWrapper.classList.remove('is-open');
 
-    menuConfig.forEach(menu => {
-        const menuContainer = document.querySelector(menu.containerSelector);
+    const openContainers = menuConfig
+        .map(menu => document.querySelector(menu.containerSelector))
+        .filter(container => container && container.classList.contains('is-open'));
         
-        if (menuContainer && isElementVisible(menuContainer)) {
-            tl.to(menuContainer, {
-                opacity: 0,
-                duration: 0.3,
-                ease: "power2.inOut",
-                onComplete: () => {
-                    menuContainer.setAttribute('style', 'display: none !important;');
-                    menu.isOpen = false;
-                }
-            }, 0);
+    gsap.to(openContainers, {
+        opacity: 0,
+        duration: 0.3,
+        ease: "power2.inOut",
+        onComplete: () => {
+            openContainers.forEach(c => c.classList.remove('is-open'));
+            isAnimating = false;
+            openMenu = null;
         }
     });
-
-    if (isElementVisible(menuWrapper)) {
-        tl.to(menuWrapper, {
-            opacity: 0,
-            duration: 0.3,
-            ease: "power2.inOut"
-        }, 0);
-    }
 }
 
 // Active la détection des clics en dehors
@@ -127,7 +100,7 @@ function enableClickOutsideCheck(menuWrapper) {
         }) && !e.target.closest('.desktop_menu_wrapper');
         
         if (isClickOutside && isWrapperOpen && isElementVisible(menuWrapper)) {
-            closeAllMenusAndWrapper(menuWrapper);
+            closeAllMenus(menuWrapper);
             disableClickOutsideCheck();
         }
     };
@@ -190,96 +163,19 @@ export function initMenuDesktop() {
 
             if (isAnimating) return;
 
-            if (menu.isOpen) {
-                closeAllMenusAndWrapper(menuWrapper);
-                disableClickOutsideCheck();
+            if (openMenu === menu) {
+                closeAllMenus(menuWrapper);
             } else {
-                isAnimating = true;
-
-                const tl = gsap.timeline({
-                    onComplete: () => {
-                        isAnimating = false;
-                    }
-                });
-
-                if (!isWrapperOpen) {
-                    menuWrapper.style.display = 'flex';
-                    menuWrapper.style.height = 'auto';
-                    console.log('🎯 Affichage du wrapper:', menuWrapper.style.display);
-                    tl.to(menuWrapper, {
-                        opacity: 1,
-                        duration: 0.3,
-                        ease: "power2.out"
-                    });
-                    isWrapperOpen = true;
-                    enableClickOutsideCheck(menuWrapper);
-                    toggleBodyScroll(true);
-                }
-
-                menuConfig.forEach(otherMenu => {
-                    if (otherMenu !== menu) {
-                        const otherContainer = document.querySelector(otherMenu.containerSelector);
-                        const otherButton = getMenuButton(otherMenu.buttonId);
-                        
-                        if (otherContainer && isElementVisible(otherContainer)) {
-                            console.log('🔒 Fermeture du menu:', otherMenu.containerSelector);
-                            tl.to(otherContainer, {
-                                width: 0,
-                                opacity: 0,
-                                duration: 0.4,
-                                ease: "power2.inOut",
-                                onComplete: () => {
-                                    otherContainer.setAttribute('style', 'display: none !important; width: auto;');
-                                    otherMenu.isOpen = false;
-                                }
-                            }, 0);
-                        }
-
-                        if (otherButton && isElementVisible(otherButton)) {
-                            tl.to(otherButton, {
-                                opacity: 0,
-                                duration: 0.2,
-                                ease: "power2.out"
-                            }, 0);
-                        }
-                    }
-                });
-
-                // 2. Fermer tous les autres menus
-                menuConfig.forEach(otherMenu => {
-                    if (otherMenu !== menu) {
-                        const otherContainer = document.querySelector(otherMenu.containerSelector);
-                        if (otherContainer && isElementVisible(otherContainer)) {
-                            tl.to(otherContainer, {
-                                opacity: 0,
-                                duration: 0.2,
-                                ease: "power2.inOut",
-                                onComplete: () => {
-                                    otherContainer.setAttribute('style', 'display: none !important;');
-                                    otherMenu.isOpen = false;
-                                }
-                            }, 0);
-                        }
-                    }
-                });
-
-                // 3. Afficher le menu cliqué avec un petit délai
-                const menuContainer = document.querySelector(menu.containerSelector);
-                tl.to({}, {
-                    duration: 0.1, // Petit délai avant d'afficher le nouveau menu
-                    onComplete: () => {
-                        menuContainer.setAttribute('style', 'display: flex !important; opacity: 0;');
-                        tl.to(menuContainer, {
-                            opacity: 1,
-                            duration: 0.3,
-                            ease: "power2.inOut"
-                        });
-                    }
-                }, ">0.1"); // Démarrer cette animation 0.1s après le début de la timeline
-
-                menu.isOpen = true;
+                openMenuContainer(menu, menuWrapper);
             }
         });
+    });
+
+    // Fermer en cliquant à l'extérieur
+    document.addEventListener('click', (e) => {
+        if (!menuWrapper.contains(e.target) && openMenu) {
+            closeAllMenus(menuWrapper);
+        }
     });
 
     console.log('Menu Wrapper:', document.querySelector('.desktop_menu_wrapper'));
@@ -295,4 +191,39 @@ export function initMenuDesktop() {
     });
 
     isInitialized = true;
+}
+
+function openMenuContainer(menu, menuWrapper) {
+    if (isAnimating) return;
+    isAnimating = true;
+
+    // Fermer les autres menus d'abord
+    const otherMenus = menuConfig.filter(m => m !== menu);
+    otherMenus.forEach(m => {
+        const container = document.querySelector(m.containerSelector);
+        if(container) container.classList.remove('is-open');
+    });
+
+    const targetContainer = document.querySelector(menu.containerSelector);
+    if (!targetContainer) {
+        isAnimating = false;
+        return;
+    }
+
+    document.body.classList.add('scroll-lock');
+    menuWrapper.classList.add('is-open');
+    targetContainer.classList.add('is-open');
+
+    gsap.fromTo(targetContainer, 
+        { opacity: 0 },
+        {
+            opacity: 1,
+            duration: 0.4,
+            ease: "power2.out",
+            onComplete: () => {
+                isAnimating = false;
+                openMenu = menu;
+            }
+        }
+    );
 }
