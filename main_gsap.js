@@ -49,6 +49,19 @@ async function initializeApp() {
         
         console.log('✨ Tous les modules ont été initialisés');
         
+        // --- Chargement conditionnel du module de réservation ---
+        const reservationContainer = document.getElementById('container-initial');
+        if (reservationContainer) {
+            console.log('🏝️ Page de réservation détectée, chargement du module...');
+            try {
+                const { SmileWorldReservation } = await import('./reservation.js');
+                new SmileWorldReservation();
+                console.log('✅ Module de réservation chargé et initialisé.');
+            } catch (err) {
+                console.error('❌ Erreur lors du chargement du module de réservation:', err);
+            }
+        }
+        
         if (loadingScreen) {
             hideLoadingScreen();
         }
