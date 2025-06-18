@@ -1,11 +1,10 @@
-// Version: 1.0.1 - Nettoyage du code
+// Version: 2.0.0 - Nettoyé et simplifié
+import { gsap } from 'gsap';
 
 // Initialise l'animation de texte
 export function initTextAnimation() {
     const spanMover = document.querySelector('.span_mover');
-    const displays = document.querySelectorAll('.display');
-
-    if (!spanMover || displays.length === 0) return;
+    if (!spanMover) return;
 
     try {
         const config = {
@@ -20,7 +19,6 @@ export function initTextAnimation() {
             }
         };
 
-        let currentIndex = 0;
         let isAnimating = false;
 
         function animate() {
@@ -30,12 +28,12 @@ export function initTextAnimation() {
             const sequence = gsap.timeline({
                 onComplete: () => {
                     isAnimating = false;
+                    // Revenir au début pour le prochain cycle
                     gsap.to(spanMover, {
                         y: config.positions.start,
                         duration: config.duration,
                         ease: config.ease,
                         onComplete: () => {
-                            currentIndex = 0;
                             setTimeout(animate, config.cycleDelay * 1000);
                         }
                     });
@@ -48,13 +46,17 @@ export function initTextAnimation() {
                 config.positions.end
             ];
 
+            // Créer la séquence d'animation
             for (let i = 0; i < positions.length; i++) {
                 sequence.to(spanMover, {
                     y: positions[i],
                     duration: config.duration,
                     ease: config.ease
                 });
-                sequence.to({}, { duration: config.pauseDuration });
+                // Ajouter une pause après chaque mouvement, sauf le dernier
+                if (i < positions.length -1 ) {
+                    sequence.to({}, { duration: config.pauseDuration });
+                }
             }
 
             sequence.play();
@@ -62,10 +64,13 @@ export function initTextAnimation() {
 
         animate();
 
+        // Nettoyer l'animation lors du déchargement de la page
         window.addEventListener('beforeunload', () => {
             gsap.killTweensOf(spanMover);
         });
-    } catch (error) {}
+    } catch (error) {
+        console.error("Erreur dans l'animation de texte:", error);
+    }
 }
 
 // Vérifie que GSAP est chargé
