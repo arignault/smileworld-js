@@ -52,11 +52,10 @@ window.mapManager = {
                 return;
             }
 
-            const marker = new google.maps.Marker({
-                position: { lat, lng },
+            const marker = new google.maps.marker.AdvancedMarkerElement({
                 map: this.map,
-                title: item.querySelector('h3')?.textContent || 'Centre Smile World',
-                animation: google.maps.Animation.DROP
+                position: { lat, lng },
+                title: item.querySelector('h3')?.textContent || 'Centre Smile World'
             });
 
             // Au clic sur un marqueur, on simule l'ouverture de la carte correspondante
