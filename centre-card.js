@@ -173,9 +173,20 @@ async function toggleCard(cardElement) {
             console.log('📦 Autres cartes ouvertes:', otherOpenCards.length);
             await Promise.all(Array.from(otherOpenCards).map(card => closeCard(card)));
             await openCard(cardElement);
+
+            // On notifie la carte de zoomer sur le bon centre
+            const placeId = cardElement.dataset.placeId;
+            if (window.mapManager && placeId) {
+                window.mapManager.focusOnCenter(placeId);
+            }
         } else {
             console.log('🔒 Tentative de fermeture de la carte');
             await closeCard(cardElement);
+
+            // On notifie la carte de revenir à la vue initiale
+            if (window.mapManager) {
+                window.mapManager.resetMapView();
+            }
         }
     } catch (error) {
         console.error('❌ Erreur lors du toggle:', error);
