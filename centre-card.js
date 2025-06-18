@@ -247,6 +247,12 @@ function handleCardHover(e, card) {
 function handleCardEnter(e, card) {
     if (!card || card.classList.contains('is-open')) return;
 
+    // Notification de la carte pour zoomer
+    const placeId = card.closest('.w-dyn-item')?.dataset.placeId;
+    if (window.mapManager && placeId) {
+        window.mapManager.focusOnCenter(placeId);
+    }
+
     // Animation de scale avec effet bouncy plus prononcé
     gsap.to(card, {
         scale: HOVER_CONFIG.scaleAmount,
@@ -264,6 +270,11 @@ function handleCardEnter(e, card) {
  */
 function handleCardLeave(card) {
     if (!card || card.classList.contains('is-open')) return;
+
+    // Notification de la carte pour réinitialiser la vue
+    if (window.mapManager) {
+        window.mapManager.resetMapView();
+    }
 
     // Réinitialisation de l'ombre avec la valeur verticale par défaut
     card.style.boxShadow = `0 ${HOVER_CONFIG.defaultVerticalOffset}rem 0 0 ${HOVER_CONFIG.shadowColor}`;
