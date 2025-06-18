@@ -56,13 +56,13 @@ async function initializeApp() {
 
         const loadingScreen = await initLoadingScreen();
         
-        // On lance l'initialisation du menu desktop avec notre nouvelle logique d'observation
-        initDesktopMenuWithObserver();
+        // EXPÉRIMENTATION : Initialisation du menu desktop désactivée
+        // initDesktopMenuWithObserver(); 
 
         const initPromises = [
             initMenuMobile(),
             initCentreCards(),
-            initMenuDesktopHoverActivite(),
+            // initMenuDesktopHoverActivite(), // Appel commenté pour corriger l'erreur
             initTextAnimation(),
             initFaqItems(),
             initMapIntegration()
