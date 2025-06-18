@@ -73,12 +73,13 @@ async function initializeApp() {
 }
 
 // Attend que le DOM soit chargé pour lancer l'application, de manière robuste
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApp);
-} else {
-    // Le DOM est déjà prêt
-    initializeApp();
-}
+// if (document.readyState === 'loading') {
+//     document.addEventListener('DOMContentLoaded', initializeApp);
+// } else {
+//     // Le DOM est déjà prêt
+//     initializeApp();
+// }
 
-// Ne pas démarrer automatiquement l'initialisation
-// L'initialisation sera déclenchée par webflow-loader.js
+// --- Lancement de l'application via le mécanisme Webflow ---
+window.Webflow = window.Webflow || [];
+window.Webflow.push(initializeApp);
