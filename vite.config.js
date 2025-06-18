@@ -8,6 +8,8 @@ export default defineConfig({
       name: 'SmileWorld',
       // Le nom du fichier de sortie
       fileName: 'smileworld-bundle',
+      // On force le format iife, plus sûr pour l'injection
+      formats: ['iife']
     },
     rollupOptions: {
       // Pas besoin d'externaliser de dépendances ici pour l'instant
