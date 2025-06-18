@@ -65,7 +65,7 @@ async function initializeApp() {
             initMenuDesktopHoverActivite(),
             initTextAnimation(),
             initFaqItems(),
-            // initMapIntegration() // EXPÉRIMENTATION : On désactive l'intégration de la carte
+            initMapIntegration()
         ];
         
         // Exécute toutes les initialisations

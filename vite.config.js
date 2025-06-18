@@ -12,11 +12,13 @@ export default defineConfig({
       formats: ['iife']
     },
     rollupOptions: {
-      // Pas besoin d'externaliser de dépendances ici pour l'instant
-      external: [],
+      // Externaliser les dépendances que l'on ne veut pas inclure dans le bundle
+      external: ['gsap'],
       output: {
-        // Exposer les variables globales pour les bibliothèques UMD
-        globals: {},
+        // Fournir les noms de variables globales pour les dépendances externalisées
+        globals: {
+          gsap: 'gsap',
+        },
       },
     },
     // Générer le bundle dans un dossier 'dist' à la racine
