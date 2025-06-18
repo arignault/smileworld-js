@@ -56,7 +56,7 @@ export function initLoadingScreen() {
         ease: config.ease
     });
 
-    setupInternalLinkListener();
+    // setupInternalLinkListener(); // EXPÉRIMENTATION : On désactive l'écouteur de liens
     isInitialized = true;
     console.log('✅ Écran de chargement initialisé avec succès');
     return Promise.resolve(loadingScreen);
@@ -130,22 +130,22 @@ function showLoadingScreenForTransition(onComplete) {
 
 // Écoute les clics sur les liens internes pour les transitions
 function setupInternalLinkListener() {
-    document.addEventListener('click', (e) => {
-        const link = e.target.closest('a');
+    // document.addEventListener('click', (e) => {
+    //     const link = e.target.closest('a');
 
-        if (!link) return;
+    //     if (!link) return;
 
-        const href = link.getAttribute('href');
-        const target = link.getAttribute('target');
+    //     const href = link.getAttribute('href');
+    //     const target = link.getAttribute('target');
 
-        if (!href || href.startsWith('#') || href.startsWith('http') || target === '_blank' || href.startsWith('mailto:') || href.startsWith('tel:')) {
-            return;
-        }
+    //     if (!href || href.startsWith('#') || href.startsWith('http') || target === '_blank' || href.startsWith('mailto:') || href.startsWith('tel:')) {
+    //         return;
+    //     }
         
-        e.preventDefault();
+    //     e.preventDefault();
         
-        showLoadingScreenForTransition(() => {
-            window.location.href = href;
-        });
-    }, true);
+    //     showLoadingScreenForTransition(() => {
+    //         window.location.href = href;
+    //     });
+    // }, true);
 } 
