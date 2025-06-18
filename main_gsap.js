@@ -24,6 +24,28 @@ function setInitialStates() {
         });
 }
 
+function initDesktopMenuWithObserver() {
+    const menuWrapper = document.querySelector('.desktop_menu_wrapper');
+    if (menuWrapper) {
+        console.log('✅ Menu wrapper trouvé immédiatement. Initialisation...');
+        initMenuDesktop();
+    } else {
+        console.log('⏳ Menu wrapper non trouvé. Mise en place d\'un observateur...');
+        const observer = new MutationObserver((mutations, obs) => {
+            if (document.querySelector('.desktop_menu_wrapper')) {
+                console.log('👀 L\'observateur a détecté le menu wrapper. Initialisation...');
+                initMenuDesktop();
+                obs.disconnect(); // On nettoie l'observateur, il a fait son travail
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
+}
+
 // L'initialisation principale
 async function initializeApp() {
     console.log('🎬 Début de l\'initialisation des modules');
@@ -34,9 +56,11 @@ async function initializeApp() {
 
         const loadingScreen = await initLoadingScreen();
         
+        // On lance l'initialisation du menu desktop avec notre nouvelle logique d'observation
+        initDesktopMenuWithObserver();
+
         const initPromises = [
             initMenuMobile(),
-            initMenuDesktop(),
             initCentreCards(),
             initMenuDesktopHoverActivite(),
             initTextAnimation(),
