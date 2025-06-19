@@ -39,7 +39,7 @@ const mapManager = {
 
         // 2. Création des marqueurs pour chaque centre
         this.createMarkers();
-        this.listenForFocusEvents();
+        this.initInteractiveList();
     },
 
     /**
@@ -79,6 +79,40 @@ const mapManager = {
             });
 
             this.markers.push({ placeId, cardId, marker });
+        });
+    },
+
+    /**
+     * Initialise les écouteurs de survol pour la liste interactive des centres.
+     */
+    initInteractiveList: function() {
+        const items = document.querySelectorAll('[data-map-trigger="true"]');
+        if (!items.length) {
+            console.log('ℹ️ Aucun élément déclencheur de carte trouvé (data-map-trigger="true").');
+            return;
+        }
+        console.log(`🤝 ${items.length} éléments déclencheurs de carte trouvés.`);
+
+        items.forEach(item => {
+            const placeId = item.dataset.placeId;
+            if (!placeId) {
+                console.warn('⚠️ Élément déclencheur ignoré car il manque data-place-id', item);
+                return;
+            }
+
+            item.addEventListener('mouseenter', () => {
+                if (this.resetTimeoutId) {
+                    clearTimeout(this.resetTimeoutId);
+                    this.resetTimeoutId = null;
+                }
+                this.focusOnCenter(placeId);
+            });
+
+            item.addEventListener('mouseleave', () => {
+                this.resetTimeoutId = setTimeout(() => {
+                    this.resetMapView();
+                }, 300); // Délai de 300ms pour permettre le passage entre les éléments
+            });
         });
     },
 
@@ -130,7 +164,7 @@ const mapManager = {
         this.map.setZoom(this.initialZoom);
     },
 
-    // Réactivation de l'écouteur d'événements
+    /* DÉBUT DE LA MODIFICATION : Fonction supprimée
     listenForFocusEvents: function() {
         document.addEventListener('map:focus', (e) => {
             this.focusOnCenter(e.detail.placeId);
@@ -140,6 +174,7 @@ const mapManager = {
             this.resetMapView();
         });
     }
+    */
 };
 
 // Expose uniquement la fonction initMap à window pour le callback de l'API Google

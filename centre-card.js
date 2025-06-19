@@ -85,19 +85,17 @@ async function toggleCard(cardElement) {
         if (!isOpen) {
             const otherOpenCards = document.querySelectorAll(`${SELECTORS.CARD}.is-open`);
             await Promise.all(Array.from(otherOpenCards).map(card => closeCard(card)));
-            
-            // On envoie le focus pour la carte cliquée
+            await openCard(cardElement);
+
+            /* DÉBUT DE LA MODIFICATION : Lignes supprimées
             const placeId = cardElement.closest('.w-dyn-item')?.dataset.placeId;
             if (placeId) {
                 document.dispatchEvent(new CustomEvent('map:focus', { detail: { placeId } }));
             }
-            
-            await openCard(cardElement);
-
+            */
         } else {
             await closeCard(cardElement);
-            // Quand on ferme une carte, on réinitialise la vue
-            document.dispatchEvent(new CustomEvent('map:reset'));
+            // document.dispatchEvent(new CustomEvent('map:reset')); // Ligne supprimée
         }
     } finally {
         isAnimating = false;
@@ -127,31 +125,6 @@ function initializeCard(card) {
     };
 
     clickableWrap.addEventListener('click', handleCardToggle);
-    
-    // --- Logique de survol pour la carte ---
-    let resetTimeout;
-
-    card.addEventListener('mouseenter', () => {
-        clearTimeout(resetTimeout);
-        // Si une carte est déjà ouverte par un clic, on ne fait rien
-        if (document.querySelector(`${SELECTORS.CARD}.is-open`)) return;
-        
-        const placeId = card.closest('.w-dyn-item')?.dataset.placeId;
-        if (placeId) {
-            document.dispatchEvent(new CustomEvent('map:focus', { detail: { placeId } }));
-        }
-    });
-
-    card.addEventListener('mouseleave', () => {
-        // Si une carte est déjà ouverte par un clic, on ne fait rien
-        if (document.querySelector(`${SELECTORS.CARD}.is-open`)) return;
-
-        // On programme une réinitialisation pour éviter les sauts entre deux survols
-        resetTimeout = setTimeout(() => {
-            document.dispatchEvent(new CustomEvent('map:reset'));
-        }, 100);
-    });
-
     initializedCards.add(card);
 }
 
