@@ -1,161 +1,155 @@
-// Version : 5.1.0 – Initialisation et animations robustes
-console.log('🚀 centre-card.js v5.1.0 chargé – Robuste');
+// Version : 6.0.0 – Logique de centre-card-old.js réintégrée
+console.log('🚀 centre-card.js v6.0.0 chargé – Logique old.js réintégrée');
 
+const SELECTORS = {
+    CARD: '.centre-card_wrapper.effect-cartoon-shadow',
+    CLICKABLE_WRAP: '.clickable_wrap[data-attribute="data-card-toggle"]',
+    TOGGLE_ELEMENTS: ['.centre-card_scroll_wrapper', '.centre-card_list', '.centre-card_button-holder', '.tag_holder_wrapper'],
+    ARROW: '.svg-holder.arrow',
+    INTERNAL_LINKS: '.centre-card_button-holder a, .centre-card_button-holder button'
+};
+
+const initializedCards = new WeakSet();
 let isAnimating = false;
 
-// --- Logique d'accordéon intégrée ---
+// --- Fonctions d'animation ---
 
-async function closeCard(item, config) {
-    if (!item || !item.classList.contains(config.openClass)) return;
-    const content = item.querySelector(config.contentSelector);
-    const icon = item.querySelector(config.iconSelector);
+async function closeCard(cardElement) {
+    if (!cardElement || !cardElement.classList.contains('is-open')) return;
     
-    item.classList.remove(config.openClass);
-    if (config.animation && config.animation.onClose) {
-        config.animation.onClose(content, icon);
+    const elementsToAnimate = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
+    const arrow = cardElement.querySelector(SELECTORS.ARROW);
+    
+    cardElement.classList.remove('is-open');
+    
+    const tl = window.gsap.timeline({
+        onComplete: () => {
+            window.gsap.set(elementsToAnimate, { display: 'none' });
+        }
+    });
+
+    tl.to(elementsToAnimate, {
+        opacity: 0,
+        y: -10,
+        duration: 0.2,
+        ease: 'power1.in',
+        stagger: 0.02
+    }, 0);
+
+    if (arrow) {
+        tl.to(arrow, { rotation: 0, duration: 0.25, ease: 'power2.inOut' }, 0);
     }
+    
+    await tl;
 }
 
-async function openCard(item, config) {
-    if (!item || item.classList.contains(config.openClass)) return;
-    const content = item.querySelector(config.contentSelector);
-    const icon = item.querySelector(config.iconSelector);
+async function openCard(cardElement) {
+    if (!cardElement || cardElement.classList.contains('is-open')) return;
+
+    cardElement.classList.add('is-open');
+    const elementsToAnimate = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
+    const arrow = cardElement.querySelector(SELECTORS.ARROW);
     
-    item.classList.add(config.openClass);
-    if (config.animation && config.animation.onOpen) {
-        config.animation.onOpen(content, icon);
+    elementsToAnimate.forEach(el => {
+        window.gsap.set(el, { 
+            display: el.dataset.originalDisplay || 'block',
+            opacity: 0,
+            y: -20
+        });
+    });
+
+    const tl = window.gsap.timeline();
+
+    if (arrow) {
+        tl.to(arrow, { rotation: 90, duration: 0.25, ease: 'back.out(1.7)' }, '<');
     }
+
+    tl.to(elementsToAnimate, {
+        opacity: 1,
+        y: 0,
+        duration: 0.3,
+        ease: 'power2.out',
+        stagger: 0.035
+    }, '<0.05');
+
+    await tl;
 }
 
-async function toggleAccordion(item, config) {
+async function toggleCard(cardElement) {
     if (isAnimating) return;
     isAnimating = true;
 
     try {
-        const isOpen = item.classList.contains(config.openClass);
+        const isOpen = cardElement.classList.contains('is-open');
+        
         if (!isOpen) {
-            const otherOpenItems = document.querySelectorAll(`${config.itemSelector}.${config.openClass}`);
-            await Promise.all(Array.from(otherOpenItems).map(other => closeCard(other, config)));
-            await openCard(item, config);
+            const otherOpenCards = document.querySelectorAll(`${SELECTORS.CARD}.is-open`);
+            await Promise.all(Array.from(otherOpenCards).map(card => closeCard(card)));
+            await openCard(cardElement);
+
+            const placeId = cardElement.closest('.w-dyn-item')?.dataset.placeId;
+            if (placeId) {
+                document.dispatchEvent(new CustomEvent('map:focus', { detail: { placeId } }));
+            }
         } else {
-            await closeCard(item, config);
+            await closeCard(cardElement);
+            document.dispatchEvent(new CustomEvent('map:reset'));
         }
     } finally {
-        setTimeout(() => { isAnimating = false; }, 50); // Petit délai de sécurité
+        isAnimating = false;
     }
 }
 
-function createAccordion(config) {
-    const items = document.querySelectorAll(config.itemSelector);
-    if (items.length === 0) return;
+// --- Fonctions d'initialisation ---
 
-    // Force la fermeture de toutes les cartes au démarrage
-    items.forEach(item => {
-        const content = item.querySelector(config.contentSelector);
-        const icon = item.querySelector(config.iconSelector);
-        item.classList.remove(config.openClass);
-        if (content) window.gsap.set(content, { display: 'none', height: 0, opacity: 0 });
-        if (icon) window.gsap.set(icon, { rotation: 0 });
-    });
+function initializeCard(card) {
+    if (!card || initializedCards.has(card)) return;
 
-    items.forEach(item => {
-        const trigger = item.querySelector(config.triggerSelector);
-        if (trigger) {
-             if (trigger.dataset.accordionInitialized) return;
-             trigger.dataset.accordionInitialized = 'true';
-             trigger.addEventListener('click', (e) => {
-                e.preventDefault();
-                toggleAccordion(item, config);
-            });
-        }
+    const clickableWrap = card.parentElement.querySelector(SELECTORS.CLICKABLE_WRAP);
+    if (!clickableWrap) return;
+
+    const elementsToToggle = card.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
+    
+    elementsToToggle.forEach(el => {
+        el.dataset.originalDisplay = window.getComputedStyle(el).display;
     });
+    window.gsap.set(elementsToToggle, { display: 'none', opacity: 0, y: -20 });
+
+    const handleCardToggle = (event) => {
+        if (event.target.closest(SELECTORS.INTERNAL_LINKS)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        toggleCard(card);
+    };
+
+    clickableWrap.addEventListener('click', handleCardToggle);
+    initializedCards.add(card);
 }
 
-// --- Logique des cartes (Survol, etc.) ---
+function setupMutationObserver() {
+    const cardsContainer = document.querySelector('.collection-list-centre-wrapper');
+    if (!cardsContainer) return;
 
-const HOVER_CONFIG = {
-    scaleDuration: 0.4,
-    scaleAmount: 1.05,
-    scaleEase: 'power2.out',
-    shadow: '0px 10px 30px rgba(0, 0, 0, 0.1)'
-};
-
-function handleCardEnter(e, card) {
-    if (!card || card.classList.contains('is-open')) return;
-    window.gsap.to(card, {
-        scale: HOVER_CONFIG.scaleAmount,
-        duration: HOVER_CONFIG.scaleDuration,
-        ease: HOVER_CONFIG.scaleEase
-    });
-}
-
-function handleCardLeave(card) {
-    if (!card) return;
-    window.gsap.to(card, {
-        scale: 1,
-        duration: HOVER_CONFIG.scaleDuration,
-        ease: HOVER_CONFIG.scaleEase,
-        onComplete: () => {
-            if (!card.classList.contains('is-open')) {
-                card.style.boxShadow = '';
+    const observer = new MutationObserver((mutationsList) => {
+        for (const mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType === 1) {
+                        if (node.matches(SELECTORS.CARD)) {
+                            initializeCard(node);
+                        }
+                        node.querySelectorAll(SELECTORS.CARD).forEach(initializeCard);
+                    }
+                });
             }
         }
     });
+
+    observer.observe(cardsContainer, { childList: true, subtree: true });
 }
 
 export function initCentreCards() {
-    const cardConfig = {
-        itemSelector: '.card-offre-h-s',
-        triggerSelector: '.accordion_head',
-        contentSelector: '.accordion_content',
-        iconSelector: '.accordion_icon',
-        openClass: 'is-open',
-        animation: {
-            onOpen: (content, icon) => {
-                if (!content) return;
-                window.gsap.set(content, { display: 'block', height: 'auto', opacity: 0 });
-                const height = window.gsap.getProperty(content, "height");
-                window.gsap.set(content, { height: 0 });
-
-                window.gsap.to(content, { height: height, opacity: 1, duration: 0.5, ease: 'power2.out' });
-                if(icon) window.gsap.to(icon, { rotation: 180, duration: 0.4, ease: 'power2.out' });
-            },
-            onClose: (content, icon) => {
-                if (!content) return;
-                window.gsap.to(content, { 
-                    height: 0, 
-                    opacity: 0, 
-                    duration: 0.4, 
-                    ease: 'power2.in',
-                    onComplete: () => window.gsap.set(content, { display: 'none' })
-                });
-                if(icon) window.gsap.to(icon, { rotation: 0, duration: 0.4, ease: 'power2.in' });
-            }
-        }
-    };
-    
-    createAccordion(cardConfig);
-
-    const cards = document.querySelectorAll(cardConfig.itemSelector);
-    cards.forEach(card => {
-        if(card.dataset.hoverInitialized) return;
-        card.dataset.hoverInitialized = 'true';
-        
-        card.addEventListener('mouseenter', (e) => handleCardEnter(e, card));
-        card.addEventListener('mouseleave', () => handleCardLeave(card));
-        
-        const observer = new MutationObserver(mutations => {
-            mutations.forEach(mutation => {
-                if (mutation.attributeName === 'class') {
-                    const targetNode = mutation.target;
-                    if (targetNode.classList.contains(cardConfig.openClass)) {
-                        targetNode.style.boxShadow = HOVER_CONFIG.shadow;
-                    } else {
-                        targetNode.style.boxShadow = '';
-                    }
-                }
-            });
-        });
-        observer.observe(card, { attributes: true });
-    });
+    const cards = document.querySelectorAll(SELECTORS.CARD);
+    cards.forEach(initializeCard);
+    setupMutationObserver();
 }

@@ -127,6 +127,10 @@ const mapManager = {
         document.addEventListener('map:focus', (e) => {
             this.focusOnCenter(e.detail.placeId);
         });
+
+        document.addEventListener('map:reset', () => {
+            this.resetMapView();
+        });
     }
 };
 
