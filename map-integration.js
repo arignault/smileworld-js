@@ -20,6 +20,11 @@ const mapManager = {
             console.error('Erreur : L\'élément #map est introuvable dans le DOM.');
             return;
         }
+        
+        const mapId = mapElement.dataset.mapId;
+        if (!mapId) {
+            console.warn("⚠️ data-map-id n'est pas défini sur l'élément #map. Les marqueurs avancés pourraient ne pas fonctionner. Veuillez créer un Map ID dans votre projet Google Cloud et l'ajouter à l'élément #map.");
+        }
 
         // 1. Initialisation de la carte
         this.map = new google.maps.Map(mapElement, {
@@ -27,6 +32,7 @@ const mapManager = {
             zoom: this.initialZoom,
             disableDefaultUI: true, // On peut désactiver l'UI par défaut pour un look plus épuré
             zoomControl: true,
+            mapId: mapId,
             styles: [ /* TODO: Ajouter des styles custom pour la carte si désiré */ ]
         });
         this.infoWindow = new google.maps.InfoWindow();
@@ -48,8 +54,9 @@ const mapManager = {
             const placeId = item.dataset.placeId;
             const cardId = item.getAttribute('id');
 
-            if (!lat || !lng || !placeId) {
-                console.warn('⚠️ Carte ignorée car il manque data-lat, data-lng ou data-place-id', item);
+            if (isNaN(lat) || isNaN(lng) || !placeId) {
+                const name = item.querySelector('h3')?.textContent || 'Nom non trouvé';
+                console.warn(`⚠️ Carte ignorée (nom: "${name}") car ses données de latitude ou longitude sont manquantes ou invalides dans le CMS.`, item);
                 return;
             }
 
@@ -165,5 +172,6 @@ export function initMap() {
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&callback=initGoogleMap`;
     script.async = true;
+    script.setAttribute('loading', 'async');
     document.head.appendChild(script);
 } 
