@@ -1,8 +1,13 @@
-// menu-desktop.js v9.0.0-diag - Mode Diagnostic
-console.log('🚀 menu-desktop.js v9.0.0-diag chargé - Mode Diagnostic');
+// menu-desktop.js v10.0.0 - Stratégie "Adaptation à Finsweet"
+// import { gsap } from 'gsap';
 
-class MenuDiagnostician {
+console.log('🚀 menu-desktop.js v10.0.0 chargé - Stratégie "Adaptation à Finsweet"');
+
+class FinsweetAwareDropdownHandler {
     constructor() {
+        this.activeListItem = null;
+        this.isAnimating = false;
+        
         this.triggerSelectors = [
             '[data-attribute="nav-link-desktop-parcs"]',
             '[data-attribute="nav-link-desktop-activites"]',
@@ -10,55 +15,96 @@ class MenuDiagnostician {
         ].join(',');
 
         this._addGlobalListener();
-        console.log('✅ Mode Diagnostic du menu activé. Veuillez cliquer sur un lien du menu desktop.');
+        console.log('✅ Gestionnaire de clic "Adaptation à Finsweet" est actif.');
     }
 
     _addGlobalListener() {
         document.body.addEventListener('click', (e) => {
             const trigger = e.target.closest(this.triggerSelectors);
-
-            if (!trigger) {
-                return; // Ne rien faire si le clic n'est pas sur un trigger
-            }
             
-            e.preventDefault();
-            e.stopPropagation();
+            if (trigger) {
+                e.preventDefault();
+                e.stopPropagation();
 
-            console.group(`🕵️‍♂️ DIAGNOSTIC SUITE À UN CLIC SUR LE MENU 🕵️‍♂️`);
-            console.log("Cible du clic (e.target):", e.target);
-            console.log("Trigger identifié ([data-attribute]):", trigger);
-            
-            const dropdownParent = trigger.closest('.w-dropdown');
-            if (dropdownParent) {
-                console.log("%c✅ SUCCÈS: Le parent .w-dropdown a été trouvé :", "color: green; font-weight: bold;", dropdownParent);
-            } else {
-                 console.log("%c❌ ÉCHEC: Le parent .w-dropdown n'a pas été trouvé avec .closest()", "color: red; font-weight: bold;");
+                const listItem = trigger.closest('li');
+                if (!listItem) {
+                    console.error("Erreur critique: Le trigger n'est pas dans un <li>.", trigger);
+                    return;
+                }
+                
+                this._toggleDropdown(listItem);
+                return;
             }
 
-            console.log("--- Chemin des ancêtres depuis le trigger ---");
-            let currentParent = trigger.parentElement;
-            let i = 1;
-            while (currentParent && currentParent.tagName !== 'BODY') {
-                console.log(
-                    `#${i} | Balise: ${currentParent.tagName}`, 
-                    `| Classes: "${currentParent.className}"`,
-                    `| ID: "${currentParent.id || 'aucun'}"`
-                );
-                currentParent = currentParent.parentElement;
-                i++;
+            if (this.activeListItem && !this.activeListItem.contains(e.target)) {
+                this._closeDropdown(this.activeListItem);
             }
-            if (currentParent && currentParent.tagName === 'BODY') {
-                 console.log(`#${i} | Balise: BODY. Fin de la recherche.`);
-            } else {
-                 console.log("Arrêt avant d'atteindre le BODY.");
-            }
-             console.log("-----------------------------------------");
+        });
+    }
 
-            console.groupEnd();
-        }, true); // Utiliser la capture pour être sûr de recevoir l'événement
+    _toggleDropdown(listItem) {
+        if (this.isAnimating) return;
+
+        if (this.activeListItem === listItem) {
+            this._closeDropdown(listItem);
+        } else {
+            if (this.activeListItem) {
+                this._closeDropdown(this.activeListItem, false);
+            }
+            this._openDropdown(listItem);
+        }
+    }
+
+    _openDropdown(listItem) {
+        this.isAnimating = true;
+        this.activeListItem = listItem;
+        
+        const list = listItem.querySelector('.w-dropdown-list');
+        if (!list) {
+            console.error("Structure invalide: .w-dropdown-list manquant dans le <li>", listItem);
+            this.isAnimating = false;
+            return;
+        }
+        
+        window.gsap.set(list, { display: 'block' });
+        window.gsap.fromTo(list, 
+            { opacity: 0, y: -10 },
+            {
+                opacity: 1,
+                y: 0,
+                duration: 0.3,
+                ease: 'power2.out',
+                onComplete: () => { this.isAnimating = false; }
+            }
+        );
+    }
+
+    _closeDropdown(listItem, updateState = true) {
+        if (!listItem) return;
+        this.isAnimating = true;
+
+        const list = listItem.querySelector('.w-dropdown-list');
+        if (!list) {
+            this.isAnimating = false;
+            return;
+        }
+
+        window.gsap.to(list, {
+            opacity: 0,
+            y: -10,
+            duration: 0.2,
+            ease: 'power1.in',
+            onComplete: () => {
+                window.gsap.set(list, { display: 'none' });
+                this.isAnimating = false;
+                if (updateState) {
+                    this.activeListItem = null;
+                }
+            }
+        });
     }
 }
 
 export function initMenuDesktop() {
-    new MenuDiagnostician();
+    new FinsweetAwareDropdownHandler();
 }
