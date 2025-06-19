@@ -1,73 +1,75 @@
-// menu-desktop.js v11.0.0 - Stratégie "Frère du LI"
+// menu-desktop.js v12.0.0 - Stratégie "Contrat par Data-Attribute"
 // import { gsap } from 'gsap';
 
-console.log('🚀 menu-desktop.js v11.0.0 chargé - Stratégie "Frère du LI"');
+console.log('🚀 menu-desktop.js v12.0.0 chargé - Stratégie "Contrat par Data-Attribute"');
 
-class SiblingDropdownHandler {
+class DataAttributeContractHandler {
     constructor() {
-        this.activeListItem = null;
+        this.activePanel = null;
         this.isAnimating = false;
         
-        this.triggerSelectors = [
-            '[data-attribute="nav-link-desktop-parcs"]',
-            '[data-attribute="nav-link-desktop-activites"]',
-            '[data-attribute="nav-link-desktop-offres"]'
-        ].join(',');
+        this.triggerSelector = '[data-attribute^="nav-link-desktop-"]';
 
         this._addGlobalListener();
-        console.log('✅ Gestionnaire de clic "Frère du LI" est actif.');
+        console.log('✅ Gestionnaire de clic "Contrat par Data-Attribute" est actif.');
+    }
+
+    _getTargetPanelSelector(trigger) {
+        const triggerAttr = trigger.getAttribute('data-attribute');
+        if (!triggerAttr) return null;
+        const panelAttr = triggerAttr.replace('nav-link-desktop-', 'nav-panel-desktop-');
+        return `[data-attribute="${panelAttr}"]`;
     }
 
     _addGlobalListener() {
         document.body.addEventListener('click', (e) => {
-            const trigger = e.target.closest(this.triggerSelectors);
+            const trigger = e.target.closest(this.triggerSelector);
             
             if (trigger) {
                 e.preventDefault();
                 e.stopPropagation();
 
-                const listItem = trigger.closest('li');
-                if (!listItem) {
-                    console.error("Erreur critique: Le trigger n'est pas dans un <li>.", trigger);
+                const targetPanelSelector = this._getTargetPanelSelector(trigger);
+                if (!targetPanelSelector) return;
+                
+                const targetPanel = document.querySelector(targetPanelSelector);
+                if (!targetPanel) {
+                    console.error(`Panneau cible ${targetPanelSelector} non trouvé. Avez-vous ajouté le data-attribute au panneau dans Webflow ?`);
                     return;
                 }
                 
-                this._toggleDropdown(listItem);
+                this._toggleDropdown(targetPanel);
                 return;
             }
 
-            if (this.activeListItem && !this.activeListItem.contains(e.target) && !this.activeListItem.nextElementSibling?.contains(e.target)) {
-                 this._closeDropdown(this.activeListItem);
+            if (this.activePanel && !this.activePanel.contains(e.target)) {
+                 const triggerForActivePanel = document.querySelector(`[data-attribute="${this.activePanel.getAttribute('data-attribute').replace('nav-panel-desktop-', 'nav-link-desktop-')}"]`);
+                 if (triggerForActivePanel && !triggerForActivePanel.contains(e.target)) {
+                    this._closeDropdown(this.activePanel);
+                 }
             }
         });
     }
 
-    _toggleDropdown(listItem) {
+    _toggleDropdown(panel) {
         if (this.isAnimating) return;
 
-        if (this.activeListItem === listItem) {
-            this._closeDropdown(listItem);
+        if (this.activePanel === panel) {
+            this._closeDropdown(panel);
         } else {
-            if (this.activeListItem) {
-                this._closeDropdown(this.activeListItem, false);
+            if (this.activePanel) {
+                this._closeDropdown(this.activePanel, false);
             }
-            this._openDropdown(listItem);
+            this._openDropdown(panel);
         }
     }
 
-    _openDropdown(listItem) {
+    _openDropdown(panel) {
         this.isAnimating = true;
-        this.activeListItem = listItem;
+        this.activePanel = panel;
         
-        const list = listItem.nextElementSibling;
-        if (!list || !list.classList.contains('w-dropdown-list')) {
-            console.error("Structure invalide: le frère .w-dropdown-list est manquant pour le <li>", listItem);
-            this.isAnimating = false;
-            return;
-        }
-        
-        window.gsap.set(list, { display: 'block' });
-        window.gsap.fromTo(list, 
+        window.gsap.set(panel, { display: 'block' });
+        window.gsap.fromTo(panel, 
             { opacity: 0, y: -10 },
             {
                 opacity: 1,
@@ -79,26 +81,20 @@ class SiblingDropdownHandler {
         );
     }
 
-    _closeDropdown(listItem, updateState = true) {
-        if (!listItem) return;
+    _closeDropdown(panel, updateState = true) {
+        if (!panel) return;
         this.isAnimating = true;
 
-        const list = listItem.nextElementSibling;
-        if (!list || !list.classList.contains('w-dropdown-list')) {
-            this.isAnimating = false;
-            return;
-        }
-
-        window.gsap.to(list, {
+        window.gsap.to(panel, {
             opacity: 0,
             y: -10,
             duration: 0.2,
             ease: 'power1.in',
             onComplete: () => {
-                window.gsap.set(list, { display: 'none' });
+                window.gsap.set(panel, { display: 'none' });
                 this.isAnimating = false;
                 if (updateState) {
-                    this.activeListItem = null;
+                    this.activePanel = null;
                 }
             }
         });
@@ -106,5 +102,5 @@ class SiblingDropdownHandler {
 }
 
 export function initMenuDesktop() {
-    new SiblingDropdownHandler();
+    new DataAttributeContractHandler();
 }
