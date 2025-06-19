@@ -23,9 +23,9 @@ function initializeModules() {
         initDebugMenu();
 
         // --- Code Splitting pour les pages spécifiques ---
-        // Page Réservation
-        if (document.querySelector('[data-page="reservation"]')) {
-            console.log("-> Page Réservation détectée. Chargement du module...");
+        // Page Réservation : on charge le module si l'URL contient "/reservation"
+        if (window.location.pathname.includes('/reservation')) {
+            console.log("-> Page Réservation détectée via l'URL. Chargement du module...");
             import('./reservation.js')
                 .then(module => {
                     module.initReservation();
