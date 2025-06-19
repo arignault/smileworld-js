@@ -1,149 +1,121 @@
-// menu-desktop.js v4.0.0 - Stratégie "Ultra Patiente"
+// menu-desktop.js v5.0.0 - Stratégie "Vérité du DOM"
 // import { gsap } from 'gsap';
 
-console.log('🚀 menu-desktop.js v4.0.0 chargé - Stratégie "Ultra Patiente"');
+console.log('🚀 menu-desktop.js v5.0.0 chargé - Stratégie "Vérité du DOM"');
 
-class MenuDesktopManager {
-    constructor() {
-        // On ne stocke que les sélecteurs, pas les éléments eux-mêmes.
-        this.triggerSelectors = {
-            parcs: '[data-attribute="nav-link-desktop-parcs"]',
-            activites: '[data-attribute="nav-link-desktop-activites"]',
-            offres: '[data-attribute="nav-link-desktop-offres"]'
-        };
-
-        this.menuSelectors = {
-            parcs: '.parc_menu_desktop',
-            activites: '.activites_menu_desktop',
-            offres: '.offres_menu_desktop'
-        };
-        
-        this.background = this._createBackground();
-        
-        this.activeMenuKey = null;
+class WebflowDropdownManager {
+    constructor(desktopNav) {
+        this.desktopNav = desktopNav;
+        this.dropdowns = Array.from(this.desktopNav.querySelectorAll('.w-dropdown'));
+        this.activeDropdown = null;
         this.isAnimating = false;
 
-        this._setupInitialStyles();
-        this._setupEventListeners();
-        console.log('✅ Menu Desktop "Ultra Patient" initialisé.');
-    }
-    
-    _createBackground() {
-        const bg = document.createElement('div');
-        bg.className = 'menu-desktop-background';
-        document.body.appendChild(bg);
-        return bg;
+        if (this.dropdowns.length === 0) {
+            console.warn('[MenuDesktop] Aucun dropdown Webflow (.w-dropdown) trouvé.');
+            return;
+        }
+
+        this._prepareDropdowns();
+        this._addEventListeners();
+        console.log(`✅ ${this.dropdowns.length} dropdown(s) Webflow initialisé(s) en mode clic.`);
     }
 
-    _setupInitialStyles() {
-        // On ne prépare que le fond, car les menus n'existent peut-être pas encore.
-        window.gsap.set(this.background, { 
-            display: 'none', 
-            opacity: 0, 
-            backgroundColor: 'rgba(0,0,0,0.5)', 
-            position: 'fixed', 
-            top: 0, 
-            left: 0, 
-            width: '100%', 
-            height: '100vh', 
-            zIndex: 998 
+    _prepareDropdowns() {
+        this.dropdowns.forEach(dd => {
+            const list = dd.querySelector('.w-dropdown-list');
+            if (list) {
+                // On s'assure que le menu est caché et prêt pour l'animation GSAP
+                window.gsap.set(list, { display: 'none', opacity: 0, y: -10 });
+                // On désactive la gestion par survol de Webflow
+                dd.dataset.hover = "false";
+            }
         });
     }
 
-    _setupEventListeners() {
-        document.body.addEventListener('click', e => {
-            if (this.isAnimating) return;
-
-            // Trouver si un trigger a été cliqué en utilisant closest()
-            const clickedTriggerKey = Object.keys(this.triggerSelectors).find(key => 
-                e.target.closest(this.triggerSelectors[key])
-            );
-
-            if (clickedTriggerKey) {
-                e.preventDefault();
-                e.stopPropagation();
-                this._toggleMenu(clickedTriggerKey);
-                return;
+    _addEventListeners() {
+        this.dropdowns.forEach(dd => {
+            const toggle = dd.querySelector('.w-dropdown-toggle');
+            if (toggle) {
+                toggle.addEventListener('click', (e) => {
+                    e.preventDefault(); // Empêche toute action par défaut du lien
+                    e.stopPropagation(); // Arrête la propagation pour éviter de fermer immédiatement
+                    this._toggleDropdown(dd);
+                });
             }
+        });
 
-            // Gérer le clic à l'extérieur pour fermer le menu
-            if (this.activeMenuKey) {
-                const activeMenuElement = document.querySelector(this.menuSelectors[this.activeMenuKey]);
-                
-                // Si le menu actif est toujours dans le DOM
-                if (activeMenuElement && !activeMenuElement.contains(e.target)) {
-                    this._closeActiveMenu();
+        // Clic à l'extérieur pour fermer
+        document.addEventListener('click', (e) => {
+            if (this.activeDropdown && !this.activeDropdown.contains(e.target)) {
+                this._closeDropdown(this.activeDropdown);
+            }
+        });
+    }
+
+    _toggleDropdown(dropdown) {
+        if (this.isAnimating) return;
+
+        if (this.activeDropdown === dropdown) {
+            this._closeDropdown(dropdown);
+        } else {
+            // Fermer l'ancien menu s'il existe
+            if (this.activeDropdown) {
+                this._closeDropdown(this.activeDropdown, false); // Ferme sans changer l'état global tout de suite
+            }
+            this._openDropdown(dropdown);
+        }
+    }
+
+    _openDropdown(dropdown) {
+        this.isAnimating = true;
+        this.activeDropdown = dropdown;
+        
+        const list = dropdown.querySelector('.w-dropdown-list');
+        if (!list) return;
+
+        dropdown.classList.add('w--open');
+        list.classList.add('w--open');
+
+        window.gsap.to(list, {
+            display: 'block',
+            opacity: 1,
+            y: 0,
+            duration: 0.3,
+            ease: 'power2.out',
+            onComplete: () => { this.isAnimating = false; }
+        });
+    }
+
+    _closeDropdown(dropdown, updateState = true) {
+        this.isAnimating = true;
+
+        const list = dropdown.querySelector('.w-dropdown-list');
+        if (!list) return;
+
+        window.gsap.to(list, {
+            opacity: 0,
+            y: -10,
+            duration: 0.2,
+            ease: 'power1.in',
+            onComplete: () => {
+                window.gsap.set(list, { display: 'none' });
+                dropdown.classList.remove('w--open');
+                list.classList.remove('w--open');
+                this.isAnimating = false;
+                if (updateState) {
+                    this.activeDropdown = null;
                 }
             }
         });
     }
-
-    _toggleMenu(key) {
-        if (this.activeMenuKey === key) {
-            this._closeActiveMenu();
-        } else {
-            // Ferme l'ancien menu instantanément s'il y en a un
-            if (this.activeMenuKey) {
-                const oldMenu = document.querySelector(this.menuSelectors[this.activeMenuKey]);
-                if (oldMenu) window.gsap.set(oldMenu, { display: 'none', opacity: 0 });
-            }
-            this._openMenu(key);
-        }
-    }
-
-    _openMenu(key) {
-        // On cherche le menu SEULEMENT au moment du clic
-        const menuToOpen = document.querySelector(this.menuSelectors[key]);
-        
-        if (!menuToOpen) {
-            console.warn(`[MenuDesktop] Panneau "${this.menuSelectors[key]}" introuvable au moment du clic.`);
-            return;
-        }
-        
-        this.isAnimating = true;
-        this.activeMenuKey = key;
-        
-        const tl = window.gsap.timeline({
-            onComplete: () => { this.isAnimating = false; }
-        });
-
-        tl.set(this.background, { display: 'block' })
-          .set(menuToOpen, { display: 'block', opacity: 0, y: -10 }) // Préparation JIT
-          .to(this.background, { opacity: 1, duration: 0.3 })
-          .to(menuToOpen, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }, "-=0.2");
-    }
-
-    _closeActiveMenu() {
-        if (!this.activeMenuKey) return;
-
-        const menuToClose = document.querySelector(this.menuSelectors[this.activeMenuKey]);
-        const currentActiveMenuKey = this.activeMenuKey; // Sauvegarde de la clé
-        this.activeMenuKey = null;
-
-        if (!menuToClose) {
-            // Si le menu n'est plus là, on ferme au moins le fond
-            window.gsap.to(this.background, { opacity: 0, duration: 0.3, onComplete: () => {
-                window.gsap.set(this.background, { display: 'none' });
-            }});
-            return;
-        }
-
-        this.isAnimating = true;
-
-        const tl = window.gsap.timeline({
-            onComplete: () => {
-                this.isAnimating = false;
-                window.gsap.set(this.background, { display: 'none' });
-                window.gsap.set(menuToClose, { display: 'none' });
-            }
-        });
-        
-        tl.to(menuToClose, { opacity: 0, y: -10, duration: 0.2, ease: 'power1.in' })
-          .to(this.background, { opacity: 0, duration: 0.3 }, "-=0.1");
-    }
 }
 
 export function initMenuDesktop() {
-    // On initialise directement, car l'écouteur est sur 'body' et n'a besoin d'aucun élément au départ.
-    new MenuDesktopManager();
+    const desktopNav = document.querySelector('.topnav.is-desktop');
+    if (desktopNav) {
+        new WebflowDropdownManager(desktopNav);
+    } else {
+        // C'est normal sur mobile, donc pas d'erreur, juste un log discret.
+        console.log('[MenuDesktop] Barre de navigation desktop non trouvée. Initialisation annulée.');
+    }
 }
