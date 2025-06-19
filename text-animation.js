@@ -1,6 +1,6 @@
-// Version: 2.0.0 - Nettoyé et simplifié
+// Version: 2.1.0 - Prêt pour le build
 // import { gsap } from 'gsap';
-import { SplitText } from 'gsap/SplitText';
+// import { SplitText } from 'gsap/SplitText';
 
 console.log('🚀 text-animation.js v2.1.0 chargé');
 
@@ -76,21 +76,20 @@ export function initTextAnimation() {
     }
 }
 
-// Vérifie que GSAP est chargé
-function checkGSAPLoaded() {
-    if (typeof gsap !== 'undefined') {
-        setTimeout(initTextAnimation, 100);
-    } else {
-        setTimeout(checkGSAPLoaded, 100);
-    }
-}
-
-checkGSAPLoaded();
+// L'initialisation est maintenant gérée par main_gsap.js
+// function checkGSAPLoaded() {
+//     if (typeof gsap !== 'undefined') {
+//         setTimeout(initTextAnimation, 100);
+//     } else {
+//         setTimeout(checkGSAPLoaded, 100);
+//     }
+// }
+// checkGSAPLoaded();
 
 function animateText(element) {
     if (!element.hasAttribute('data-text-animated')) {
         const type = element.dataset.textAnimation || 'chars';
-        const mySplitText = new SplitText(element, { type: type });
+        const mySplitText = new window.gsap.SplitText(element, { type: type });
         
         let split;
         if (type === 'chars') {

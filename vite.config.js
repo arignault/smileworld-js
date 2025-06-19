@@ -23,5 +23,7 @@ export default defineConfig({
     },
     // Générer le bundle dans un dossier 'dist' à la racine
     outDir: 'dist', 
+    // Vider le dossier dist à chaque build
+    emptyOutDir: true,
   },
 }); 
