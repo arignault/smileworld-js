@@ -97,16 +97,18 @@ async function initializeApp() {
     }
 }
 
-// --- Lancement de l'application via le mécanisme Webflow ---
-// Nouvelle fonction patiente qui attend que GSAP soit chargé
+// Nouvelle fonction patiente qui attend que GSAP et les éléments soient chargés
 function waitForElementsAndInitialize() {
-    // On attend que la barre de navigation et le menu principal soient disponibles
-    if (window.gsap && document.querySelector('.w-nav') && document.querySelector('.desktop_menu_wrapper')) {
+    const isGsapReady = !!window.gsap;
+    const isNavReady = !!document.querySelector('.w-nav');
+    const isMenuWrapperReady = !!document.querySelector('.desktop_menu_wrapper');
+
+    if (isGsapReady && isNavReady && isMenuWrapperReady) {
         console.log('✅ GSAP et les éléments du menu sont prêts. Initialisation de l\'application...');
         window.gsap.registerPlugin(SplitText);
         initializeApp();
     } else {
-        console.log('⏳ GSAP ou les éléments du menu ne sont pas prêts, nouvelle tentative dans 100ms...');
+        console.log(`⏳ Attente... GSAP: ${isGsapReady}, .w-nav: ${isNavReady}, .desktop_menu_wrapper: ${isMenuWrapperReady}. Nouvelle tentative dans 100ms...`);
         setTimeout(waitForElementsAndInitialize, 100);
     }
 }
