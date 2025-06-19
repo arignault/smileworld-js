@@ -118,6 +118,6 @@ class ClassBasedContractHandler {
     }
 }
 
-export function initMenuDesktop() {
-    new ClassBasedContractHandler();
-}
+// L'initialisation se fait directement dans le script
+// pour éviter les problèmes de modules dans Webflow.
+new ClassBasedContractHandler();
