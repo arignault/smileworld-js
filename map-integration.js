@@ -39,6 +39,7 @@ const mapManager = {
 
         // 2. Création des marqueurs pour chaque centre
         this.createMarkers();
+        this.listenForFocusEvents();
     },
 
     /**
@@ -129,7 +130,7 @@ const mapManager = {
         this.map.setZoom(this.initialZoom);
     },
 
-    /* DÉBUT DE LA MODIFICATION : Fonction supprimée
+    // Réactivation de l'écouteur d'événements
     listenForFocusEvents: function() {
         document.addEventListener('map:focus', (e) => {
             this.focusOnCenter(e.detail.placeId);
@@ -139,7 +140,6 @@ const mapManager = {
             this.resetMapView();
         });
     }
-    */
 };
 
 // Expose uniquement la fonction initMap à window pour le callback de l'API Google
