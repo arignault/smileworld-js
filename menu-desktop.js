@@ -1,70 +1,82 @@
-// menu-desktop.js v6.0.0 - Stratégie "Ultime" (Événement Global)
+// menu-desktop.js v7.0.0 - Stratégie "Anti-Conflit"
 // import { gsap } from 'gsap';
 
-console.log('🚀 menu-desktop.js v6.0.0 chargé - Stratégie "Ultime"');
+console.log('🚀 menu-desktop.js v7.0.0 chargé - Stratégie "Anti-Conflit"');
 
-class GlobalDropdownClickHandler {
+class DataAttributeDropdownHandler {
     constructor() {
-        this.activeDropdown = null;
+        this.activeDropdownParent = null;
         this.isAnimating = false;
+        
+        // Sélecteurs basés uniquement sur les data-attributes personnalisés
+        this.triggerSelectors = [
+            '[data-attribute="nav-link-desktop-parcs"]',
+            '[data-attribute="nav-link-desktop-activites"]',
+            '[data-attribute="nav-link-desktop-offres"]'
+        ].join(',');
+
         this._addGlobalListener();
-        console.log('✅ Gestionnaire de clic global pour les dropdowns est actif.');
+        console.log('✅ Gestionnaire de clic "Anti-Conflit" est actif.');
     }
 
     _addGlobalListener() {
         document.body.addEventListener('click', (e) => {
-            const toggle = e.target.closest('.w-dropdown-toggle');
-            
-            // Cas 1: On a cliqué sur un toggle de dropdown
-            if (toggle) {
+            const trigger = e.target.closest(this.triggerSelectors);
+
+            // Cas 1: On a cliqué sur un de nos triggers
+            if (trigger) {
                 e.preventDefault();
                 e.stopPropagation();
-                const dropdown = toggle.parentElement; // .w-dropdown est le parent direct
-                this._toggleDropdown(dropdown);
+                
+                // On remonte au conteneur commun, qui est le w-dropdown
+                const dropdownParent = trigger.closest('.w-dropdown');
+                if (!dropdownParent) {
+                    console.error("Impossible de trouver le parent .w-dropdown pour le trigger:", trigger);
+                    return;
+                }
+                
+                this._toggleDropdown(dropdownParent);
                 return;
             }
 
-            // Cas 2: On a cliqué n'importe où ailleurs sur la page
-            if (this.activeDropdown && !this.activeDropdown.contains(e.target)) {
-                this._closeDropdown(this.activeDropdown);
+            // Cas 2: Clic à l'extérieur pour fermer
+            if (this.activeDropdownParent && !this.activeDropdownParent.contains(e.target)) {
+                this._closeDropdown(this.activeDropdownParent);
             }
         });
     }
 
-    _toggleDropdown(dropdown) {
+    _toggleDropdown(dropdownParent) {
         if (this.isAnimating) return;
 
-        // Si on clique sur le dropdown déjà actif, on le ferme.
-        if (this.activeDropdown === dropdown) {
-            this._closeDropdown(dropdown);
+        if (this.activeDropdownParent === dropdownParent) {
+            this._closeDropdown(dropdownParent);
         } else {
-            // Sinon, on ferme l'ancien (s'il y en a un) et on ouvre le nouveau.
-            if (this.activeDropdown) {
-                this._closeDropdown(this.activeDropdown, false); 
+            if (this.activeDropdownParent) {
+                this._closeDropdown(this.activeDropdownParent, false);
             }
-            this._openDropdown(dropdown);
+            this._openDropdown(dropdownParent);
         }
     }
 
-    _openDropdown(dropdown) {
+    _openDropdown(dropdownParent) {
         this.isAnimating = true;
-        this.activeDropdown = dropdown;
+        this.activeDropdownParent = dropdownParent;
         
-        const list = dropdown.querySelector('.w-dropdown-list');
+        // On trouve le panneau à l'intérieur du parent
+        const list = dropdownParent.querySelector('.w-dropdown-list');
         if (!list) {
-            console.error("Structure de dropdown invalide: .w-dropdown-list manquant.", dropdown);
+            console.error("Structure invalide: .w-dropdown-list manquant dans", dropdownParent);
             this.isAnimating = false;
             return;
         }
 
-        // Forcer la désactivation du hover natif de Webflow
-        if (dropdown.dataset.hover === "true") dropdown.dataset.hover = "false";
+        // Forcer la désactivation du hover natif
+        if (dropdownParent.dataset.hover === "true") dropdownParent.dataset.hover = "false";
 
-        dropdown.classList.add('w--open');
-        list.classList.add('w--open');
-
-        // Animation d'ouverture
-        window.gsap.set(list, { display: 'block' }); // On s'assure qu'il est visible avant l'anim
+        dropdownParent.classList.add('w--open');
+        
+        window.gsap.set(list, { display: 'block' });
         window.gsap.fromTo(list, 
             { opacity: 0, y: -10 },
             {
@@ -77,17 +89,16 @@ class GlobalDropdownClickHandler {
         );
     }
 
-    _closeDropdown(dropdown, updateState = true) {
-        if (!dropdown) return;
+    _closeDropdown(dropdownParent, updateState = true) {
+        if (!dropdownParent) return;
         this.isAnimating = true;
 
-        const list = dropdown.querySelector('.w-dropdown-list');
+        const list = dropdownParent.querySelector('.w-dropdown-list');
         if (!list) {
             this.isAnimating = false;
             return;
         }
 
-        // Animation de fermeture
         window.gsap.to(list, {
             opacity: 0,
             y: -10,
@@ -95,11 +106,10 @@ class GlobalDropdownClickHandler {
             ease: 'power1.in',
             onComplete: () => {
                 window.gsap.set(list, { display: 'none' });
-                dropdown.classList.remove('w--open');
-                list.classList.remove('w--open');
+                dropdownParent.classList.remove('w--open');
                 this.isAnimating = false;
                 if (updateState) {
-                    this.activeDropdown = null;
+                    this.activeDropdownParent = null;
                 }
             }
         });
@@ -107,7 +117,5 @@ class GlobalDropdownClickHandler {
 }
 
 export function initMenuDesktop() {
-    // Il n'y a plus rien à vérifier. On lance le gestionnaire global.
-    // Il attendra passivement les clics.
-    new GlobalDropdownClickHandler();
+    new DataAttributeDropdownHandler();
 }
