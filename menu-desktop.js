@@ -121,7 +121,24 @@ class MenuDesktop {
     }
 }
 
+let menuInitAttempts = 0;
+const MAX_MENU_INIT_ATTEMPTS = 50; // Attend max 5 secondes
+
+function tryToInitMenu() {
+    if (document.querySelector('.desktop_menu_wrapper')) {
+        console.log('✅ .desktop_menu_wrapper trouvé. Initialisation du menu desktop.');
+        new MenuDesktop();
+    } else {
+        menuInitAttempts++;
+        if (menuInitAttempts < MAX_MENU_INIT_ATTEMPTS) {
+            console.log(`[MenuDesktop] Wrapper non trouvé, nouvelle tentative dans 100ms (${menuInitAttempts}/${MAX_MENU_INIT_ATTEMPTS})`);
+            setTimeout(tryToInitMenu, 100);
+        } else {
+            console.error('[MenuDesktop] Initialisation annulée après 5 secondes. .desktop_menu_wrapper introuvable.');
+        }
+    }
+}
+
 export function initMenuDesktop() {
-    // La logique d'observation sera dans main_gsap.js pour s'assurer que .w-nav existe
-    new MenuDesktop();
+    tryToInitMenu();
 }

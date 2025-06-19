@@ -101,14 +101,13 @@ async function initializeApp() {
 function waitForElementsAndInitialize() {
     const isGsapReady = !!window.gsap;
     const isNavReady = !!document.querySelector('.w-nav');
-    const isMenuWrapperReady = !!document.querySelector('.desktop_menu_wrapper');
 
-    if (isGsapReady && isNavReady && isMenuWrapperReady) {
-        console.log('✅ GSAP et les éléments du menu sont prêts. Initialisation de l\'application...');
+    if (isGsapReady && isNavReady) {
+        console.log('✅ GSAP et .w-nav sont prêts. Initialisation de l\'application...');
         window.gsap.registerPlugin(SplitText);
         initializeApp();
     } else {
-        console.log(`⏳ Attente... GSAP: ${isGsapReady}, .w-nav: ${isNavReady}, .desktop_menu_wrapper: ${isMenuWrapperReady}. Nouvelle tentative dans 100ms...`);
+        console.log(`⏳ Attente... GSAP: ${isGsapReady}, .w-nav: ${isNavReady}. Nouvelle tentative dans 100ms...`);
         setTimeout(waitForElementsAndInitialize, 100);
     }
 }

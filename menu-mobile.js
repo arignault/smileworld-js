@@ -53,8 +53,26 @@ class MenuMobile {
     }
 }
 
+let mobileMenuInitAttempts = 0;
+const MAX_MOBILE_MENU_INIT_ATTEMPTS = 50;
+
+function tryToInitMobileMenu() {
+    if (document.querySelector('.menu-mobile')) {
+        console.log('✅ .menu-mobile trouvé. Initialisation du menu mobile.');
+        new MenuMobile();
+    } else {
+        mobileMenuInitAttempts++;
+        if (mobileMenuInitAttempts < MAX_MOBILE_MENU_INIT_ATTEMPTS) {
+            console.log(`[MenuMobile] Conteneur non trouvé, nouvelle tentative dans 100ms...`);
+            setTimeout(tryToInitMobileMenu, 100);
+        } else {
+            console.error('[MenuMobile] Initialisation annulée après 5 secondes. .menu-mobile introuvable.');
+        }
+    }
+}
+
 export function initMenuMobile() {
-    new MenuMobile();
+    tryToInitMobileMenu();
 }
   
   
