@@ -87,13 +87,15 @@ async function toggleCard(cardElement) {
             await Promise.all(Array.from(otherOpenCards).map(card => closeCard(card)));
             await openCard(cardElement);
 
+            /* DÉBUT DE LA MODIFICATION : Lignes supprimées
             const placeId = cardElement.closest('.w-dyn-item')?.dataset.placeId;
             if (placeId) {
                 document.dispatchEvent(new CustomEvent('map:focus', { detail: { placeId } }));
             }
+            */
         } else {
             await closeCard(cardElement);
-            document.dispatchEvent(new CustomEvent('map:reset'));
+            // document.dispatchEvent(new CustomEvent('map:reset')); // Ligne supprimée
         }
     } finally {
         isAnimating = false;
