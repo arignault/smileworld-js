@@ -1,24 +1,22 @@
-// menu-desktop.js v12.0.0 - Stratégie "Contrat par Data-Attribute"
+// menu-desktop.js v13.0.0 - Stratégie "Contrat par Classe"
 // import { gsap } from 'gsap';
 
-console.log('🚀 menu-desktop.js v12.0.0 chargé - Stratégie "Contrat par Data-Attribute"');
+console.log('🚀 menu-desktop.js v13.0.0 chargé - Stratégie "Contrat par Classe"');
 
-class DataAttributeContractHandler {
+class ClassBasedContractHandler {
     constructor() {
         this.activePanel = null;
         this.isAnimating = false;
         
         this.triggerSelector = '[data-attribute^="nav-link-desktop-"]';
+        this.panelClassMap = {
+            'parc': '.parc_menu_desktop',
+            'activites': '.activites_menu_desktop',
+            'offres': '.offres_menu_desktop'
+        };
 
         this._addGlobalListener();
-        console.log('✅ Gestionnaire de clic "Contrat par Data-Attribute" est actif.');
-    }
-
-    _getTargetPanelSelector(trigger) {
-        const triggerAttr = trigger.getAttribute('data-attribute');
-        if (!triggerAttr) return null;
-        const panelAttr = triggerAttr.replace('nav-link-desktop-', 'nav-panel-desktop-');
-        return `[data-attribute="${panelAttr}"]`;
+        console.log('✅ Gestionnaire de clic "Contrat par Classe" est actif.');
     }
 
     _addGlobalListener() {
@@ -29,29 +27,43 @@ class DataAttributeContractHandler {
                 e.preventDefault();
                 e.stopPropagation();
 
-                const targetPanelSelector = this._getTargetPanelSelector(trigger);
-                if (!targetPanelSelector) return;
-                
-                const targetPanel = document.querySelector(targetPanelSelector);
-                if (!targetPanel) {
-                    console.error(`Panneau cible ${targetPanelSelector} non trouvé. Avez-vous ajouté le data-attribute au panneau dans Webflow ?`);
+                const triggerAttr = trigger.getAttribute('data-attribute');
+                if (!triggerAttr) return;
+
+                const key = triggerAttr.replace('nav-link-desktop-', '');
+                const targetPanelSelector = this.panelClassMap[key];
+
+                if (!targetPanelSelector) {
+                    console.error(`Aucune classe de panneau correspondante trouvée pour la clé: ${key}`);
                     return;
                 }
                 
-                this._toggleDropdown(targetPanel);
+                const targetPanel = document.querySelector(targetPanelSelector);
+                if (!targetPanel) {
+                    console.error(`Panneau cible ${targetPanelSelector} non trouvé. Avez-vous ajouté la classe au panneau dans Webflow ?`);
+                    return;
+                }
+                
+                this._toggleDropdown(targetPanel, key);
                 return;
             }
 
             if (this.activePanel && !this.activePanel.contains(e.target)) {
-                 const triggerForActivePanel = document.querySelector(`[data-attribute="${this.activePanel.getAttribute('data-attribute').replace('nav-panel-desktop-', 'nav-link-desktop-')}"]`);
-                 if (triggerForActivePanel && !triggerForActivePanel.contains(e.target)) {
+                 const triggerKey = this.activePanel.dataset.panelKey;
+                 if (triggerKey) {
+                    const triggerForActivePanel = document.querySelector(`[data-attribute="nav-link-desktop-${triggerKey}"]`);
+                     if (!triggerForActivePanel || (triggerForActivePanel && !triggerForActivePanel.contains(e.target))) {
+                        this._closeDropdown(this.activePanel);
+                     }
+                 } else {
+                    // Fallback for safety, though should not be reached with the new logic
                     this._closeDropdown(this.activePanel);
                  }
             }
         });
     }
 
-    _toggleDropdown(panel) {
+    _toggleDropdown(panel, key) {
         if (this.isAnimating) return;
 
         if (this.activePanel === panel) {
@@ -60,13 +72,14 @@ class DataAttributeContractHandler {
             if (this.activePanel) {
                 this._closeDropdown(this.activePanel, false);
             }
-            this._openDropdown(panel);
+            this._openDropdown(panel, key);
         }
     }
 
-    _openDropdown(panel) {
+    _openDropdown(panel, key) {
         this.isAnimating = true;
         this.activePanel = panel;
+        panel.dataset.panelKey = key;
         
         window.gsap.set(panel, { display: 'block' });
         window.gsap.fromTo(panel, 
@@ -85,6 +98,10 @@ class DataAttributeContractHandler {
         if (!panel) return;
         this.isAnimating = true;
 
+        if (panel.dataset.panelKey) {
+            delete panel.dataset.panelKey;
+        }
+
         window.gsap.to(panel, {
             opacity: 0,
             y: -10,
@@ -102,5 +119,5 @@ class DataAttributeContractHandler {
 }
 
 export function initMenuDesktop() {
-    new DataAttributeContractHandler();
+    new ClassBasedContractHandler();
 }
