@@ -1,51 +1,30 @@
-// menu-desktop.js v5.0.0 - Stratégie "Vérité du DOM"
+// menu-desktop.js v6.0.0 - Stratégie "Ultime" (Événement Global)
 // import { gsap } from 'gsap';
 
-console.log('🚀 menu-desktop.js v5.0.0 chargé - Stratégie "Vérité du DOM"');
+console.log('🚀 menu-desktop.js v6.0.0 chargé - Stratégie "Ultime"');
 
-class WebflowDropdownManager {
-    constructor(desktopNav) {
-        this.desktopNav = desktopNav;
-        this.dropdowns = Array.from(this.desktopNav.querySelectorAll('.w-dropdown'));
+class GlobalDropdownClickHandler {
+    constructor() {
         this.activeDropdown = null;
         this.isAnimating = false;
-
-        if (this.dropdowns.length === 0) {
-            console.warn('[MenuDesktop] Aucun dropdown Webflow (.w-dropdown) trouvé.');
-            return;
-        }
-
-        this._prepareDropdowns();
-        this._addEventListeners();
-        console.log(`✅ ${this.dropdowns.length} dropdown(s) Webflow initialisé(s) en mode clic.`);
+        this._addGlobalListener();
+        console.log('✅ Gestionnaire de clic global pour les dropdowns est actif.');
     }
 
-    _prepareDropdowns() {
-        this.dropdowns.forEach(dd => {
-            const list = dd.querySelector('.w-dropdown-list');
-            if (list) {
-                // On s'assure que le menu est caché et prêt pour l'animation GSAP
-                window.gsap.set(list, { display: 'none', opacity: 0, y: -10 });
-                // On désactive la gestion par survol de Webflow
-                dd.dataset.hover = "false";
-            }
-        });
-    }
-
-    _addEventListeners() {
-        this.dropdowns.forEach(dd => {
-            const toggle = dd.querySelector('.w-dropdown-toggle');
+    _addGlobalListener() {
+        document.body.addEventListener('click', (e) => {
+            const toggle = e.target.closest('.w-dropdown-toggle');
+            
+            // Cas 1: On a cliqué sur un toggle de dropdown
             if (toggle) {
-                toggle.addEventListener('click', (e) => {
-                    e.preventDefault(); // Empêche toute action par défaut du lien
-                    e.stopPropagation(); // Arrête la propagation pour éviter de fermer immédiatement
-                    this._toggleDropdown(dd);
-                });
+                e.preventDefault();
+                e.stopPropagation();
+                const dropdown = toggle.parentElement; // .w-dropdown est le parent direct
+                this._toggleDropdown(dropdown);
+                return;
             }
-        });
 
-        // Clic à l'extérieur pour fermer
-        document.addEventListener('click', (e) => {
+            // Cas 2: On a cliqué n'importe où ailleurs sur la page
             if (this.activeDropdown && !this.activeDropdown.contains(e.target)) {
                 this._closeDropdown(this.activeDropdown);
             }
@@ -55,12 +34,13 @@ class WebflowDropdownManager {
     _toggleDropdown(dropdown) {
         if (this.isAnimating) return;
 
+        // Si on clique sur le dropdown déjà actif, on le ferme.
         if (this.activeDropdown === dropdown) {
             this._closeDropdown(dropdown);
         } else {
-            // Fermer l'ancien menu s'il existe
+            // Sinon, on ferme l'ancien (s'il y en a un) et on ouvre le nouveau.
             if (this.activeDropdown) {
-                this._closeDropdown(this.activeDropdown, false); // Ferme sans changer l'état global tout de suite
+                this._closeDropdown(this.activeDropdown, false); 
             }
             this._openDropdown(dropdown);
         }
@@ -71,27 +51,43 @@ class WebflowDropdownManager {
         this.activeDropdown = dropdown;
         
         const list = dropdown.querySelector('.w-dropdown-list');
-        if (!list) return;
+        if (!list) {
+            console.error("Structure de dropdown invalide: .w-dropdown-list manquant.", dropdown);
+            this.isAnimating = false;
+            return;
+        }
+
+        // Forcer la désactivation du hover natif de Webflow
+        if (dropdown.dataset.hover === "true") dropdown.dataset.hover = "false";
 
         dropdown.classList.add('w--open');
         list.classList.add('w--open');
 
-        window.gsap.to(list, {
-            display: 'block',
-            opacity: 1,
-            y: 0,
-            duration: 0.3,
-            ease: 'power2.out',
-            onComplete: () => { this.isAnimating = false; }
-        });
+        // Animation d'ouverture
+        window.gsap.set(list, { display: 'block' }); // On s'assure qu'il est visible avant l'anim
+        window.gsap.fromTo(list, 
+            { opacity: 0, y: -10 },
+            {
+                opacity: 1,
+                y: 0,
+                duration: 0.3,
+                ease: 'power2.out',
+                onComplete: () => { this.isAnimating = false; }
+            }
+        );
     }
 
     _closeDropdown(dropdown, updateState = true) {
+        if (!dropdown) return;
         this.isAnimating = true;
 
         const list = dropdown.querySelector('.w-dropdown-list');
-        if (!list) return;
+        if (!list) {
+            this.isAnimating = false;
+            return;
+        }
 
+        // Animation de fermeture
         window.gsap.to(list, {
             opacity: 0,
             y: -10,
@@ -111,11 +107,7 @@ class WebflowDropdownManager {
 }
 
 export function initMenuDesktop() {
-    const desktopNav = document.querySelector('.topnav.is-desktop');
-    if (desktopNav) {
-        new WebflowDropdownManager(desktopNav);
-    } else {
-        // C'est normal sur mobile, donc pas d'erreur, juste un log discret.
-        console.log('[MenuDesktop] Barre de navigation desktop non trouvée. Initialisation annulée.');
-    }
+    // Il n'y a plus rien à vérifier. On lance le gestionnaire global.
+    // Il attendra passivement les clics.
+    new GlobalDropdownClickHandler();
 }
