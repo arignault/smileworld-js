@@ -1,78 +1,165 @@
-// Version: 2.0.0 - Refactorisation avec classes CSS et simplification
+// menu-mobile.js v3.0.0 - "Chef d'Orchestre" au clic
 // import { gsap } from 'gsap';
 
-console.log('🚀 menu-mobile.js v2.0.0 chargé');
+console.log('🚀 menu-mobile.js v3.0.0 chargé - Stratégie "Chef d\'Orchestre"');
 
-class MenuMobile {
+class MenuMobileManager {
     constructor() {
         this.elements = {
-            menu: document.querySelector('.menu-mobile'),
-            // Les boutons sont recherchés dynamiquement par la délégation
-        };
-        this.navBar = document.querySelector('.w-nav');
-        this.animation = null;
+            mainPanel: document.querySelector('.menu-mobile'),
+            openButton: document.querySelector('#hamburger-menu'),
+            closeButton: document.querySelector('.button-close_menu-mobile'),
+            
+            navLinks: {
+                parcs: document.querySelector('#parcs-nav_button_mobile'),
+                activites: document.querySelector('#activites-nav_button_mobile'),
+                offres: document.querySelector('#formules-nav_button_mobile'),
+            },
+            
+            panels: {
+                main: document.querySelector('#main-menu-mobile'),
+                parcs: document.querySelector('#parc-menu-mobile'),
+                activites: document.querySelector('#activites-menu-mobile'),
+                offres: document.querySelector('#offres-menu-mobile'),
+            },
 
-        if (!this.navBar || !this.elements.menu) {
-            console.error('[MenuMobile] Barre de navigation (.w-nav) ou menu (.menu-mobile) introuvable. Initialisation annulée.');
+            backButtons: document.querySelectorAll('.button-back-menu'),
+        };
+
+        this.activePanel = this.elements.panels.main;
+        this.isAnimating = false;
+        
+        if (!this.elements.mainPanel) {
+            console.warn('[MenuMobile] Panneau principal .menu-mobile introuvable. Initialisation annulée.');
             return;
         }
 
+        this._setupInitialStyles();
         this._setupEventListeners();
-        console.log('✅ Menu Mobile initialisé avec la délégation d\'événements.');
+        console.log('✅ Menu Mobile "Chef d\'Orchestre" initialisé.');
     }
 
-    _setupEventListeners() {
-        this.navBar.addEventListener('click', e => {
-            const openBtn = e.target.closest('.menu-button-open');
-            const closeBtn = e.target.closest('.menu-button-close');
-
-            if (openBtn) {
-                this._animateOpen();
-            } else if (closeBtn) {
-                this._animateClose();
+    _setupInitialStyles() {
+        window.gsap.set(this.elements.mainPanel, { x: '100%', display: 'none' });
+        Object.values(this.elements.panels).forEach((panel, index) => {
+            if (panel) {
+                const isMainPanel = panel === this.elements.panels.main;
+                window.gsap.set(panel, { 
+                    display: isMainPanel ? 'flex' : 'none', 
+                    opacity: isMainPanel ? 1 : 0, 
+                    x: '0%' 
+                });
             }
         });
     }
 
-    _animateOpen() {
-        if (this.animation && this.animation.isActive()) return;
+    _setupEventListeners() {
+        document.body.addEventListener('click', e => {
+            if (this.isAnimating) return;
 
-        this.animation = window.gsap.timeline();
-        this.animation
-            .set(this.elements.menu, { display: 'block' })
-            .to(this.elements.menu, { right: '0%', duration: 0.5, ease: 'power3.inOut' });
+            // --- Open / Close ---
+            if (this.elements.openButton && this.elements.openButton.contains(e.target)) {
+                e.preventDefault();
+                this._openMainMenu();
+                return;
+            }
+            if (this.elements.closeButton && this.elements.closeButton.contains(e.target)) {
+                e.preventDefault();
+                this._closeMainMenu();
+                return;
+            }
+
+            // --- Navigation vers sous-menu ---
+            const clickedNavKey = Object.keys(this.elements.navLinks).find(key => 
+                this.elements.navLinks[key] && this.elements.navLinks[key].contains(e.target)
+            );
+            if (clickedNavKey) {
+                e.preventDefault();
+                const targetPanel = this.elements.panels[clickedNavKey];
+                if (targetPanel) this._navigateToPanel(targetPanel);
+                return;
+            }
+
+            // --- Navigation retour ---
+            const clickedBackButton = Array.from(this.elements.backButtons).find(btn => btn.contains(e.target));
+            if (clickedBackButton) {
+                e.preventDefault();
+                this._navigateToPanel(this.elements.panels.main, true);
+                return;
+            }
+        });
     }
 
-    _animateClose() {
-        if (this.animation && this.animation.isActive()) return;
-
-        this.animation = window.gsap.timeline();
-        this.animation
-            .to(this.elements.menu, { right: '-100%', duration: 0.5, ease: 'power3.inOut' })
-            .set(this.elements.menu, { display: 'none' });
+    _openMainMenu() {
+        this.isAnimating = true;
+        window.gsap.set(this.elements.mainPanel, { display: 'block' });
+        window.gsap.to(this.elements.mainPanel, { 
+            x: '0%', 
+            duration: 0.5, 
+            ease: 'power3.out',
+            onComplete: () => { this.isAnimating = false; }
+        });
+        document.body.style.overflow = 'hidden';
     }
-}
 
-let mobileMenuInitAttempts = 0;
-const MAX_MOBILE_MENU_INIT_ATTEMPTS = 50;
+    _closeMainMenu() {
+        this.isAnimating = true;
+        // Avant de fermer, s'assurer que seul le menu principal est visible
+        this._resetToMainPanel();
+        
+        window.gsap.to(this.elements.mainPanel, {
+            x: '100%',
+            duration: 0.4,
+            ease: 'power3.in',
+            onComplete: () => {
+                window.gsap.set(this.elements.mainPanel, { display: 'none' });
+                this.isAnimating = false;
+            }
+        });
+        document.body.style.overflow = '';
+    }
+    
+    _navigateToPanel(targetPanel, isGoingBack = false) {
+        if (!this.activePanel || !targetPanel || this.activePanel === targetPanel) return;
 
-function tryToInitMobileMenu() {
-    if (document.querySelector('.menu-mobile')) {
-        console.log('✅ .menu-mobile trouvé. Initialisation du menu mobile.');
-        new MenuMobile();
-    } else {
-        mobileMenuInitAttempts++;
-        if (mobileMenuInitAttempts < MAX_MOBILE_MENU_INIT_ATTEMPTS) {
-            console.log(`[MenuMobile] Conteneur non trouvé, nouvelle tentative dans 100ms...`);
-            setTimeout(tryToInitMobileMenu, 100);
-        } else {
-            console.error('[MenuMobile] Initialisation annulée après 5 secondes. .menu-mobile introuvable.');
-        }
+        this.isAnimating = true;
+        const currentPanel = this.activePanel;
+        const movePercent = isGoingBack ? 100 : -100;
+
+        window.gsap.set(targetPanel, { display: 'flex', x: `${-movePercent}%`, opacity: 1 });
+
+        const tl = window.gsap.timeline({
+            onComplete: () => {
+                window.gsap.set(currentPanel, { display: 'none' });
+                this.activePanel = targetPanel;
+                this.isAnimating = false;
+            }
+        });
+
+        tl.to(currentPanel, { x: `${movePercent}%`, duration: 0.4, ease: 'power2.inOut' })
+          .to(targetPanel, { x: '0%', duration: 0.4, ease: 'power2.inOut' }, '-=0.4');
+    }
+
+    _resetToMainPanel() {
+        Object.values(this.elements.panels).forEach(panel => {
+            if (panel) {
+                if (panel === this.elements.panels.main) {
+                    window.gsap.set(panel, { display: 'flex', x: '0%' });
+                } else {
+                    window.gsap.set(panel, { display: 'none' });
+                }
+            }
+        });
+        this.activePanel = this.elements.panels.main;
     }
 }
 
 export function initMenuMobile() {
-    tryToInitMobileMenu();
+    if (document.querySelector('.menu-mobile')) {
+        new MenuMobileManager();
+    } else {
+        console.warn('[MenuMobile] Élément .menu-mobile non trouvé. Initialisation annulée.');
+    }
 }
   
   

@@ -1,144 +1,134 @@
-// menu-desktop.js v2.3.0 - Utilise la délégation d'événements
+// menu-desktop.js v3.0.0 - "Chef d'Orchestre" au clic
 // import { gsap } from 'gsap';
 
-console.log('🚀 menu-desktop.js v2.3.0 chargé');
+console.log('🚀 menu-desktop.js v3.0.0 chargé - Stratégie "Chef d\'Orchestre"');
 
-class MenuDesktop {
+class MenuDesktopManager {
     constructor() {
-        this.elements = {
-            wrapper: document.querySelector('.desktop_menu_wrapper'),
+        this.triggers = {
+            parcs: document.querySelector('[data-attribute="nav-link-desktop-parcs"]'),
+            activites: document.querySelector('[data-attribute="nav-link-desktop-activites"]'),
+            offres: document.querySelector('[data-attribute="nav-link-desktop-offres"]')
+        };
+
+        this.menus = {
             parcs: document.querySelector('.parc_menu_desktop'),
             activites: document.querySelector('.activites_menu_desktop'),
             offres: document.querySelector('.offres_menu_desktop')
         };
-        this.navBar = document.querySelector('.w-nav'); // Le conteneur parent fiable
-        this.currentMenu = null;
-        this.currentTimeline = null;
-        this.leaveTimeout = null;
+        
+        this.background = this._createBackground();
+        
+        this.activeMenu = null;
+        this.isAnimating = false;
 
-        if (!this.navBar || !this.elements.wrapper) {
-            console.error('[MenuDesktop] Barre de navigation (.w-nav) ou wrapper (.desktop_menu_wrapper) introuvable. Initialisation annulée.');
-            return;
-        }
-
+        this._setupInitialStyles();
         this._setupEventListeners();
-        console.log('✅ Menu Desktop initialisé avec la délégation d\'événements.');
+        console.log('✅ Menu Desktop "Chef d\'Orchestre" initialisé.');
+    }
+    
+    _createBackground() {
+        const bg = document.createElement('div');
+        bg.className = 'menu-desktop-background';
+        document.body.appendChild(bg);
+        return bg;
+    }
+
+    _setupInitialStyles() {
+        Object.values(this.menus).forEach(menu => {
+            if (menu) window.gsap.set(menu, { display: 'none', opacity: 0 });
+        });
+        window.gsap.set(this.background, { display: 'none', opacity: 0, backgroundColor: 'rgba(0,0,0,0.5)', position: 'fixed', top: 0, left: 0, width: '100%', height: '100vh', zIndex: 998 });
     }
 
     _setupEventListeners() {
-        // Utilise mouseover qui "bulle" (bubble) contrairement à mouseenter
-        this.navBar.addEventListener('mouseover', e => {
-            const trigger = e.target.closest('[data-menu-target]');
-            if (trigger) {
-                this._handleMenuEnter(trigger);
-            }
-        });
+        document.body.addEventListener('click', e => {
+            if (this.isAnimating) return;
 
-        this.elements.wrapper.addEventListener('mouseleave', this._handleMenuLeave.bind(this));
-    }
+            // Trouver si un trigger a été cliqué
+            const clickedTriggerKey = Object.keys(this.triggers).find(key => 
+                this.triggers[key] && this.triggers[key].contains(e.target)
+            );
 
-    _handleMenuEnter(trigger) {
-        clearTimeout(this.leaveTimeout); // Annule toute fermeture en cours
-        const menuKey = trigger.dataset.menuTarget;
-
-        // Si on survole déjà le bon trigger, ne rien faire
-        if (this.currentMenu && this.currentMenu === this.elements[menuKey]) {
-            return;
-        }
-        
-        // Fermer le menu précédent avant d'en ouvrir un nouveau
-        if (this.currentMenu) {
-            this._animateMenuClose(false); // Fermeture rapide sans cacher le fond
-        }
-        
-        this._animateMenuOpen(menuKey);
-    }
-
-    _handleMenuLeave() {
-        this.leaveTimeout = setTimeout(() => {
-            this._animateMenuClose(true); // Fermeture complète
-        }, 50);
-    }
-    
-    _animateMenuClose(hideWrapper) {
-        console.log('🎬 Animation de fermeture du menu', this.currentMenu);
-        if (this.currentMenu) {
-            const menuContent = this.currentMenu.querySelector('.menu-desktop-content');
-            
-            if (this.currentTimeline && this.currentTimeline.isActive()) {
-                this.currentTimeline.kill();
+            if (clickedTriggerKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                this._toggleMenu(clickedTriggerKey);
+                return;
             }
 
-            this.currentTimeline = window.gsap.timeline({
-                onComplete: () => {
-                    this.currentMenu.classList.remove('is-active');
-                    if (hideWrapper) {
-                        this.elements.wrapper.classList.remove('is-active');
-                    }
-                    this.currentMenu = null;
+            // Gérer le clic à l'extérieur
+            if (this.activeMenu) {
+                const activeMenuElement = this.menus[this.activeMenu];
+                const activeTriggerElement = this.triggers[this.activeMenu];
+                const isClickInside = activeMenuElement && activeMenuElement.contains(e.target);
+                const isClickOnTrigger = activeTriggerElement && activeTriggerElement.contains(e.target);
+
+                if (!isClickInside && !isClickOnTrigger) {
+                    this._closeActiveMenu();
                 }
-            });
-            
-            this.currentTimeline.to(menuContent, {
-                opacity: 0,
-                duration: 0.2,
-                ease: 'power1.in'
-            });
+            }
+        });
+    }
+
+    _toggleMenu(key) {
+        if (this.activeMenu === key) {
+            this._closeActiveMenu();
+        } else {
+            // Ferme l'ancien menu instantanément s'il y en a un
+            if (this.activeMenu) {
+                const oldMenu = this.menus[this.activeMenu];
+                if (oldMenu) window.gsap.set(oldMenu, { display: 'none', opacity: 0 });
+            }
+            this._openMenu(key);
         }
     }
 
-    _animateMenuOpen(menuKey) {
-        if (!this.elements[menuKey]) return;
+    _openMenu(key) {
+        const menuToOpen = this.menus[key];
+        if (!menuToOpen) return;
+        
+        this.isAnimating = true;
+        this.activeMenu = key;
+        
+        const tl = window.gsap.timeline({
+            onComplete: () => { this.isAnimating = false; }
+        });
 
-        this.currentMenu = this.elements[menuKey];
-        const menuContent = this.currentMenu.querySelector('.menu-desktop-content');
-        
-        console.log('🎬 Animation d\'ouverture du menu', this.currentMenu);
-        
-        if (this.currentTimeline && this.currentTimeline.isActive()) {
-            this.currentTimeline.kill();
-        }
+        tl.set(this.background, { display: 'block' })
+          .set(menuToOpen, { display: 'block' })
+          .to(this.background, { opacity: 1, duration: 0.3 })
+          .to(menuToOpen, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }, "-=0.2");
+    }
 
-        this.elements.wrapper.classList.add('is-active');
-        
-        // S'assurer que les autres menus sont bien cachés
-        ['parcs', 'activites', 'offres'].forEach(key => {
-            if (key !== menuKey && this.elements[key]) {
-                this.elements[key].classList.remove('is-active');
-                 const content = this.elements[key].querySelector('.menu-desktop-content');
-                 if(content) window.gsap.set(content, {opacity: 0});
+    _closeActiveMenu() {
+        if (!this.activeMenu) return;
+
+        const menuToClose = this.menus[this.activeMenu];
+        if (!menuToClose) return;
+
+        this.isAnimating = true;
+        const currentActiveMenuKey = this.activeMenu; // Sauvegarde la clé
+        this.activeMenu = null;
+
+        const tl = window.gsap.timeline({
+            onComplete: () => {
+                this.isAnimating = false;
+                window.gsap.set(this.background, { display: 'none' });
+                window.gsap.set(menuToClose, { display: 'none' });
             }
         });
         
-        this.currentMenu.classList.add('is-active');
-        
-        this.currentTimeline = window.gsap.from(menuContent, {
-            opacity: 0,
-            y: '-10px',
-            duration: 0.3,
-            ease: 'power2.out'
-        });
-    }
-}
-
-let menuInitAttempts = 0;
-const MAX_MENU_INIT_ATTEMPTS = 50; // Attend max 5 secondes
-
-function tryToInitMenu() {
-    if (document.querySelector('.desktop_menu_wrapper')) {
-        console.log('✅ .desktop_menu_wrapper trouvé. Initialisation du menu desktop.');
-        new MenuDesktop();
-    } else {
-        menuInitAttempts++;
-        if (menuInitAttempts < MAX_MENU_INIT_ATTEMPTS) {
-            console.log(`[MenuDesktop] Wrapper non trouvé, nouvelle tentative dans 100ms (${menuInitAttempts}/${MAX_MENU_INIT_ATTEMPTS})`);
-            setTimeout(tryToInitMenu, 100);
-        } else {
-            console.error('[MenuDesktop] Initialisation annulée après 5 secondes. .desktop_menu_wrapper introuvable.');
-        }
+        tl.to(menuToClose, { opacity: 0, y: -10, duration: 0.2, ease: 'power1.in' })
+          .to(this.background, { opacity: 0, duration: 0.3 }, "-=0.1");
     }
 }
 
 export function initMenuDesktop() {
-    tryToInitMenu();
+    // Le script attendra que les éléments soient là, mais ne bloquera pas
+    if (document.querySelector('[data-attribute="nav-link-desktop-parcs"]')) {
+        new MenuDesktopManager();
+    } else {
+        console.warn('[MenuDesktop] Aucun trigger de menu desktop trouvé. Initialisation annulée.');
+    }
 }
