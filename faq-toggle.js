@@ -1,7 +1,10 @@
 // Version : 2.0.0 – Utilise le module accordéon générique
 import { createAccordion } from './accordion.js';
 
-console.log('🚀 faq-toggle.js v1.0.2 chargé – Système de FAQ avec animations GSAP');
+// faq-toggle.js v1.1.0 - Utilisation de window.gsap
+// import { gsap } from 'gsap';
+
+console.log('🚀 faq-toggle.js v1.1.0 chargé');
 
 const SELECTORS = {
     FAQ_ITEM: '.faq_item.effect-cartoon-shadow',
@@ -40,14 +43,14 @@ async function closeCard(faqItem) {
     faqItem.classList.remove('is-open');
     
     // On prépare les éléments pour l'animation
-    gsap.set(elementsToAnimate, { 
+    window.gsap.set(elementsToAnimate, { 
         willChange: 'transform, opacity',
         backfaceVisibility: 'hidden'
     });
     
-    const tl = gsap.timeline({
+    const tl = window.gsap.timeline({
         onStart: () => {
-            gsap.set(elementsToAnimate, { display: 'block' });
+            window.gsap.set(elementsToAnimate, { display: 'block' });
         }
     });
 
@@ -114,7 +117,7 @@ async function openCard(faqItem) {
     // On prépare les éléments
     elementsToAnimate.forEach(el => {
         const display = el.dataset.originalDisplay || 'block';
-        gsap.set(el, { 
+        window.gsap.set(el, { 
             display: display,
             opacity: 0,
             y: -20
@@ -123,9 +126,9 @@ async function openCard(faqItem) {
     
     // On mesure la hauteur finale
     const finalHeight = respondElement.scrollHeight;
-    gsap.set(respondElement, { height: 0 });
+    window.gsap.set(respondElement, { height: 0 });
 
-    const tl = gsap.timeline();
+    const tl = window.gsap.timeline();
 
     // Animation de la hauteur - Plus bouncy
     tl.to(respondElement, {
@@ -223,7 +226,7 @@ export function updateFaqLayout(faqItem) {
     });
 
     if (!faqItem.classList.contains('is-open')) {
-        gsap.set(elementsToToggle, { display: 'none', opacity: 0 });
+        window.gsap.set(elementsToToggle, { display: 'none', opacity: 0 });
     }
 }
 
@@ -258,9 +261,9 @@ export function initializeFaq(faqItem) {
     // On cache le contenu en mettant la hauteur à 0
     const respondElement = faqItem.querySelector('.faq_respond');
     if (respondElement) {
-        gsap.set(respondElement, { height: 0 });
+        window.gsap.set(respondElement, { height: 0 });
     }
-    gsap.set(elementsToToggle, { display: 'none', opacity: 0 });
+    window.gsap.set(elementsToToggle, { display: 'none', opacity: 0 });
 
     // Fonction pour gérer le toggle de la FAQ
     const handleFaqToggle = (event) => {

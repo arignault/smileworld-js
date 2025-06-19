@@ -1,5 +1,7 @@
 // Version: 1.1.3 - Nettoyage du code
-import { gsap } from 'gsap';
+// import { gsap } from 'gsap';
+
+console.log('🚀 loading-screen.js v1.2.0 chargé');
 
 // Configuration de l'animation
 const config = {
@@ -40,15 +42,15 @@ export function initLoadingScreen() {
     }
 
     console.log('🎨 Configuration des styles initiaux');
-    gsap.set(loadingScreen, { 
+    window.gsap.set(loadingScreen, { 
         opacity: 1, 
         display: 'flex',
         backgroundColor: 'white'
     });
     
     // Animation d'entrée pour le logo
-    gsap.set(logoWrap, { opacity: 0, scale: 0.9 });
-    gsap.to(logoWrap, {
+    window.gsap.set(logoWrap, { opacity: 0, scale: 0.9 });
+    window.gsap.to(logoWrap, {
         opacity: 1,
         scale: 1,
         duration: 0.5,
@@ -90,10 +92,10 @@ export function hideLoadingScreen() {
     }
 
     console.log('🎬 Démarrage de l\'animation de masquage');
-    const tl = gsap.timeline({
+    const tl = window.gsap.timeline({
         onComplete: () => {
             console.log('✅ Animation de masquage terminée');
-            gsap.set(loadingScreen, { display: 'none' });
+            window.gsap.set(loadingScreen, { display: 'none' });
             isHiding = false;
         }
     });
@@ -110,7 +112,13 @@ export function hideLoadingScreen() {
 export function forceHideLoadingScreen() {
     const loadingScreen = document.querySelector('.loadingscreen');
     if (loadingScreen) {
-        gsap.set(loadingScreen, { display: 'none' });
+        window.gsap.to(loadingScreen, {
+            opacity: 0,
+            duration: 0.5,
+            onComplete: () => {
+                window.gsap.set(loadingScreen, { display: 'none' });
+            }
+        });
     }
     isHiding = false;
 }
@@ -123,7 +131,7 @@ function showLoadingScreenForTransition(onComplete) {
         return;
     }
 
-    gsap.timeline({ onComplete })
+    window.gsap.timeline({ onComplete })
         .set(loadingScreen, { display: 'flex', opacity: 0, backgroundColor: 'white' })
         .to(loadingScreen, { opacity: 1, duration: config.fadeInDuration, ease: config.ease });
 }

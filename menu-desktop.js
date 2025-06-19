@@ -1,5 +1,7 @@
 // Version: 1.0.6 - Nettoyage du code
-import { gsap } from 'gsap';
+// import { gsap } from 'gsap';
+
+console.log('🚀 menu-desktop.js v2.2.0 chargé');
 
 // Variables globales
 let isInitialized = false;
@@ -75,7 +77,7 @@ function closeAllMenusAndWrapper(menuWrapper) {
     if (!menuWrapper || isAnimating) return;
 
     isAnimating = true;
-    const tl = gsap.timeline({
+    const tl = window.gsap.timeline({
         onComplete: () => {
             if (menuWrapper) {
                 menuWrapper.setAttribute('style', 'display: none !important;');
@@ -197,7 +199,7 @@ export function initMenuDesktop() {
             } else {
                 isAnimating = true;
 
-                const tl = gsap.timeline({
+                const tl = window.gsap.timeline({
                     onComplete: () => {
                         isAnimating = false;
                     }

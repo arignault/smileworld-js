@@ -1,5 +1,7 @@
 // Version: 2.0.0 - Refactorisation avec classes CSS et simplification
-import { gsap } from 'gsap';
+// import { gsap } from 'gsap';
+
+console.log('🚀 menu-mobile.js v1.2.0 chargé');
 
 // Sélecteurs
 const SELECTORS = {
@@ -43,12 +45,12 @@ function enableScroll() {
 function animateMenuOpen(menu) {
     if (!menu) return;
     menu.classList.add('is-open');
-    gsap.fromTo(menu, { x: '100%' }, { x: '0%', duration: 0.4, ease: 'power2.out' });
+    hamburgerTimeline.fromTo(menu, { x: '100%' }, { x: '0%', duration: 0.4, ease: 'power2.out' });
 }
 
 function animateMenuClose(menu, onComplete) {
     if (!menu) return;
-    gsap.to(menu, {
+    hamburgerTimeline.to(menu, {
         x: '100%',
         duration: 0.3,
         ease: 'power2.in',
@@ -101,7 +103,7 @@ export function initMenuMobile() {
     if (!menuButton) return;
 
     // Initialisation de la timeline du hamburger
-    hamburgerTimeline = gsap.timeline({ paused: true })
+    hamburgerTimeline = window.gsap.timeline({ paused: true })
         .to(menuButton, { rotation: 90, duration: 0.4, ease: "elastic.out(1, 0.5)" });
 
     // Clic sur le bouton hamburger
@@ -130,6 +132,8 @@ export function initMenuMobile() {
     document.querySelectorAll(SELECTORS.BACK_BUTTONS).forEach(btn => {
         btn.addEventListener('click', backToMainMenu);
     });
+
+    console.log('✅ Écouteurs d\'événements pour le menu mobile configurés');
 }
   
   

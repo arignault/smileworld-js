@@ -1,4 +1,4 @@
-import gsap from 'gsap';
+import {gsap} from 'gsap';
 
 // window.Webflow = window.Webflow || [];
 // window.Webflow.push(function() {
@@ -74,8 +74,8 @@ export class SmileWorldReservation {
     this.dom.reserveBtn.classList.add('disabled');
     this.dom.iframeWrap.style.display = 'none';
     if (this.dom.selectionWrapper) {
-      gsap.set(this.dom.selectionWrapper, { opacity: 0.5, pointerEvents: 'none' });
-      gsap.set(this.dom.label, { opacity: 0 });
+      window.gsap.set(this.dom.selectionWrapper, { opacity: 0.5, pointerEvents: 'none' });
+      window.gsap.set(this.dom.label, { opacity: 0 });
     }
   }
   
@@ -307,7 +307,7 @@ export class SmileWorldReservation {
 
   _animateSelectionAppearance() {
     if (!this.dom.selectionWrapper) return;
-    const tl = gsap.timeline();
+    const tl = window.gsap.timeline();
     tl.to(this.dom.selectionWrapper, { opacity: 1, pointerEvents: 'auto', duration: 0.4, ease: 'power2.inOut' })
       .from(this.dom.selectionWrapper, { scale: 0.9, ease: 'elastic.out(1, 0.6)', duration: 1.2 }, "-=0.2")
       .to(this.dom.label, { opacity: 1, duration: 0.5 }, "-=1");
@@ -315,8 +315,8 @@ export class SmileWorldReservation {
 
   _resetSelectionAppearance() {
     if (!this.dom.selectionWrapper) return;
-    gsap.to(this.dom.selectionWrapper, { opacity: 0.5, pointerEvents: 'none', duration: 0.3 });
-    gsap.to(this.dom.label, { opacity: 0, duration: 0.2 });
+    window.gsap.to(this.dom.selectionWrapper, { opacity: 0.5, pointerEvents: 'none', duration: 0.3 });
+    window.gsap.to(this.dom.label, { opacity: 0, duration: 0.2 });
   }
 
   _updateVideoSource(parkButton) {

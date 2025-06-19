@@ -1,34 +1,19 @@
-// Version : 4.0.0 – Utilise le module accordéon et les événements custom
+// Version : 4.1.0 – Utilise window.gsap
+// import { gsap } from 'gsap';
 import { createAccordion } from './accordion.js';
-import { gsap } from 'gsap';
 
-console.log('🚀 centre-card.js v4.0.0 chargé – Refactorisé avec Accordion et Events');
+console.log('🚀 centre-card.js v4.1.0 chargé – Refactorisé avec Accordion et Events');
 
 const HOVER_CONFIG = {
-    maxOffset: 0.1875,
-    defaultVerticalOffset: 0.1875,
-    shadowColor: 'var(--colors--black)',
+    scaleDuration: 0.4,
     scaleAmount: 1.05,
-    scaleDuration: 0.15,
-    scaleEase: "elastic.out(1, 0.3)"
+    scaleEase: 'power2.out',
+    shadow: '0px 10px 30px rgba(0, 0, 0, 0.1)'
 };
-
-function calculateMousePosition(e, element) {
-    const rect = element.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    return { x: -(x * 2 - 1) };
-}
-
-function handleCardHover(e, card) {
-    if (!card || card.classList.contains('is-open')) return;
-    const pos = calculateMousePosition(e, card);
-    const offsetX = pos.x * HOVER_CONFIG.maxOffset;
-    card.style.boxShadow = `${offsetX}rem ${HOVER_CONFIG.defaultVerticalOffset}rem 0 0 ${HOVER_CONFIG.shadowColor}`;
-}
 
 function handleCardEnter(e, card) {
     if (!card || card.classList.contains('is-open')) return;
-    gsap.to(card, {
+    window.gsap.to(card, {
         scale: HOVER_CONFIG.scaleAmount,
         duration: HOVER_CONFIG.scaleDuration,
         ease: HOVER_CONFIG.scaleEase
@@ -37,7 +22,7 @@ function handleCardEnter(e, card) {
 
 function handleCardLeave(card) {
     if (!card) return;
-    gsap.to(card, {
+    window.gsap.to(card, {
         scale: 1,
         duration: HOVER_CONFIG.scaleDuration,
         ease: HOVER_CONFIG.scaleEase,
@@ -49,41 +34,47 @@ function handleCardLeave(card) {
     });
 }
 
-function initializeCardHover(card) {
-    card.addEventListener('mouseenter', (e) => handleCardEnter(e, card));
-    card.addEventListener('mousemove', (e) => handleCardHover(e, card));
-    card.addEventListener('mouseleave', () => handleCardLeave(card));
-}
-
 export function initCentreCards() {
     const cardConfig = {
-        itemSelector: '.centre-card_wrapper.effect-cartoon-shadow',
-        triggerSelector: '.clickable_wrap[data-attribute="data-card-toggle"]',
-        contentSelector: '.centre-card_scroll_wrapper',
-        arrowSelector: '.svg-holder.arrow'
+        itemSelector: '.card-offre-h-s',
+        triggerSelector: '.accordion_head',
+        contentSelector: '.accordion_content',
+        iconSelector: '.accordion_icon',
+        openClass: 'is-open',
+        animation: {
+            onOpen: (content, icon) => {
+                window.gsap.set(content, { height: 'auto', opacity: 1 });
+                window.gsap.from(content, { height: 0, opacity: 0, duration: 0.5, ease: 'power2.out' });
+                window.gsap.to(icon, { rotation: '+=180', duration: 0.4, ease: 'power2.out' });
+            },
+            onClose: (content, icon) => {
+                window.gsap.to(content, { height: 0, opacity: 0, duration: 0.4, ease: 'power2.in' });
+                window.gsap.to(icon, { rotation: '+=180', duration: 0.4, ease: 'power2.in' });
+            }
+        }
     };
     
     createAccordion(cardConfig);
 
     const cards = document.querySelectorAll(cardConfig.itemSelector);
     cards.forEach(card => {
-        initializeCardHover(card);
-    });
-
-    // Écoute l'événement d'ouverture de l'accordéon
-    document.addEventListener('accordion:opened', (e) => {
-        const openedItem = e.detail.item;
+        card.addEventListener('mouseenter', (e) => handleCardEnter(e, card));
+        card.addEventListener('mouseleave', () => handleCardLeave(card));
         
-        // Vérifie si l'élément ouvert est une carte de centre
-        if (openedItem.matches(cardConfig.itemSelector)) {
-            const placeId = openedItem.closest('.w-dyn-item')?.dataset.placeId;
-            if (placeId) {
-                // Émet un événement pour que la carte se concentre sur ce lieu
-                document.dispatchEvent(new CustomEvent('map:focus', {
-                    bubbles: true,
-                    detail: { placeId }
-                }));
-            }
-        }
+        // Ajout d'un observateur pour gérer le style de l'ombre
+        const observer = new MutationObserver(mutations => {
+            mutations.forEach(mutation => {
+                if (mutation.attributeName === 'class') {
+                    const targetNode = mutation.target;
+                    if (targetNode.classList.contains('is-open')) {
+                        targetNode.style.boxShadow = HOVER_CONFIG.shadow;
+                    } else {
+                        targetNode.style.boxShadow = '';
+                    }
+                }
+            });
+        });
+
+        observer.observe(card, { attributes: true });
     });
-} 
+}

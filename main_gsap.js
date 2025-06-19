@@ -1,5 +1,6 @@
-// Version: 1.0.2 - Ajout toggle FAQ
-import { gsap } from 'gsap';
+// Version: 1.0.3 - Attente GSAP + Enregistrement SplitText
+// import { gsap } from 'gsap';
+import { SplitText } from "gsap/SplitText";
 
 console.log('🔍 main_gsap.js - Module chargé et exécution commencée');
 
@@ -101,6 +102,7 @@ async function initializeApp() {
 function waitForGsapAndInitialize() {
   if (window.gsap) {
     console.log('✅ GSAP a été trouvé sur window, initialisation de l\'application...');
+    window.gsap.registerPlugin(SplitText);
     initializeApp();
   } else {
     console.log('⏳ GSAP non trouvé, nouvelle tentative dans 100ms...');
