@@ -8,16 +8,19 @@ import { initFaqItems } from './faq-toggle.js';
 import { initMenuDesktop } from './menu-desktop.js';
 import { initMenuMobile } from './menu-mobile.js';
 import { initCentreCards } from './centre-card.js';
+import { initDebugMenu } from './debug-menu.js';
+import { initMap } from './map-integration.js';
 
 function initializeModules() {
     console.log("✅ GSAP est prêt. Initialisation des modules...");
     
     try {
-        // Initialise les modules qui ne dépendent pas de la page
+        // Initialise les modules généraux
         initTextAnimation();
         initFaqItems();
         initMenuDesktop();
         initMenuMobile();
+        initDebugMenu();
 
         // --- Code Splitting pour les pages spécifiques ---
         // Page Réservation
@@ -31,8 +34,9 @@ function initializeModules() {
                 .catch(err => console.error("Échec du chargement du module de réservation:", err));
         }
 
-        // Initialisation des cartes en dernier, comme demandé
+        // Initialisation des modules qui dépendent d'éléments spécifiques
         initCentreCards();
+        initMap();
 
         console.log('✨ Tous les modules principaux ont été initialisés.');
         // Une fois que tout est prêt, on cache le loader.

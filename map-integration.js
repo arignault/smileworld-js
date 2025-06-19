@@ -137,10 +137,10 @@ window.initGoogleMap = mapManager.initMap.bind(mapManager);
  * Point d'entrée pour l'intégration de la carte.
  * Lit la clé API depuis l'élément #map et charge le script Google Maps.
  */
-export function initMapIntegration() {
+export function initMap() {
     const mapElement = document.getElementById('map');
     if (!mapElement) {
-        console.warn('⚠️ L\'élément #map est introuvable, l\'intégration de la carte est annulée.');
+        // Pas une erreur, la carte n'est peut-être juste pas sur cette page.
         return;
     }
 
