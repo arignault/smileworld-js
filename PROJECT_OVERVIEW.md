@@ -49,18 +49,72 @@ Voici sa séquence de chargement :
 4.  **`hideLoadingScreen()` :** Une fois que tous les modules principaux sont initialisés, l'écran de chargement est masqué.
 5.  **`window.addEventListener('load', ...)` :** En tout dernier, une fois que la page et **toutes ses ressources (images, etc.)** sont chargées, on initialise les cartes de centres (`initCentreCards()`). C'est une étape cruciale pour s'assurer que leur état initial (fermé) n'est pas écrasé par d'autres scripts.
 
-## 5. Description des Modules
+## 5. Description Détaillée des Modules
 
-- **`main_gsap.js`** : (voir ci-dessus)
-- **`menu-desktop.js`** : Gère l'ouverture/fermeture des panneaux du menu sur ordinateur. Il pilote un conteneur principal (`.desktop_menu_wrapper`) et gère les clics à l'extérieur des panneaux pour fermer le menu.
-- **`menu-mobile.js`** : Gère la logique d'ouverture et de navigation dans le menu hamburger sur mobile.
-- **`centre-card.js`** : Contient la logique complexe d'ouverture/fermeture (accordéon) des cartes de centres. Il force leur état fermé au chargement et communique avec la carte (`map-integration.js`) via des événements pour centrer la vue.
-- **`faq-toggle.js`** : Gère l'accordéon simple de la page FAQ.
-- **`loading-screen.js`** : Gère l'animation d'apparition et de disparition de l'écran de chargement.
-- **`text-animation.js`** : Gère l'animation de texte (défilement vertical de mots).
-- **`map-integration.js`** : Charge l'API Google Maps, crée les marqueurs pour chaque centre et écoute les événements (`map:focus`, `map:reset`) pour centrer la carte ou réinitialiser la vue.
-- **`reservation.js`** : Contient toute la logique de sélection et de filtrage de la page de réservation.
-- **`debug-menu.js`** : Un module d'aide qui s'active en ajoutant `#debug` à l'URL et qui affiche des informations utiles dans la console.
+### `main_gsap.js`
+Chef d'orchestre du projet.
+- **`waitForGsapAndInitialize()`**: Boucle d'attente qui vérifie la présence de `window.gsap` avant de lancer l'initialisation principale. Gère un timeout pour ne pas bloquer l'utilisateur.
+- **`initializeModules()`**: Appelle les fonctions `init` de tous les modules dans un ordre logique. Charge `reservation.js` de manière asynchrone si l'URL correspond.
+- **`window.addEventListener('load', ...)`**: Écouteur d'événement qui déclenche `initCentreCards()` une fois la page entièrement chargée, assurant que son initialisation est la dernière à s'exécuter.
+
+### `menu-desktop.js`
+Gère le menu principal sur grand écran.
+- **`WrapperBasedContractHandler` (classe)**: Contient toute la logique du menu.
+- **`_addGlobalListener()`**: Ajoute un seul écouteur de clic sur `document.body` qui gère toutes les interactions (ouverture, fermeture, changement de panneau).
+- **`_openWrapperAndPanel()`**: Affiche le conteneur du menu et le panneau cible avec une animation d'apparition.
+- **`_closeAll()`**: Cache le conteneur du menu avec une animation de disparition.
+- **`_switchPanels()`**: Gère la transition animée entre deux panneaux lorsque le menu est déjà ouvert.
+- **`initMenuDesktop()` (exportée)**: Fonction d'entrée appelée par `main_gsap.js` pour créer une instance de la classe et activer le menu.
+
+### `menu-mobile.js`
+Gère le menu "hamburger" sur mobile.
+- **`MenuMobileManager` (classe)**: Contient la logique du menu.
+- **`_setupEventListeners()`**: Ajoute les écouteurs pour ouvrir/fermer le menu et naviguer entre les panneaux.
+- **`_openMainMenu()` / `_closeMainMenu()`**: Animent l'apparition/disparition du menu depuis le côté de l'écran.
+- **`_navigateToPanel()`**: Gère la transition latérale entre le menu principal et les sous-menus (parcs, activités, etc.).
+- **`initMenuMobile()` (exportée)**: Active le menu mobile.
+
+### `centre-card.js`
+Logique complexe des cartes de centres cliquables.
+- **`closeCard()` / `openCard()`**: Fonctions internes qui gèrent les animations de fermeture/ouverture d'une carte.
+- **`toggleCard()`**: Orchestre la logique d'accordéon : ferme les autres cartes ouvertes avant d'en ouvrir une nouvelle. Envoie les événements `map:focus` ou `map:reset`.
+- **`initializeCard()`**: Fonction clé qui prépare chaque carte. Elle cache le contenu par défaut et attache l'écouteur de clic.
+- **`setupMutationObserver()`**: Observe le DOM pour initialiser automatiquement les cartes qui seraient ajoutées dynamiquement (par ex: par un filtre).
+- **`initCentreCards()` (exportée)**: Fonction d'entrée qui trouve toutes les cartes sur la page et lance leur initialisation.
+
+### `faq-toggle.js`
+Logique simple d'accordéon pour la page FAQ.
+- **`toggleCard()`**: Gère l'ouverture/fermeture d'un item de la FAQ et ferme les autres.
+- **`initFaqItems()` (exportée)**: Trouve tous les items de la FAQ et attache les écouteurs de clic.
+
+### `loading-screen.js`
+Gère l'écran de chargement initial.
+- **`initLoadingScreen()` (exportée)**: Configure les styles initiaux de l'écran de chargement.
+- **`hideLoadingScreen()` (exportée)**: Gère l'animation de disparition de l'écran de chargement.
+
+### `text-animation.js`
+Gère l'animation des mots qui défilent verticalement.
+- **`initTextAnimation()` (exportée)**: Trouve l'élément et lance la boucle d'animation GSAP.
+
+### `map-integration.js`
+Charge et gère la carte Google Maps.
+- **`mapManager` (objet)**: Contient toutes les fonctions et l'état de la carte (marqueurs, etc.).
+- **`createMarkers()`**: Scanne le DOM pour trouver les éléments de centre et place un marqueur sur la carte pour chacun.
+- **`focusOnCenter()`**: Centre la carte et zoome sur un marqueur spécifique.
+- **`listenForFocusEvents()`**: Ajoute des écouteurs pour les événements `map:focus` et `map:reset` envoyés par d'autres modules (comme `centre-card.js`).
+- **`initMap()` (exportée)**: Fonction d'entrée qui lit la clé API depuis le DOM et charge le script Google Maps.
+
+### `reservation.js`
+Logique de la page de réservation.
+- **`SmileWorldReservation` (classe)**: Contient toute la logique complexe de la page : sélection, filtrage des parcs/activités, mise à jour de l'interface, etc.
+- **`_handleSelection()`**: Gère les clics sur les différentes options.
+- **`_updateStateAndButton()`**: Met à jour l'état interne et l'apparence du bouton "Réserver".
+- **`_fullReset()`**: Réinitialise complètement le formulaire de sélection.
+- **`initReservation()` (exportée)**: Fonction d'entrée qui crée une instance de la classe pour lancer le module.
+
+### `debug-menu.js`
+Module d'aide au débogage.
+- **`initDebugMenu()` (exportée)**: Vérifie si l'URL contient `#debug`. Si c'est le cas, il affiche un résumé des éléments clés (wrapper, panneaux, etc.) dans la console.
 
 ## 6. Déploiement sur Webflow
 
