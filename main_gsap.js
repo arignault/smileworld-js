@@ -97,5 +97,16 @@ async function initializeApp() {
 }
 
 // --- Lancement de l'application via le mécanisme Webflow ---
+// Nouvelle fonction patiente qui attend que GSAP soit chargé
+function waitForGsapAndInitialize() {
+  if (window.gsap) {
+    console.log('✅ GSAP a été trouvé sur window, initialisation de l\'application...');
+    initializeApp();
+  } else {
+    console.log('⏳ GSAP non trouvé, nouvelle tentative dans 100ms...');
+    setTimeout(waitForGsapAndInitialize, 100); // On réessaie après 100ms
+  }
+}
+
 window.Webflow = window.Webflow || [];
-window.Webflow.push(initializeApp);
+window.Webflow.push(waitForGsapAndInitialize);
