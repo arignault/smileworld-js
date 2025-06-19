@@ -128,8 +128,8 @@ const mapManager = {
             const { Place } = await google.maps.importLibrary("places");
             const place = new Place({ id: placeId });
             
-            // On spécifie les champs dont on a besoin
-            await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location', 'rating', 'websiteUri', 'googleMapsUri'] });
+            // On spécifie les champs dont on a besoin, avec la bonne casse (URI)
+            await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location', 'rating', 'websiteURI', 'googleMapsURI'] });
 
             if (place.location) {
                 this.map.panTo(place.location);
@@ -140,7 +140,7 @@ const mapManager = {
                         <div class="map-infowindow-title">${place.displayName}</div>
                         <div class="map-infowindow-address">${place.formattedAddress}</div>
                         ${place.rating ? `<div class="map-infowindow-rating">Note : ${place.rating} ★</div>` : ''}
-                        <a href="${place.googleMapsUri}" target="_blank">Voir sur Google Maps</a>
+                        <a href="${place.googleMapsURI}" target="_blank">Voir sur Google Maps</a>
                     </div>
                 `;
                 this.infoWindow.setContent(content);
