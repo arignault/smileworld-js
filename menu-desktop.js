@@ -1,13 +1,8 @@
-// menu-desktop.js v8.0.0 - Stratégie "Vérité du DOM Ultime"
-// import { gsap } from 'gsap';
+// menu-desktop.js v9.0.0-diag - Mode Diagnostic
+console.log('🚀 menu-desktop.js v9.0.0-diag chargé - Mode Diagnostic');
 
-console.log('🚀 menu-desktop.js v8.0.0 chargé - Stratégie "Vérité du DOM Ultime"');
-
-class FinalDropdownHandler {
+class MenuDiagnostician {
     constructor() {
-        this.activeDropdown = null;
-        this.isAnimating = false;
-        
         this.triggerSelectors = [
             '[data-attribute="nav-link-desktop-parcs"]',
             '[data-attribute="nav-link-desktop-activites"]',
@@ -15,101 +10,55 @@ class FinalDropdownHandler {
         ].join(',');
 
         this._addGlobalListener();
-        console.log('✅ Gestionnaire de clic "Vérité du DOM Ultime" est actif.');
+        console.log('✅ Mode Diagnostic du menu activé. Veuillez cliquer sur un lien du menu desktop.');
     }
 
     _addGlobalListener() {
         document.body.addEventListener('click', (e) => {
             const trigger = e.target.closest(this.triggerSelectors);
 
-            if (trigger) {
-                e.preventDefault();
-                e.stopPropagation();
+            if (!trigger) {
+                return; // Ne rien faire si le clic n'est pas sur un trigger
+            }
+            
+            e.preventDefault();
+            e.stopPropagation();
 
-                const dropdownContainer = trigger.closest('.w-dropdown');
-                if (!dropdownContainer) {
-                    console.error("Erreur critique : Le trigger n'est pas dans un .w-dropdown.", trigger);
-                    return;
-                }
-                
-                this._toggleDropdown(dropdownContainer);
-                return;
+            console.group(`🕵️‍♂️ DIAGNOSTIC SUITE À UN CLIC SUR LE MENU 🕵️‍♂️`);
+            console.log("Cible du clic (e.target):", e.target);
+            console.log("Trigger identifié ([data-attribute]):", trigger);
+            
+            const dropdownParent = trigger.closest('.w-dropdown');
+            if (dropdownParent) {
+                console.log("%c✅ SUCCÈS: Le parent .w-dropdown a été trouvé :", "color: green; font-weight: bold;", dropdownParent);
+            } else {
+                 console.log("%c❌ ÉCHEC: Le parent .w-dropdown n'a pas été trouvé avec .closest()", "color: red; font-weight: bold;");
             }
 
-            if (this.activeDropdown && !this.activeDropdown.contains(e.target)) {
-                this._closeDropdown(this.activeDropdown);
+            console.log("--- Chemin des ancêtres depuis le trigger ---");
+            let currentParent = trigger.parentElement;
+            let i = 1;
+            while (currentParent && currentParent.tagName !== 'BODY') {
+                console.log(
+                    `#${i} | Balise: ${currentParent.tagName}`, 
+                    `| Classes: "${currentParent.className}"`,
+                    `| ID: "${currentParent.id || 'aucun'}"`
+                );
+                currentParent = currentParent.parentElement;
+                i++;
             }
-        });
-    }
-
-    _toggleDropdown(dropdown) {
-        if (this.isAnimating) return;
-
-        if (this.activeDropdown === dropdown) {
-            this._closeDropdown(dropdown);
-        } else {
-            if (this.activeDropdown) {
-                this._closeDropdown(this.activeDropdown, false);
+            if (currentParent && currentParent.tagName === 'BODY') {
+                 console.log(`#${i} | Balise: BODY. Fin de la recherche.`);
+            } else {
+                 console.log("Arrêt avant d'atteindre le BODY.");
             }
-            this._openDropdown(dropdown);
-        }
-    }
+             console.log("-----------------------------------------");
 
-    _openDropdown(dropdown) {
-        this.isAnimating = true;
-        this.activeDropdown = dropdown;
-        
-        const list = dropdown.querySelector('.w-dropdown-list');
-        if (!list) {
-            console.error("Structure invalide: .w-dropdown-list manquant dans", dropdown);
-            this.isAnimating = false;
-            return;
-        }
-
-        if (dropdown.dataset.hover === "true") dropdown.dataset.hover = "false";
-        
-        dropdown.classList.add('w--open');
-        
-        window.gsap.set(list, { display: 'block' });
-        window.gsap.fromTo(list, 
-            { opacity: 0, y: -10 },
-            {
-                opacity: 1,
-                y: 0,
-                duration: 0.3,
-                ease: 'power2.out',
-                onComplete: () => { this.isAnimating = false; }
-            }
-        );
-    }
-
-    _closeDropdown(dropdown, updateState = true) {
-        if (!dropdown) return;
-        this.isAnimating = true;
-
-        const list = dropdown.querySelector('.w-dropdown-list');
-        if (!list) {
-            this.isAnimating = false;
-            return;
-        }
-
-        window.gsap.to(list, {
-            opacity: 0,
-            y: -10,
-            duration: 0.2,
-            ease: 'power1.in',
-            onComplete: () => {
-                window.gsap.set(list, { display: 'none' });
-                dropdown.classList.remove('w--open');
-                this.isAnimating = false;
-                if (updateState) {
-                    this.activeDropdown = null;
-                }
-            }
-        });
+            console.groupEnd();
+        }, true); // Utiliser la capture pour être sûr de recevoir l'événement
     }
 }
 
 export function initMenuDesktop() {
-    new FinalDropdownHandler();
+    new MenuDiagnostician();
 }
