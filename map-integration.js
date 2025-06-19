@@ -122,49 +122,61 @@ const mapManager = {
      * @returns {string} Le HTML de la bulle d'info.
      */
     buildInfoWindowContent: function(place) {
+        // --- Photo ---
         let photoHtml = '';
         if (place.photos && place.photos.length > 0) {
-            // On prend la première photo et on demande une URL.
-            // La taille est limitée pour ne pas être trop grande dans la bulle.
             const photoUrl = place.photos[0].getURI({ maxWidth: 400, maxHeight: 200 });
-            photoHtml = `<img src="${photoUrl}" alt="Photo de ${place.displayName}" style="width:100%; height:auto; border-radius: 8px; margin-bottom: 10px;">`;
+            photoHtml = `<img src="${photoUrl}" alt="Photo de ${place.displayName}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 12px;">`;
         }
 
+        // --- Note (Rating) ---
         let ratingHtml = '';
         if (place.rating) {
             const stars = '★'.repeat(Math.round(place.rating)) + '☆'.repeat(5 - Math.round(place.rating));
-            ratingHtml = `<div class="map-infowindow-rating">${stars} ${place.rating.toFixed(1)} (${place.userRatingCount || 0} avis)</div>`;
+            ratingHtml = `
+                <div style="display: flex; align-items: center; color: #555; margin-bottom: 8px; font-size: 14px;">
+                    <span style="color: #f8b400; font-size: 18px; margin-right: 8px;">${stars}</span>
+                    <span style="font-weight: bold; color: #111; margin-right: 5px;">${place.rating.toFixed(1)}</span>
+                    <span>(${place.userRatingCount || 0} avis)</span>
+                </div>`;
         }
 
+        // --- Avis (Review) ---
         let reviewsHtml = '';
         if (place.reviews && place.reviews.length > 0) {
-            // On prend le premier avis comme exemple
             const review = place.reviews[0];
-            reviewsHtml = `
-                <div class="map-infowindow-review">
-                    <p>"${review.text}"</p>
-                    <span>- ${review.authorAttribution.displayName}</span>
-                </div>
-            `;
+            if (review.text) {
+                 reviewsHtml = `
+                    <div style="border-left: 3px solid #eee; padding-left: 12px; margin-top: 12px; font-style: italic;">
+                        <p style="margin: 0 0 5px 0; font-size: 13px; color: #555;">"${review.text.substring(0, 100)}..."</p>
+                        <span style="font-weight: bold; font-size: 12px; color: #333;">- ${review.authorAttribution.displayName}</span>
+                    </div>
+                `;
+            }
         }
         
+        // --- Horaires (Hours) ---
         let hoursHtml = '';
-        if (place.regularOpeningHours) {
-            const today = new Date().getDay(); // 0 pour Dimanche, 1 pour Lundi...
-             // L'API Google utilise 0 pour Dimanche, mais weekdayDescriptions est localisé. On prend le jour actuel.
-            const todaysHours = place.regularOpeningHours.weekdayDescriptions[today-1] || place.regularOpeningHours.weekdayDescriptions[6]; // Fallback à Samedi si Dimanche
-            hoursHtml = `<div class="map-infowindow-hours">Aujourd'hui : ${todaysHours}</div>`;
+        if (place.regularOpeningHours && place.regularOpeningHours.weekdayDescriptions) {
+             // getDay() renvoie 0 pour Dimanche, 1 pour Lundi, etc.
+            const today = new Date().getDay();
+            // L'API peut renvoyer un tableau commençant par Lundi pour le français.
+            // On s'adapte : si c'est Dimanche (0), on prend le dernier élément (index 6).
+            const dayIndex = today === 0 ? 6 : today - 1;
+            const todaysHours = place.regularOpeningHours.weekdayDescriptions[dayIndex];
+            hoursHtml = `<div style="font-size: 13px; color: #333; margin-bottom: 12px; display: flex; align-items: center;"><svg viewBox="0 0 24 24" style="width:16px; height:16px; margin-right: 8px; fill: #555;"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"></path><path d="M13 7h-2v6h6v-2h-4V7z"></path></svg><span>${todaysHours}</span></div>`;
         }
 
 
+        // --- Conteneur Principal ---
         return `
-            <div class="map-infowindow-content">
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 290px; padding: 5px;">
                 ${photoHtml}
-                <div class="map-infowindow-title">${place.displayName}</div>
-                <div class="map-infowindow-address">${place.formattedAddress}</div>
+                <div style="font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px;">${place.displayName}</div>
+                <div style="font-size: 13px; color: #555; margin-bottom: 8px;">${place.formattedAddress}</div>
                 ${ratingHtml}
                 ${hoursHtml}
-                <a href="${place.googleMapsURI}" target="_blank">Voir sur Google Maps</a>
+                <a href="${place.googleMapsURI}" target="_blank" style="display: inline-block; margin-top: 8px; font-size: 13px; color: #1a73e8; text-decoration: none; font-weight: 500;">Voir sur Google Maps</a>
                 ${reviewsHtml}
             </div>
         `;
