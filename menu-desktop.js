@@ -1,301 +1,127 @@
-// Version: 1.0.6 - Nettoyage du code
+// menu-desktop.js v2.3.0 - Utilise la délégation d'événements
 // import { gsap } from 'gsap';
 
-console.log('🚀 menu-desktop.js v2.2.0 chargé');
+console.log('🚀 menu-desktop.js v2.3.0 chargé');
 
-// Variables globales
-let isInitialized = false;
-let isWrapperOpen = false;
-let isAnimating = false;
-let menuButtons = new Map();
-let clickOutsideListener = null;
-let originalBodyStyle = '';
+class MenuDesktop {
+    constructor() {
+        this.elements = {
+            wrapper: document.querySelector('.desktop_menu_wrapper'),
+            parcs: document.querySelector('.parc_menu_desktop'),
+            activites: document.querySelector('.activites_menu_desktop'),
+            offres: document.querySelector('.offres_menu_desktop')
+        };
+        this.navBar = document.querySelector('.w-nav'); // Le conteneur parent fiable
+        this.currentMenu = null;
+        this.currentTimeline = null;
+        this.leaveTimeout = null;
 
-// Configuration des menus
-const menuConfig = [
-    {
-        buttonId: 'nav-link-desktop-parcs',
-        containerSelector: '.parc_menu_desktop',
-        isOpen: false
-    },
-    {
-        buttonId: 'nav-link-desktop-activites',
-        containerSelector: '.activites_menu_desktop',
-        isOpen: false
-    },
-    {
-        buttonId: 'nav-link-desktop-offres',
-        containerSelector: '.offres_menu_desktop',
-        isOpen: false
-    }
-];
-
-// Fonction pour gérer le scroll
-function toggleBodyScroll(disable) {
-    if (disable) {
-        originalBodyStyle = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-    } else {
-        document.body.style.overflow = originalBodyStyle;
-    }
-}
-
-// Initialise les boutons de menu
-function initializeMenuButtons() {
-    console.log('🔄 Initialisation des boutons de menu...');
-    menuConfig.forEach(menu => {
-        const button = document.getElementById(menu.buttonId);
-        if (button) {
-            menuButtons.set(menu.buttonId, button);
-            console.log(`✅ Bouton trouvé: ${menu.buttonId}`);
-        } else {
-            console.log(`❌ Bouton non trouvé: ${menu.buttonId}`);
+        if (!this.navBar || !this.elements.wrapper) {
+            console.error('[MenuDesktop] Barre de navigation (.w-nav) ou wrapper (.desktop_menu_wrapper) introuvable. Initialisation annulée.');
+            return;
         }
-    });
-}
 
-// Récupère un bouton de menu
-function getMenuButton(buttonId) {
-    return menuButtons.get(buttonId);
-}
-
-// Vérifie si un élément est visible
-function isElementVisible(element) {
-    if (!element) return false;
-    const style = window.getComputedStyle(element);
-    return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
-}
-
-// Récupère le display calculé
-function getComputedDisplay(element) {
-    if (!element) return 'none';
-    return window.getComputedStyle(element).display;
-}
-
-// Ferme tous les menus et le wrapper
-function closeAllMenusAndWrapper(menuWrapper) {
-    if (!menuWrapper || isAnimating) return;
-
-    isAnimating = true;
-    const tl = window.gsap.timeline({
-        onComplete: () => {
-            if (menuWrapper) {
-                menuWrapper.setAttribute('style', 'display: none !important;');
-            }
-            isWrapperOpen = false;
-            isAnimating = false;
-            toggleBodyScroll(false);
-        }
-    });
-
-    menuConfig.forEach(menu => {
-        const menuContainer = document.querySelector(menu.containerSelector);
-        
-        if (menuContainer && isElementVisible(menuContainer)) {
-            tl.to(menuContainer, {
-                opacity: 0,
-                duration: 0.3,
-                ease: "power2.inOut",
-                onComplete: () => {
-                    menuContainer.setAttribute('style', 'display: none !important;');
-                    menu.isOpen = false;
-                }
-            }, 0);
-        }
-    });
-
-    if (isElementVisible(menuWrapper)) {
-        tl.to(menuWrapper, {
-            opacity: 0,
-            duration: 0.3,
-            ease: "power2.inOut"
-        }, 0);
-    }
-}
-
-// Active la détection des clics en dehors
-function enableClickOutsideCheck(menuWrapper) {
-    if (clickOutsideListener) {
-        document.removeEventListener('click', clickOutsideListener);
+        this._setupEventListeners();
+        console.log('✅ Menu Desktop initialisé avec la délégation d\'événements.');
     }
 
-    clickOutsideListener = (e) => {
-        if (isAnimating) return;
-
-        const isClickOutside = !menuConfig.some(menu => {
-            const button = getMenuButton(menu.buttonId);
-            const container = document.querySelector(menu.containerSelector);
-            return (button && e.target === button) || 
-                   (container && e.target.closest(menu.containerSelector));
-        }) && !e.target.closest('.desktop_menu_wrapper');
-        
-        if (isClickOutside && isWrapperOpen && isElementVisible(menuWrapper)) {
-            closeAllMenusAndWrapper(menuWrapper);
-            disableClickOutsideCheck();
-        }
-    };
-
-    document.addEventListener('click', clickOutsideListener);
-}
-
-// Désactive la détection des clics en dehors
-function disableClickOutsideCheck() {
-    if (clickOutsideListener) {
-        document.removeEventListener('click', clickOutsideListener);
-        clickOutsideListener = null;
-    }
-}
-
-// Ajouter des styles CSS initiaux pour les menus
-function initializeMenuStyles() {
-    menuConfig.forEach(menu => {
-        const menuContainer = document.querySelector(menu.containerSelector);
-        if (menuContainer) {
-            menuContainer.style.transition = 'width 0.4s ease-in-out';
-            menuContainer.style.overflow = 'hidden';
-        }
-    });
-}
-
-// Initialise le menu desktop
-export function initMenuDesktop() {
-    console.log('🚀 Démarrage de l\'initialisation du menu desktop');
-    
-    if (isInitialized) {
-        console.log('⚠️ Le menu desktop est déjà initialisé');
-        return;
-    }
-
-    initializeMenuStyles();
-
-    console.log('🔍 Recherche des éléments du menu...');
-    initializeMenuButtons();
-    
-    const menuWrapper = document.querySelector('.desktop_menu_wrapper');
-    if (!menuWrapper) {
-        console.log('❌ Menu wrapper non trouvé');
-        return;
-    }
-    console.log('✅ Menu wrapper trouvé');
-
-    menuConfig.forEach(menu => {
-        const menuButton = getMenuButton(menu.buttonId);
-        const menuContainer = document.querySelector(menu.containerSelector);
-
-        if (!menuButton || !menuContainer) return;
-
-        menuContainer.style.display = 'none';
-        menuContainer.style.opacity = '0';
-
-        menuButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-
-            if (isAnimating) return;
-
-            if (menu.isOpen) {
-                closeAllMenusAndWrapper(menuWrapper);
-                disableClickOutsideCheck();
-            } else {
-                isAnimating = true;
-
-                const tl = window.gsap.timeline({
-                    onComplete: () => {
-                        isAnimating = false;
-                    }
-                });
-
-                if (!isWrapperOpen) {
-                    menuWrapper.style.display = 'flex';
-                    menuWrapper.style.height = 'auto';
-                    console.log('🎯 Affichage du wrapper:', menuWrapper.style.display);
-                    tl.to(menuWrapper, {
-                        opacity: 1,
-                        duration: 0.3,
-                        ease: "power2.out"
-                    });
-                    isWrapperOpen = true;
-                    enableClickOutsideCheck(menuWrapper);
-                    toggleBodyScroll(true);
-                }
-
-                menuConfig.forEach(otherMenu => {
-                    if (otherMenu !== menu) {
-                        const otherContainer = document.querySelector(otherMenu.containerSelector);
-                        const otherButton = getMenuButton(otherMenu.buttonId);
-                        
-                        if (otherContainer && isElementVisible(otherContainer)) {
-                            console.log('🔒 Fermeture du menu:', otherMenu.containerSelector);
-                            tl.to(otherContainer, {
-                                width: 0,
-                                opacity: 0,
-                                duration: 0.4,
-                                ease: "power2.inOut",
-                                onComplete: () => {
-                                    otherContainer.setAttribute('style', 'display: none !important; width: auto;');
-                                    otherMenu.isOpen = false;
-                                }
-                            }, 0);
-                        }
-
-                        if (otherButton && isElementVisible(otherButton)) {
-                            tl.to(otherButton, {
-                                opacity: 0,
-                                duration: 0.2,
-                                ease: "power2.out"
-                            }, 0);
-                        }
-                    }
-                });
-
-                // 2. Fermer tous les autres menus
-                menuConfig.forEach(otherMenu => {
-                    if (otherMenu !== menu) {
-                        const otherContainer = document.querySelector(otherMenu.containerSelector);
-                        if (otherContainer && isElementVisible(otherContainer)) {
-                            tl.to(otherContainer, {
-                                opacity: 0,
-                                duration: 0.2,
-                                ease: "power2.inOut",
-                                onComplete: () => {
-                                    otherContainer.setAttribute('style', 'display: none !important;');
-                                    otherMenu.isOpen = false;
-                                }
-                            }, 0);
-                        }
-                    }
-                });
-
-                // 3. Afficher le menu cliqué avec un petit délai
-                const menuContainer = document.querySelector(menu.containerSelector);
-                tl.to({}, {
-                    duration: 0.1, // Petit délai avant d'afficher le nouveau menu
-                    onComplete: () => {
-                        menuContainer.setAttribute('style', 'display: flex !important; opacity: 0;');
-                        tl.to(menuContainer, {
-                            opacity: 1,
-                            duration: 0.3,
-                            ease: "power2.inOut"
-                        });
-                    }
-                }, ">0.1"); // Démarrer cette animation 0.1s après le début de la timeline
-
-                menu.isOpen = true;
+    _setupEventListeners() {
+        // Utilise mouseover qui "bulle" (bubble) contrairement à mouseenter
+        this.navBar.addEventListener('mouseover', e => {
+            const trigger = e.target.closest('[data-menu-target]');
+            if (trigger) {
+                this._handleMenuEnter(trigger);
             }
         });
-    });
 
-    console.log('Menu Wrapper:', document.querySelector('.desktop_menu_wrapper'));
-    console.log('Boutons de menu:', {
-        parcs: document.getElementById('nav-link-desktop-parcs'),
-        activites: document.getElementById('nav-link-desktop-activites'),
-        offres: document.getElementById('nav-link-desktop-offres')
-    });
-    console.log('Conteneurs de menu:', {
-        parcs: document.querySelector('.parc_menu_desktop'),
-        activites: document.querySelector('.activites_menu_desktop'),
-        offres: document.querySelector('.offres_menu_desktop')
-    });
+        this.elements.wrapper.addEventListener('mouseleave', this._handleMenuLeave.bind(this));
+    }
 
-    isInitialized = true;
+    _handleMenuEnter(trigger) {
+        clearTimeout(this.leaveTimeout); // Annule toute fermeture en cours
+        const menuKey = trigger.dataset.menuTarget;
+
+        // Si on survole déjà le bon trigger, ne rien faire
+        if (this.currentMenu && this.currentMenu === this.elements[menuKey]) {
+            return;
+        }
+        
+        // Fermer le menu précédent avant d'en ouvrir un nouveau
+        if (this.currentMenu) {
+            this._animateMenuClose(false); // Fermeture rapide sans cacher le fond
+        }
+        
+        this._animateMenuOpen(menuKey);
+    }
+
+    _handleMenuLeave() {
+        this.leaveTimeout = setTimeout(() => {
+            this._animateMenuClose(true); // Fermeture complète
+        }, 50);
+    }
+    
+    _animateMenuClose(hideWrapper) {
+        console.log('🎬 Animation de fermeture du menu', this.currentMenu);
+        if (this.currentMenu) {
+            const menuContent = this.currentMenu.querySelector('.menu-desktop-content');
+            
+            if (this.currentTimeline && this.currentTimeline.isActive()) {
+                this.currentTimeline.kill();
+            }
+
+            this.currentTimeline = window.gsap.timeline({
+                onComplete: () => {
+                    this.currentMenu.classList.remove('is-active');
+                    if (hideWrapper) {
+                        this.elements.wrapper.classList.remove('is-active');
+                    }
+                    this.currentMenu = null;
+                }
+            });
+            
+            this.currentTimeline.to(menuContent, {
+                opacity: 0,
+                duration: 0.2,
+                ease: 'power1.in'
+            });
+        }
+    }
+
+    _animateMenuOpen(menuKey) {
+        if (!this.elements[menuKey]) return;
+
+        this.currentMenu = this.elements[menuKey];
+        const menuContent = this.currentMenu.querySelector('.menu-desktop-content');
+        
+        console.log('🎬 Animation d\'ouverture du menu', this.currentMenu);
+        
+        if (this.currentTimeline && this.currentTimeline.isActive()) {
+            this.currentTimeline.kill();
+        }
+
+        this.elements.wrapper.classList.add('is-active');
+        
+        // S'assurer que les autres menus sont bien cachés
+        ['parcs', 'activites', 'offres'].forEach(key => {
+            if (key !== menuKey && this.elements[key]) {
+                this.elements[key].classList.remove('is-active');
+                 const content = this.elements[key].querySelector('.menu-desktop-content');
+                 if(content) window.gsap.set(content, {opacity: 0});
+            }
+        });
+        
+        this.currentMenu.classList.add('is-active');
+        
+        this.currentTimeline = window.gsap.from(menuContent, {
+            opacity: 0,
+            y: '-10px',
+            duration: 0.3,
+            ease: 'power2.out'
+        });
+    }
+}
+
+export function initMenuDesktop() {
+    // La logique d'observation sera dans main_gsap.js pour s'assurer que .w-nav existe
+    new MenuDesktop();
 }

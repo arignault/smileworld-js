@@ -57,11 +57,11 @@ async function initializeApp() {
 
         const loadingScreen = await initLoadingScreen();
         
-        // On lance l'initialisation du menu desktop avec notre nouvelle logique d'observation
-        initDesktopMenuWithObserver();
-
+        // Initialisation directe des menus (ils s'attacheront quand les éléments seront prêts)
+        initMenuDesktop();
+        initMenuMobile();
+        
         const initPromises = [
-            initMenuMobile(),
             initCentreCards(),
             initMenuDesktopHoverActivite(),
             initTextAnimation(),
@@ -99,16 +99,17 @@ async function initializeApp() {
 
 // --- Lancement de l'application via le mécanisme Webflow ---
 // Nouvelle fonction patiente qui attend que GSAP soit chargé
-function waitForGsapAndInitialize() {
-  if (window.gsap) {
-    console.log('✅ GSAP a été trouvé sur window, initialisation de l\'application...');
-    window.gsap.registerPlugin(SplitText);
-    initializeApp();
-  } else {
-    console.log('⏳ GSAP non trouvé, nouvelle tentative dans 100ms...');
-    setTimeout(waitForGsapAndInitialize, 100); // On réessaie après 100ms
-  }
+function waitForElementsAndInitialize() {
+    // On attend que la barre de navigation et le menu principal soient disponibles
+    if (window.gsap && document.querySelector('.w-nav') && document.querySelector('.desktop_menu_wrapper')) {
+        console.log('✅ GSAP et les éléments du menu sont prêts. Initialisation de l\'application...');
+        window.gsap.registerPlugin(SplitText);
+        initializeApp();
+    } else {
+        console.log('⏳ GSAP ou les éléments du menu ne sont pas prêts, nouvelle tentative dans 100ms...');
+        setTimeout(waitForElementsAndInitialize, 100);
+    }
 }
 
 window.Webflow = window.Webflow || [];
-window.Webflow.push(waitForGsapAndInitialize);
+window.Webflow.push(waitForElementsAndInitialize);
