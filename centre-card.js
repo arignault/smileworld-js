@@ -1,8 +1,77 @@
-// Version : 4.1.0 – Utilise window.gsap
-// import { gsap } from 'gsap';
-import { createAccordion } from './accordion.js';
+// Version : 5.0.0 – Autonome et état initial forcé
+console.log('🚀 centre-card.js v5.0.0 chargé – Autonome');
 
-console.log('🚀 centre-card.js v4.1.0 chargé – Refactorisé avec Accordion et Events');
+let isAnimating = false;
+
+// --- Logique d'accordéon intégrée ---
+
+async function closeCard(item, config) {
+    if (!item || !item.classList.contains(config.openClass)) return;
+    const content = item.querySelector(config.contentSelector);
+    const icon = item.querySelector(config.iconSelector);
+    
+    item.classList.remove(config.openClass);
+    if (config.animation && config.animation.onClose) {
+        config.animation.onClose(content, icon);
+    }
+}
+
+async function openCard(item, config) {
+    if (!item || item.classList.contains(config.openClass)) return;
+    const content = item.querySelector(config.contentSelector);
+    const icon = item.querySelector(config.iconSelector);
+    
+    item.classList.add(config.openClass);
+    if (config.animation && config.animation.onOpen) {
+        config.animation.onOpen(content, icon);
+    }
+}
+
+async function toggleAccordion(item, config) {
+    if (isAnimating) return;
+    isAnimating = true;
+
+    try {
+        const isOpen = item.classList.contains(config.openClass);
+        if (!isOpen) {
+            const otherOpenItems = document.querySelectorAll(`${config.itemSelector}.${config.openClass}`);
+            await Promise.all(Array.from(otherOpenItems).map(other => closeCard(other, config)));
+            await openCard(item, config);
+        } else {
+            await closeCard(item, config);
+        }
+    } finally {
+        isAnimating = false;
+    }
+}
+
+function createAccordion(config) {
+    const items = document.querySelectorAll(config.itemSelector);
+    if (items.length === 0) return;
+
+    // Force la fermeture de toutes les cartes au démarrage
+    items.forEach(item => {
+        const content = item.querySelector(config.contentSelector);
+        if (item.classList.contains(config.openClass)) {
+            item.classList.remove(config.openClass);
+        }
+        window.gsap.set(content, { height: 0, opacity: 0 });
+    });
+
+    items.forEach(item => {
+        const trigger = item.querySelector(config.triggerSelector);
+        if (trigger) {
+             if (trigger.dataset.accordionInitialized) return;
+             trigger.dataset.accordionInitialized = 'true';
+             trigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleAccordion(item, config);
+            });
+        }
+    });
+}
+
+// --- Logique des cartes (Survol, etc.) ---
 
 const HOVER_CONFIG = {
     scaleDuration: 0.4,
@@ -43,13 +112,16 @@ export function initCentreCards() {
         openClass: 'is-open',
         animation: {
             onOpen: (content, icon) => {
-                window.gsap.set(content, { height: 'auto', opacity: 1 });
-                window.gsap.from(content, { height: 0, opacity: 0, duration: 0.5, ease: 'power2.out' });
-                window.gsap.to(icon, { rotation: '+=180', duration: 0.4, ease: 'power2.out' });
+                window.gsap.set(content, { height: 'auto' });
+                window.gsap.fromTo(content, 
+                    { height: 0, opacity: 0 }, 
+                    { height: 'auto', opacity: 1, duration: 0.5, ease: 'power2.out' }
+                );
+                if(icon) window.gsap.to(icon, { rotation: '+=180', duration: 0.4, ease: 'power2.out' });
             },
             onClose: (content, icon) => {
                 window.gsap.to(content, { height: 0, opacity: 0, duration: 0.4, ease: 'power2.in' });
-                window.gsap.to(icon, { rotation: '+=180', duration: 0.4, ease: 'power2.in' });
+                if(icon) window.gsap.to(icon, { rotation: '-=180', duration: 0.4, ease: 'power2.in' });
             }
         }
     };
@@ -58,15 +130,17 @@ export function initCentreCards() {
 
     const cards = document.querySelectorAll(cardConfig.itemSelector);
     cards.forEach(card => {
+        if(card.dataset.hoverInitialized) return;
+        card.dataset.hoverInitialized = 'true';
+        
         card.addEventListener('mouseenter', (e) => handleCardEnter(e, card));
         card.addEventListener('mouseleave', () => handleCardLeave(card));
         
-        // Ajout d'un observateur pour gérer le style de l'ombre
         const observer = new MutationObserver(mutations => {
             mutations.forEach(mutation => {
                 if (mutation.attributeName === 'class') {
                     const targetNode = mutation.target;
-                    if (targetNode.classList.contains('is-open')) {
+                    if (targetNode.classList.contains(cardConfig.openClass)) {
                         targetNode.style.boxShadow = HOVER_CONFIG.shadow;
                     } else {
                         targetNode.style.boxShadow = '';
@@ -74,7 +148,6 @@ export function initCentreCards() {
                 }
             });
         });
-
         observer.observe(card, { attributes: true });
     });
 }

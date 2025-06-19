@@ -25,8 +25,20 @@ class WrapperBasedContractHandler {
             const trigger = e.target.closest(this.triggerSelector);
             const wrapper = document.querySelector(this.wrapperSelector);
 
+            // --- Débogage Clic Extérieur ---
+            if (!trigger && this.activePanel) {
+                console.log('--- Débogage Clic Extérieur ---');
+                console.log('Cible du clic:', e.target);
+                console.log('Wrapper trouvé:', !!wrapper);
+                if(wrapper) {
+                    console.log('Le clic est DANS le wrapper:', wrapper.contains(e.target));
+                }
+                console.log('Condition de fermeture (doit être true):', !!(!trigger && this.activePanel && wrapper && !wrapper.contains(e.target)));
+            }
+
             // Clic en dehors du wrapper (si un menu est ouvert)
             if (!trigger && this.activePanel && wrapper && !wrapper.contains(e.target)) {
+                console.log('✅ Conditions remplies, fermeture du menu.');
                 this._closeAll();
                 return;
             }
