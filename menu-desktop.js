@@ -1,14 +1,13 @@
-// menu-desktop.js v7.0.0 - Stratégie "Anti-Conflit"
+// menu-desktop.js v8.0.0 - Stratégie "Vérité du DOM Ultime"
 // import { gsap } from 'gsap';
 
-console.log('🚀 menu-desktop.js v7.0.0 chargé - Stratégie "Anti-Conflit"');
+console.log('🚀 menu-desktop.js v8.0.0 chargé - Stratégie "Vérité du DOM Ultime"');
 
-class DataAttributeDropdownHandler {
+class FinalDropdownHandler {
     constructor() {
-        this.activeDropdownParent = null;
+        this.activeDropdown = null;
         this.isAnimating = false;
         
-        // Sélecteurs basés uniquement sur les data-attributes personnalisés
         this.triggerSelectors = [
             '[data-attribute="nav-link-desktop-parcs"]',
             '[data-attribute="nav-link-desktop-activites"]',
@@ -16,65 +15,60 @@ class DataAttributeDropdownHandler {
         ].join(',');
 
         this._addGlobalListener();
-        console.log('✅ Gestionnaire de clic "Anti-Conflit" est actif.');
+        console.log('✅ Gestionnaire de clic "Vérité du DOM Ultime" est actif.');
     }
 
     _addGlobalListener() {
         document.body.addEventListener('click', (e) => {
             const trigger = e.target.closest(this.triggerSelectors);
 
-            // Cas 1: On a cliqué sur un de nos triggers
             if (trigger) {
                 e.preventDefault();
                 e.stopPropagation();
-                
-                // On remonte au conteneur commun, qui est le w-dropdown
-                const dropdownParent = trigger.closest('.w-dropdown');
-                if (!dropdownParent) {
-                    console.error("Impossible de trouver le parent .w-dropdown pour le trigger:", trigger);
+
+                const dropdownContainer = trigger.closest('.w-dropdown');
+                if (!dropdownContainer) {
+                    console.error("Erreur critique : Le trigger n'est pas dans un .w-dropdown.", trigger);
                     return;
                 }
                 
-                this._toggleDropdown(dropdownParent);
+                this._toggleDropdown(dropdownContainer);
                 return;
             }
 
-            // Cas 2: Clic à l'extérieur pour fermer
-            if (this.activeDropdownParent && !this.activeDropdownParent.contains(e.target)) {
-                this._closeDropdown(this.activeDropdownParent);
+            if (this.activeDropdown && !this.activeDropdown.contains(e.target)) {
+                this._closeDropdown(this.activeDropdown);
             }
         });
     }
 
-    _toggleDropdown(dropdownParent) {
+    _toggleDropdown(dropdown) {
         if (this.isAnimating) return;
 
-        if (this.activeDropdownParent === dropdownParent) {
-            this._closeDropdown(dropdownParent);
+        if (this.activeDropdown === dropdown) {
+            this._closeDropdown(dropdown);
         } else {
-            if (this.activeDropdownParent) {
-                this._closeDropdown(this.activeDropdownParent, false);
+            if (this.activeDropdown) {
+                this._closeDropdown(this.activeDropdown, false);
             }
-            this._openDropdown(dropdownParent);
+            this._openDropdown(dropdown);
         }
     }
 
-    _openDropdown(dropdownParent) {
+    _openDropdown(dropdown) {
         this.isAnimating = true;
-        this.activeDropdownParent = dropdownParent;
+        this.activeDropdown = dropdown;
         
-        // On trouve le panneau à l'intérieur du parent
-        const list = dropdownParent.querySelector('.w-dropdown-list');
+        const list = dropdown.querySelector('.w-dropdown-list');
         if (!list) {
-            console.error("Structure invalide: .w-dropdown-list manquant dans", dropdownParent);
+            console.error("Structure invalide: .w-dropdown-list manquant dans", dropdown);
             this.isAnimating = false;
             return;
         }
 
-        // Forcer la désactivation du hover natif
-        if (dropdownParent.dataset.hover === "true") dropdownParent.dataset.hover = "false";
-
-        dropdownParent.classList.add('w--open');
+        if (dropdown.dataset.hover === "true") dropdown.dataset.hover = "false";
+        
+        dropdown.classList.add('w--open');
         
         window.gsap.set(list, { display: 'block' });
         window.gsap.fromTo(list, 
@@ -89,11 +83,11 @@ class DataAttributeDropdownHandler {
         );
     }
 
-    _closeDropdown(dropdownParent, updateState = true) {
-        if (!dropdownParent) return;
+    _closeDropdown(dropdown, updateState = true) {
+        if (!dropdown) return;
         this.isAnimating = true;
 
-        const list = dropdownParent.querySelector('.w-dropdown-list');
+        const list = dropdown.querySelector('.w-dropdown-list');
         if (!list) {
             this.isAnimating = false;
             return;
@@ -106,10 +100,10 @@ class DataAttributeDropdownHandler {
             ease: 'power1.in',
             onComplete: () => {
                 window.gsap.set(list, { display: 'none' });
-                dropdownParent.classList.remove('w--open');
+                dropdown.classList.remove('w--open');
                 this.isAnimating = false;
                 if (updateState) {
-                    this.activeDropdownParent = null;
+                    this.activeDropdown = null;
                 }
             }
         });
@@ -117,5 +111,5 @@ class DataAttributeDropdownHandler {
 }
 
 export function initMenuDesktop() {
-    new DataAttributeDropdownHandler();
+    new FinalDropdownHandler();
 }
