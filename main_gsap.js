@@ -1,4 +1,6 @@
-// main_gsap.js v3.0.1 - Réintégration du loading screen
+// main_gsap.js - Fichier désactivé au profit de scripts individuels.
+// Ce fichier est conservé comme archive de l'ancienne logique de "bundle".
+/*
 console.log("🚀 main_gsap.js v3.0.1 chargé");
 
 // import { gsap } from "gsap"; // GSAP est maintenant chargé globalement via CDN
@@ -69,3 +71,4 @@ window.Webflow.push(function() {
     console.log("🚀 Webflow est prêt, lancement de l'attente de GSAP.");
     waitForGsapAndInitialize();
 });
+*/

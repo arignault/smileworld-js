@@ -1,27 +1,31 @@
 import { resolve } from 'path';
 import { defineConfig } from 'vite';
+import { glob } from 'glob';
+
+// Récupérer tous les fichiers .js à la racine, sauf les fichiers de config
+const entryPoints = glob.sync('*.js', { 
+    ignore: ['vite.config.js', 'tailwind.config.js'] 
+});
 
 export default defineConfig({
   build: {
-    lib: {
-      entry: resolve(__dirname, 'main_gsap.js'),
-      name: 'SmileWorld',
-      // Le nom du fichier de sortie
-      fileName: 'smileworld-bundle',
-      // On force le format iife, plus sûr pour l'injection
-      formats: ['iife']
-    },
+    // Utiliser les points d'entrée multiples
     rollupOptions: {
-      // Externaliser les dépendances que l'on ne veut pas inclure dans le bundle
-      external: ['gsap'],
+      input: entryPoints,
       output: {
-        // Fournir les noms de variables globales pour les dépendances externalisées
+        // Définir le pattern pour les noms de fichiers en sortie
+        entryFileNames: '[name].js',
+        // S'assurer que les dépendances externes sont gérées
         globals: {
           gsap: 'gsap',
         },
       },
+      // Externaliser les dépendances que l'on ne veut pas inclure dans le bundle
+      external: ['gsap'],
     },
-    // Générer le bundle dans un dossier 'dist' à la racine
-    outDir: 'dist', 
+    // Générer les bundles dans un dossier 'dist' à la racine
+    outDir: 'dist',
+    // Vider le dossier dist à chaque build
+    emptyOutDir: true,
   },
 }); 
