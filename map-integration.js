@@ -35,6 +35,9 @@ const mapManager = {
             mapId: mapId
         });
         this.infoWindow = new google.maps.InfoWindow();
+        google.maps.event.addListener(this.infoWindow, 'closeclick', () => {
+            this.resetMapView();
+        });
 
         // 2. Création des marqueurs pour chaque centre
         this.createMarkers();
@@ -66,15 +69,9 @@ const mapManager = {
                 title: item.querySelector('h3')?.textContent || 'Centre Smile World'
             });
 
-            // Au clic sur un marqueur, on simule l'ouverture de la carte correspondante
+            // Au clic sur un marqueur, on déclenche le focus sur le centre
             marker.addListener('click', () => {
-                // Le clickable_wrap avec data-card-toggle est celui qui ouvre la carte
-                const clickableElement = item.querySelector('.clickable_wrap[data-attribute="data-card-toggle"]');
-                if (clickableElement) {
-                    clickableElement.click();
-                } else {
-                    console.warn("Impossible de trouver l'élément cliquable pour ouvrir la carte", item);
-                }
+                this.focusOnCenter(placeId);
             });
 
             this.markers.push({ placeId, cardId, marker });
@@ -99,18 +96,9 @@ const mapManager = {
                 return;
             }
 
-            item.addEventListener('mouseenter', () => {
-                if (this.resetTimeoutId) {
-                    clearTimeout(this.resetTimeoutId);
-                    this.resetTimeoutId = null;
-                }
+            // On passe d'un événement de survol à un événement de clic
+            item.addEventListener('click', () => {
                 this.focusOnCenter(placeId);
-            });
-
-            item.addEventListener('mouseleave', () => {
-                this.resetTimeoutId = setTimeout(() => {
-                    this.resetMapView();
-                }, 300); // Délai de 300ms pour permettre le passage entre les éléments
             });
         });
     },
@@ -128,21 +116,18 @@ const mapManager = {
             const { Place } = await google.maps.importLibrary("places");
             const place = new Place({ id: placeId });
             
-            // On spécifie les champs dont on a besoin, avec la bonne casse (URI)
-            await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location', 'rating', 'websiteURI', 'googleMapsURI'] });
+            // On demande les nouveaux champs : avis, photos, horaires...
+            const fields = [
+                'displayName', 'formattedAddress', 'location', 'rating', 
+                'googleMapsURI', 'photos', 'reviews', 'userRatingCount', 'regularOpeningHours'
+            ];
+            await place.fetchFields({ fields });
 
             if (place.location) {
                 this.map.panTo(place.location);
                 this.map.setZoom(15);
 
-                const content = `
-                    <div class="map-infowindow-content">
-                        <div class="map-infowindow-title">${place.displayName}</div>
-                        <div class="map-infowindow-address">${place.formattedAddress}</div>
-                        ${place.rating ? `<div class="map-infowindow-rating">Note : ${place.rating} ★</div>` : ''}
-                        <a href="${place.googleMapsURI}" target="_blank">Voir sur Google Maps</a>
-                    </div>
-                `;
+                const content = this.buildInfoWindowContent(place);
                 this.infoWindow.setContent(content);
                 
                 const targetMarker = this.markers.find(m => m.placeId === placeId)?.marker;
@@ -155,6 +140,60 @@ const mapManager = {
         } catch (error) {
             console.error(`Erreur lors de la récupération des détails pour le Place ID ${placeId}:`, error);
         }
+    },
+
+    /**
+     * Construit le contenu HTML pour la bulle d'info.
+     * @param {google.maps.places.Place} place L'objet Place avec les données.
+     * @returns {string} Le HTML de la bulle d'info.
+     */
+    buildInfoWindowContent: function(place) {
+        let photoHtml = '';
+        if (place.photos && place.photos.length > 0) {
+            // On prend la première photo et on demande une URL.
+            // La taille est limitée pour ne pas être trop grande dans la bulle.
+            const photoUrl = place.photos[0].getURI({ maxWidth: 400, maxHeight: 200 });
+            photoHtml = `<img src="${photoUrl}" alt="Photo de ${place.displayName}" style="width:100%; height:auto; border-radius: 8px; margin-bottom: 10px;">`;
+        }
+
+        let ratingHtml = '';
+        if (place.rating) {
+            const stars = '★'.repeat(Math.round(place.rating)) + '☆'.repeat(5 - Math.round(place.rating));
+            ratingHtml = `<div class="map-infowindow-rating">${stars} ${place.rating.toFixed(1)} (${place.userRatingCount || 0} avis)</div>`;
+        }
+
+        let reviewsHtml = '';
+        if (place.reviews && place.reviews.length > 0) {
+            // On prend le premier avis comme exemple
+            const review = place.reviews[0];
+            reviewsHtml = `
+                <div class="map-infowindow-review">
+                    <p>"${review.text}"</p>
+                    <span>- ${review.authorAttribution.displayName}</span>
+                </div>
+            `;
+        }
+        
+        let hoursHtml = '';
+        if (place.regularOpeningHours) {
+            const today = new Date().getDay(); // 0 pour Dimanche, 1 pour Lundi...
+             // L'API Google utilise 0 pour Dimanche, mais weekdayDescriptions est localisé. On prend le jour actuel.
+            const todaysHours = place.regularOpeningHours.weekdayDescriptions[today-1] || place.regularOpeningHours.weekdayDescriptions[6]; // Fallback à Samedi si Dimanche
+            hoursHtml = `<div class="map-infowindow-hours">Aujourd'hui : ${todaysHours}</div>`;
+        }
+
+
+        return `
+            <div class="map-infowindow-content">
+                ${photoHtml}
+                <div class="map-infowindow-title">${place.displayName}</div>
+                <div class="map-infowindow-address">${place.formattedAddress}</div>
+                ${ratingHtml}
+                ${hoursHtml}
+                <a href="${place.googleMapsURI}" target="_blank">Voir sur Google Maps</a>
+                ${reviewsHtml}
+            </div>
+        `;
     },
 
     /**
