@@ -1,30 +1,31 @@
-// menu-desktop.js v3.0.0 - "Chef d'Orchestre" au clic
+// menu-desktop.js v4.0.0 - Stratégie "Ultra Patiente"
 // import { gsap } from 'gsap';
 
-console.log('🚀 menu-desktop.js v3.0.0 chargé - Stratégie "Chef d\'Orchestre"');
+console.log('🚀 menu-desktop.js v4.0.0 chargé - Stratégie "Ultra Patiente"');
 
 class MenuDesktopManager {
     constructor() {
-        this.triggers = {
-            parcs: document.querySelector('[data-attribute="nav-link-desktop-parcs"]'),
-            activites: document.querySelector('[data-attribute="nav-link-desktop-activites"]'),
-            offres: document.querySelector('[data-attribute="nav-link-desktop-offres"]')
+        // On ne stocke que les sélecteurs, pas les éléments eux-mêmes.
+        this.triggerSelectors = {
+            parcs: '[data-attribute="nav-link-desktop-parcs"]',
+            activites: '[data-attribute="nav-link-desktop-activites"]',
+            offres: '[data-attribute="nav-link-desktop-offres"]'
         };
 
-        this.menus = {
-            parcs: document.querySelector('.parc_menu_desktop'),
-            activites: document.querySelector('.activites_menu_desktop'),
-            offres: document.querySelector('.offres_menu_desktop')
+        this.menuSelectors = {
+            parcs: '.parc_menu_desktop',
+            activites: '.activites_menu_desktop',
+            offres: '.offres_menu_desktop'
         };
         
         this.background = this._createBackground();
         
-        this.activeMenu = null;
+        this.activeMenuKey = null;
         this.isAnimating = false;
 
         this._setupInitialStyles();
         this._setupEventListeners();
-        console.log('✅ Menu Desktop "Chef d\'Orchestre" initialisé.');
+        console.log('✅ Menu Desktop "Ultra Patient" initialisé.');
     }
     
     _createBackground() {
@@ -35,19 +36,27 @@ class MenuDesktopManager {
     }
 
     _setupInitialStyles() {
-        Object.values(this.menus).forEach(menu => {
-            if (menu) window.gsap.set(menu, { display: 'none', opacity: 0 });
+        // On ne prépare que le fond, car les menus n'existent peut-être pas encore.
+        window.gsap.set(this.background, { 
+            display: 'none', 
+            opacity: 0, 
+            backgroundColor: 'rgba(0,0,0,0.5)', 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            width: '100%', 
+            height: '100vh', 
+            zIndex: 998 
         });
-        window.gsap.set(this.background, { display: 'none', opacity: 0, backgroundColor: 'rgba(0,0,0,0.5)', position: 'fixed', top: 0, left: 0, width: '100%', height: '100vh', zIndex: 998 });
     }
 
     _setupEventListeners() {
         document.body.addEventListener('click', e => {
             if (this.isAnimating) return;
 
-            // Trouver si un trigger a été cliqué
-            const clickedTriggerKey = Object.keys(this.triggers).find(key => 
-                this.triggers[key] && this.triggers[key].contains(e.target)
+            // Trouver si un trigger a été cliqué en utilisant closest()
+            const clickedTriggerKey = Object.keys(this.triggerSelectors).find(key => 
+                e.target.closest(this.triggerSelectors[key])
             );
 
             if (clickedTriggerKey) {
@@ -57,14 +66,12 @@ class MenuDesktopManager {
                 return;
             }
 
-            // Gérer le clic à l'extérieur
-            if (this.activeMenu) {
-                const activeMenuElement = this.menus[this.activeMenu];
-                const activeTriggerElement = this.triggers[this.activeMenu];
-                const isClickInside = activeMenuElement && activeMenuElement.contains(e.target);
-                const isClickOnTrigger = activeTriggerElement && activeTriggerElement.contains(e.target);
-
-                if (!isClickInside && !isClickOnTrigger) {
+            // Gérer le clic à l'extérieur pour fermer le menu
+            if (this.activeMenuKey) {
+                const activeMenuElement = document.querySelector(this.menuSelectors[this.activeMenuKey]);
+                
+                // Si le menu actif est toujours dans le DOM
+                if (activeMenuElement && !activeMenuElement.contains(e.target)) {
                     this._closeActiveMenu();
                 }
             }
@@ -72,12 +79,12 @@ class MenuDesktopManager {
     }
 
     _toggleMenu(key) {
-        if (this.activeMenu === key) {
+        if (this.activeMenuKey === key) {
             this._closeActiveMenu();
         } else {
             // Ferme l'ancien menu instantanément s'il y en a un
-            if (this.activeMenu) {
-                const oldMenu = this.menus[this.activeMenu];
+            if (this.activeMenuKey) {
+                const oldMenu = document.querySelector(this.menuSelectors[this.activeMenuKey]);
                 if (oldMenu) window.gsap.set(oldMenu, { display: 'none', opacity: 0 });
             }
             this._openMenu(key);
@@ -85,31 +92,43 @@ class MenuDesktopManager {
     }
 
     _openMenu(key) {
-        const menuToOpen = this.menus[key];
-        if (!menuToOpen) return;
+        // On cherche le menu SEULEMENT au moment du clic
+        const menuToOpen = document.querySelector(this.menuSelectors[key]);
+        
+        if (!menuToOpen) {
+            console.warn(`[MenuDesktop] Panneau "${this.menuSelectors[key]}" introuvable au moment du clic.`);
+            return;
+        }
         
         this.isAnimating = true;
-        this.activeMenu = key;
+        this.activeMenuKey = key;
         
         const tl = window.gsap.timeline({
             onComplete: () => { this.isAnimating = false; }
         });
 
         tl.set(this.background, { display: 'block' })
-          .set(menuToOpen, { display: 'block' })
+          .set(menuToOpen, { display: 'block', opacity: 0, y: -10 }) // Préparation JIT
           .to(this.background, { opacity: 1, duration: 0.3 })
           .to(menuToOpen, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }, "-=0.2");
     }
 
     _closeActiveMenu() {
-        if (!this.activeMenu) return;
+        if (!this.activeMenuKey) return;
 
-        const menuToClose = this.menus[this.activeMenu];
-        if (!menuToClose) return;
+        const menuToClose = document.querySelector(this.menuSelectors[this.activeMenuKey]);
+        const currentActiveMenuKey = this.activeMenuKey; // Sauvegarde de la clé
+        this.activeMenuKey = null;
+
+        if (!menuToClose) {
+            // Si le menu n'est plus là, on ferme au moins le fond
+            window.gsap.to(this.background, { opacity: 0, duration: 0.3, onComplete: () => {
+                window.gsap.set(this.background, { display: 'none' });
+            }});
+            return;
+        }
 
         this.isAnimating = true;
-        const currentActiveMenuKey = this.activeMenu; // Sauvegarde la clé
-        this.activeMenu = null;
 
         const tl = window.gsap.timeline({
             onComplete: () => {
@@ -125,10 +144,6 @@ class MenuDesktopManager {
 }
 
 export function initMenuDesktop() {
-    // Le script attendra que les éléments soient là, mais ne bloquera pas
-    if (document.querySelector('[data-attribute="nav-link-desktop-parcs"]')) {
-        new MenuDesktopManager();
-    } else {
-        console.warn('[MenuDesktop] Aucun trigger de menu desktop trouvé. Initialisation annulée.');
-    }
+    // On initialise directement, car l'écouteur est sur 'body' et n'a besoin d'aucun élément au départ.
+    new MenuDesktopManager();
 }
