@@ -10,7 +10,7 @@ class ClassBasedContractHandler {
         
         this.triggerSelector = '[data-attribute^="nav-link-desktop-"]';
         this.panelClassMap = {
-            'parc': '.parc_menu_desktop',
+            'parcs': '.parc_menu_desktop',
             'activites': '.activites_menu_desktop',
             'offres': '.offres_menu_desktop'
         };
