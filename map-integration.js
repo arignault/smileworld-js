@@ -41,7 +41,6 @@ const mapManager = {
 
         // 2. Création des marqueurs pour chaque centre
         this.createMarkers();
-        this.initInteractiveList();
     },
 
     /**
@@ -75,31 +74,6 @@ const mapManager = {
             });
 
             this.markers.push({ placeId, cardId, marker });
-        });
-    },
-
-    /**
-     * Initialise les écouteurs de survol pour la liste interactive des centres.
-     */
-    initInteractiveList: function() {
-        const items = document.querySelectorAll('[data-map-trigger="true"]');
-        if (!items.length) {
-            console.log('ℹ️ Aucun élément déclencheur de carte trouvé (data-map-trigger="true").');
-            return;
-        }
-        console.log(`🤝 ${items.length} éléments déclencheurs de carte trouvés.`);
-
-        items.forEach(item => {
-            const placeId = item.dataset.placeId;
-            if (!placeId) {
-                console.warn('⚠️ Élément déclencheur ignoré car il manque data-place-id', item);
-                return;
-            }
-
-            // On passe d'un événement de survol à un événement de clic
-            item.addEventListener('click', () => {
-                this.focusOnCenter(placeId);
-            });
         });
     },
 
