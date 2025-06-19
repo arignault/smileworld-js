@@ -424,6 +424,13 @@ export class SmileWorldReservation {
   }
 }
 
+/**
+ * Point d'entrée pour l'initialisation du module de réservation.
+ */
+export function initReservation() {
+  new SmileWorldReservation();
+}
+
 // --- Lancement ---
 // new SmileWorldReservation();
 // }); 

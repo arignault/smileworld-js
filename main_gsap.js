@@ -35,7 +35,6 @@ function initializeModules() {
         }
 
         // Initialisation des modules qui dépendent d'éléments spécifiques
-        initCentreCards();
         initMap();
 
         console.log('✨ Tous les modules principaux ont été initialisés.');
@@ -76,4 +75,10 @@ window.Webflow = window.Webflow || [];
 window.Webflow.push(function() {
     console.log("🚀 Webflow est prêt, lancement de l'attente de GSAP.");
     waitForGsapAndInitialize();
+});
+
+// À la toute fin, une fois que tout (y compris les images) est chargé, on force la fermeture des cartes.
+window.addEventListener('load', () => {
+    console.log('🎬 La page est entièrement chargée. Forçage de l\'état des cartes de centre.');
+    initCentreCards();
 });
