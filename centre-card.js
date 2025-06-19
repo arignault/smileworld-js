@@ -150,6 +150,14 @@ function setupMutationObserver() {
 
 export function initCentreCards() {
     const cards = document.querySelectorAll(SELECTORS.CARD);
+
+    // Sécurité : s'assurer qu'aucune carte n'est ouverte au chargement
+    cards.forEach(card => {
+        if (card.classList.contains('is-open')) {
+            card.classList.remove('is-open');
+        }
+    });
+
     cards.forEach(initializeCard);
     setupMutationObserver();
 }
