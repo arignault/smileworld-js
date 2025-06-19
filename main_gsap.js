@@ -9,6 +9,7 @@ import { initMenuDesktop } from './menu-desktop.js';
 import { initMenuMobile } from './menu-mobile.js';
 import { initCentreCards } from './centre-card.js';
 import { initDebugMenu } from './debug-menu.js';
+import { initReservation } from './reservation.js';
 import { initMap } from './map-integration.js';
 
 function initializeModules() {
@@ -26,12 +27,8 @@ function initializeModules() {
         // Page Réservation : on charge le module si l'URL contient "/reservation"
         if (window.location.pathname.includes('/reservation')) {
             console.log("-> Page Réservation détectée via l'URL. Chargement du module...");
-            import('./reservation.js')
-                .then(module => {
-                    module.initReservation();
-                    console.log("✅ Module Réservation chargé et initialisé.");
-                })
-                .catch(err => console.error("Échec du chargement du module de réservation:", err));
+            initReservation();
+            console.log("✅ Module Réservation chargé et initialisé.");
         }
 
         // Initialisation des modules qui dépendent d'éléments spécifiques
