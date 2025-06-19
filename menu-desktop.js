@@ -1,14 +1,13 @@
-// menu-desktop.js v13.0.0 - Stratégie "Contrat par Classe"
-// import { gsap } from 'gsap';
+// menu-desktop.js v14.0.0 - Stratégie "Wrapper"
+console.log('🚀 menu-desktop.js v14.0.0 chargé - Stratégie "Wrapper"');
 
-console.log('🚀 menu-desktop.js v13.0.0 chargé - Stratégie "Contrat par Classe"');
-
-class ClassBasedContractHandler {
+class WrapperBasedContractHandler {
     constructor() {
         this.activePanel = null;
         this.isAnimating = false;
         
         this.triggerSelector = '[data-attribute^="nav-link-desktop-"]';
+        this.wrapperSelector = '.desktop_menu_wrapper'; // Le sélecteur pour votre conteneur
         this.panelClassMap = {
             'parcs': '.parc_menu_desktop',
             'activites': '.activites_menu_desktop',
@@ -16,108 +15,129 @@ class ClassBasedContractHandler {
         };
 
         this._addGlobalListener();
-        console.log('✅ Gestionnaire de clic "Contrat par Classe" est actif.');
+        console.log('✅ Gestionnaire de clic "Stratégie Wrapper" est actif.');
     }
 
     _addGlobalListener() {
         document.body.addEventListener('click', (e) => {
+            if (this.isAnimating) return;
+
             const trigger = e.target.closest(this.triggerSelector);
-            
-            if (trigger) {
-                e.preventDefault();
-                e.stopPropagation();
+            const wrapper = document.querySelector(this.wrapperSelector);
 
-                const triggerAttr = trigger.getAttribute('data-attribute');
-                if (!triggerAttr) return;
-
-                const key = triggerAttr.replace('nav-link-desktop-', '');
-                const targetPanelSelector = this.panelClassMap[key];
-
-                if (!targetPanelSelector) {
-                    console.error(`Aucune classe de panneau correspondante trouvée pour la clé: ${key}`);
-                    return;
-                }
-                
-                const targetPanel = document.querySelector(targetPanelSelector);
-                if (!targetPanel) {
-                    console.error(`Panneau cible ${targetPanelSelector} non trouvé. Avez-vous ajouté la classe au panneau dans Webflow ?`);
-                    return;
-                }
-                
-                this._toggleDropdown(targetPanel, key);
+            // Clic en dehors du wrapper (si un menu est ouvert)
+            if (!trigger && this.activePanel && wrapper && !wrapper.contains(e.target)) {
+                this._closeAll();
                 return;
             }
 
-            if (this.activePanel && !this.activePanel.contains(e.target)) {
-                 const triggerKey = this.activePanel.dataset.panelKey;
-                 if (triggerKey) {
-                    const triggerForActivePanel = document.querySelector(`[data-attribute="nav-link-desktop-${triggerKey}"]`);
-                     if (!triggerForActivePanel || (triggerForActivePanel && !triggerForActivePanel.contains(e.target))) {
-                        this._closeDropdown(this.activePanel);
-                     }
-                 } else {
-                    // Fallback for safety, though should not be reached with the new logic
-                    this._closeDropdown(this.activePanel);
-                 }
+            // Si ce n'est ni un clic sur un trigger, ni un clic "dehors", on ignore
+            if (!trigger) return;
+
+            // ---- A partir d'ici, on a cliqué sur un trigger ----
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (!wrapper) {
+                console.error(`Wrapper introuvable avec le sélecteur: ${this.wrapperSelector}`);
+                return;
+            }
+
+            const key = trigger.getAttribute('data-attribute').replace('nav-link-desktop-', '');
+            const targetPanel = wrapper.querySelector(this.panelClassMap[key]);
+
+            if (!targetPanel) {
+                console.error(`Panneau cible pour la clé "${key}" non trouvé dans le wrapper.`);
+                return;
+            }
+
+            const isSamePanel = this.activePanel === targetPanel;
+            const noPanelOpen = !this.activePanel;
+
+            if (isSamePanel) {
+                this._closeAll();
+            } else if (noPanelOpen) {
+                this._openWrapperAndPanel(targetPanel);
+            } else {
+                this._switchPanels(this.activePanel, targetPanel);
             }
         });
     }
 
-    _toggleDropdown(panel, key) {
-        if (this.isAnimating) return;
+    _openWrapperAndPanel(panel) {
+        const wrapper = document.querySelector(this.wrapperSelector);
+        this.isAnimating = true;
 
-        if (this.activePanel === panel) {
-            this._closeDropdown(panel);
-        } else {
-            if (this.activePanel) {
-                this._closeDropdown(this.activePanel, false);
+        // Prépare les états avant animation
+        window.gsap.set(wrapper, { display: 'flex', opacity: 0 });
+        // On s'assure que seul le bon panneau est visible
+        Object.values(this.panelClassMap).forEach(selector => {
+            const p = wrapper.querySelector(selector);
+            if (p) window.gsap.set(p, { display: 'none' });
+        });
+        window.gsap.set(panel, { display: 'flex' });
+
+        // Animation d'apparition du wrapper
+        window.gsap.to(wrapper, {
+            opacity: 1,
+            duration: 0.3,
+            ease: 'power2.out',
+            onComplete: () => {
+                this.isAnimating = false;
+                this.activePanel = panel;
             }
-            this._openDropdown(panel, key);
-        }
+        });
     }
 
-    _openDropdown(panel, key) {
-        this.isAnimating = true;
-        this.activePanel = panel;
-        panel.dataset.panelKey = key;
+    _closeAll() {
+        const wrapper = document.querySelector(this.wrapperSelector);
+        if (!this.activePanel || !wrapper) return;
         
-        window.gsap.set(panel, { display: 'block' });
-        window.gsap.fromTo(panel, 
-            { opacity: 0, y: -10 },
-            {
-                opacity: 1,
-                y: 0,
-                duration: 0.3,
-                ease: 'power2.out',
-                onComplete: () => { this.isAnimating = false; }
-            }
-        );
-    }
-
-    _closeDropdown(panel, updateState = true) {
-        if (!panel) return;
         this.isAnimating = true;
 
-        if (panel.dataset.panelKey) {
-            delete panel.dataset.panelKey;
-        }
-
-        window.gsap.to(panel, {
+        // Animation de disparition du wrapper
+        window.gsap.to(wrapper, {
             opacity: 0,
-            y: -10,
             duration: 0.2,
             ease: 'power1.in',
             onComplete: () => {
-                window.gsap.set(panel, { display: 'none' });
-                this.isAnimating = false;
-                if (updateState) {
-                    this.activePanel = null;
+                window.gsap.set(wrapper, { display: 'none' });
+                // On cache aussi le panneau par sécurité
+                if (this.activePanel) {
+                    window.gsap.set(this.activePanel, { display: 'none' });
                 }
+                this.activePanel = null;
+                this.isAnimating = false;
             }
+        });
+    }
+
+    _switchPanels(oldPanel, newPanel) {
+        this.isAnimating = true;
+
+        const tl = window.gsap.timeline({
+            onComplete: () => {
+                this.isAnimating = false;
+                this.activePanel = newPanel;
+            }
+        });
+
+        // Cache l'ancien panneau
+        tl.to(oldPanel, {
+            opacity: 0,
+            duration: 0.15,
+            onComplete: () => window.gsap.set(oldPanel, { display: 'none' })
+        });
+
+        // Affiche le nouveau
+        tl.set(newPanel, { display: 'flex', opacity: 0 });
+        tl.to(newPanel, {
+            opacity: 1,
+            duration: 0.15
         });
     }
 }
 
 export function initMenuDesktop() {
-    new ClassBasedContractHandler();
+    new WrapperBasedContractHandler();
 }
