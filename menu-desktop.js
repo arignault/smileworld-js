@@ -1,9 +1,9 @@
-// menu-desktop.js v10.0.0 - Stratégie "Adaptation à Finsweet"
+// menu-desktop.js v11.0.0 - Stratégie "Frère du LI"
 // import { gsap } from 'gsap';
 
-console.log('🚀 menu-desktop.js v10.0.0 chargé - Stratégie "Adaptation à Finsweet"');
+console.log('🚀 menu-desktop.js v11.0.0 chargé - Stratégie "Frère du LI"');
 
-class FinsweetAwareDropdownHandler {
+class SiblingDropdownHandler {
     constructor() {
         this.activeListItem = null;
         this.isAnimating = false;
@@ -15,7 +15,7 @@ class FinsweetAwareDropdownHandler {
         ].join(',');
 
         this._addGlobalListener();
-        console.log('✅ Gestionnaire de clic "Adaptation à Finsweet" est actif.');
+        console.log('✅ Gestionnaire de clic "Frère du LI" est actif.');
     }
 
     _addGlobalListener() {
@@ -36,8 +36,8 @@ class FinsweetAwareDropdownHandler {
                 return;
             }
 
-            if (this.activeListItem && !this.activeListItem.contains(e.target)) {
-                this._closeDropdown(this.activeListItem);
+            if (this.activeListItem && !this.activeListItem.contains(e.target) && !this.activeListItem.nextElementSibling?.contains(e.target)) {
+                 this._closeDropdown(this.activeListItem);
             }
         });
     }
@@ -59,9 +59,9 @@ class FinsweetAwareDropdownHandler {
         this.isAnimating = true;
         this.activeListItem = listItem;
         
-        const list = listItem.querySelector('.w-dropdown-list');
-        if (!list) {
-            console.error("Structure invalide: .w-dropdown-list manquant dans le <li>", listItem);
+        const list = listItem.nextElementSibling;
+        if (!list || !list.classList.contains('w-dropdown-list')) {
+            console.error("Structure invalide: le frère .w-dropdown-list est manquant pour le <li>", listItem);
             this.isAnimating = false;
             return;
         }
@@ -83,8 +83,8 @@ class FinsweetAwareDropdownHandler {
         if (!listItem) return;
         this.isAnimating = true;
 
-        const list = listItem.querySelector('.w-dropdown-list');
-        if (!list) {
+        const list = listItem.nextElementSibling;
+        if (!list || !list.classList.contains('w-dropdown-list')) {
             this.isAnimating = false;
             return;
         }
@@ -106,5 +106,5 @@ class FinsweetAwareDropdownHandler {
 }
 
 export function initMenuDesktop() {
-    new FinsweetAwareDropdownHandler();
+    new SiblingDropdownHandler();
 }
