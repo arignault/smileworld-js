@@ -77,8 +77,8 @@ const mapManager = {
                 'displayName', 'formattedAddress', 'location', 'rating', 
                 'googleMapsURI', 'photos', 'reviews', 'userRatingCount', 'regularOpeningHours'
             ];
-            // On demande les champs avec la langue spécifiée
-            await place.fetchFields({ fields, language: 'fr' });
+            // On demande les champs avec la langue spécifiée globalement
+            await place.fetchFields({ fields });
 
             if (place.location) {
                 this.map.panTo(place.location);
@@ -185,7 +185,7 @@ export function initMap() {
 
     console.log('🗺️ Chargement de l\'API Google Maps...');
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&callback=initGoogleMap`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&callback=initGoogleMap&language=fr`;
     script.async = true;
     script.setAttribute('loading', 'async');
     document.head.appendChild(script);
