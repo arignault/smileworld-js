@@ -7,7 +7,7 @@ class MenuMobileManager {
     constructor() {
         // On ne stocke que les sélecteurs, pas les éléments eux-mêmes.
         this.selectors = {
-            mainPanel: '.menu-mobile',
+            mainPanel: '#main-menu-mobile-wrapper',
             openButton: '#hamburger-menu',
             closeButton: '.button-close_menu-mobile',
             navLinks: {
@@ -68,7 +68,7 @@ class MenuMobileManager {
 
     _openMainMenu() {
         const mainPanel = document.querySelector(this.selectors.mainPanel);
-        if (!mainPanel) return console.warn('[MenuMobile] Panneau principal .menu-mobile introuvable au clic.');
+        if (!mainPanel) return console.warn('[MenuMobile] Panneau principal #main-menu-mobile-wrapper introuvable au clic.');
 
         this.isAnimating = true;
         // Styles appliqués juste avant l'animation
