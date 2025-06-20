@@ -26,8 +26,8 @@ function initializeModules() {
         initMenuMobile();
         initDebugMenu();
 
-        // Initialisation de l'animation des tags sur la page d'accueil
-        if(window.location.pathname === '/') {
+        // Initialisation de l'animation des tags sur la page d'accueil (logique assouplie)
+        if(window.location.pathname === '/' || window.location.pathname.includes('accueil')) {
             console.log("-> Page d'accueil détectée. Initialisation du module d'animation des tags.");
             initCardTagsAnimation();
         }
