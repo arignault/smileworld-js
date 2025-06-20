@@ -15,10 +15,12 @@ const config = {
 
 let isInitialized = false;
 let isHiding = false;
+let startTime = 0; // Pour suivre le temps de chargement
 
 // Initialise l'écran de chargement
 export function initLoadingScreen() {
     console.log('🎬 initLoadingScreen - Début de l\'initialisation');
+    startTime = Date.now(); // On enregistre l'heure de début
     if (isInitialized) {
         console.log('ℹ️ Écran de chargement déjà initialisé');
         return Promise.resolve();
@@ -67,6 +69,19 @@ export function initLoadingScreen() {
 // Masque l'écran de chargement
 export function hideLoadingScreen() {
     console.log('🎬 hideLoadingScreen - Début du masquage');
+
+    const elapsedTime = Date.now() - startTime;
+    const remainingTime = 1500 - elapsedTime; // 1.5 secondes
+
+    if (remainingTime > 0) {
+        console.log(`⏳ Attente de ${remainingTime}ms supplémentaires pour atteindre la durée minimale.`);
+        setTimeout(performHideAnimation, remainingTime);
+    } else {
+        performHideAnimation();
+    }
+}
+
+function performHideAnimation() {
     if (!isInitialized) {
         console.warn('⚠️ Écran de chargement non initialisé');
         return;
