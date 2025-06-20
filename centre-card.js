@@ -1,5 +1,5 @@
-// Version : 7.0.0 – Intégration des animations rapides
-console.log('🚀 centre-card.js v7.0.0 chargé – Intégration animations rapides');
+// Version : 7.0.1 – Forçage du commit
+console.log('🚀 centre-card.js v7.0.1 chargé – Intégration animations rapides (force commit)');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
