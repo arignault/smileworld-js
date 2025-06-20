@@ -13,7 +13,6 @@ import { initReservation } from './reservation.js';
 import { initMap } from './map-integration.js';
 import { initPrivateRoomPopup } from './privateroom.js';
 import { initPreselection } from './preselect.js';
-import { initMarqueeAnimation } from './marquee-animation.js';
 
 function initializeModules() {
     console.log("✅ GSAP est prêt. Initialisation des modules...");
@@ -25,9 +24,6 @@ function initializeModules() {
         initMenuDesktop();
         initMenuMobile();
         initDebugMenu();
-
-        // Initialisation de l'animation marquee (si des conteneurs existent)
-        initMarqueeAnimation();
 
         // --- Code Splitting pour les pages spécifiques ---
         // Page Réservation : on charge le module si l'URL contient "/reservation"
