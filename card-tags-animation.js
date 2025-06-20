@@ -1,7 +1,7 @@
 import { gsap } from "gsap";
 
 const MODULE_NAME = "card-tags-animation";
-const MODULE_VERSION = "3.2.0"; // Two-level MutationObserver strategy
+const MODULE_VERSION = "3.2.1"; // Restored normal logic
 
 const log = (message, ...args) => console.log(`[SW-TAGS] ${message}`, ...args);
 
@@ -133,41 +133,36 @@ function setupObserversForCards(cardWrappers) {
 
 
 export function initCardTagsAnimation() {
-    console.log(`🏷️ ${MODULE_NAME}.js v${MODULE_VERSION} prêt à être initialisé. Test avec délai de 5s.`);
+    console.log(`🏷️ ${MODULE_NAME}.js v${MODULE_VERSION} prêt à être initialisé`);
+
+    // Niveau 1: Attendre l'apparition des cartes elles-mêmes
+    const initialCards = document.querySelectorAll('.centre_card_pro_wrapper');
+    if (initialCards.length > 0) {
+        log('INIT: Cartes trouvées immédiatement. Lancement des observateurs de tags.');
+        setupObserversForCards(initialCards);
+        return;
+    }
+
+    log('INIT: Aucune carte trouvée. Mise en place de l\'observateur pour ".centre_card_pro_wrapper".');
+    const cardObserver = new MutationObserver((mutationsList, obs) => {
+        const detectedCards = document.querySelectorAll('.centre_card_pro_wrapper');
+        if (detectedCards.length > 0) {
+            log('INIT: Cartes détectées via MutationObserver. Lancement des observateurs de tags.');
+            obs.disconnect();
+            setupObserversForCards(detectedCards);
+        }
+    });
+
+    cardObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+    });
 
     setTimeout(() => {
-        log("INIT: Démarrage de la logique après 5 secondes de pause.");
-
-        // Niveau 1: Attendre l'apparition des cartes elles-mêmes
-        const initialCards = document.querySelectorAll('.centre_card_pro_wrapper');
-        if (initialCards.length > 0) {
-            log('INIT: Cartes trouvées immédiatement. Lancement des observateurs de tags.');
-            setupObserversForCards(initialCards);
-            return;
-        }
-
-        log('INIT: Aucune carte trouvée. Mise en place de l\'observateur pour ".centre_card_pro_wrapper".');
-        const cardObserver = new MutationObserver((mutationsList, obs) => {
-            const detectedCards = document.querySelectorAll('.centre_card_pro_wrapper');
-            if (detectedCards.length > 0) {
-                log('INIT: Cartes détectées via MutationObserver. Lancement des observateurs de tags.');
-                obs.disconnect();
-                setupObserversForCards(detectedCards);
-            }
-        });
-
-        cardObserver.observe(document.body, {
-            childList: true,
-            subtree: true,
-        });
-
-        setTimeout(() => {
-            const stillObserving = (cardObserver.takeRecords().length > 0) || document.body.isConnected;
-             if(stillObserving) {
-                cardObserver.disconnect();
-                log(`INIT: L'observateur de cartes a expiré après 15s.`);
-             }
-        }, 15000); // Timeout de sécurité pour l'observateur de cartes
-
-    }, 5000);
+        const stillObserving = (cardObserver.takeRecords().length > 0) || document.body.isConnected;
+         if(stillObserving) {
+            cardObserver.disconnect();
+            log(`INIT: L'observateur de cartes a expiré après 15s.`);
+         }
+    }, 15000); // Timeout de sécurité pour l'observateur de cartes
 }

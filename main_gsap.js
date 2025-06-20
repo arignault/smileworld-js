@@ -26,8 +26,11 @@ function initializeModules() {
         initMenuMobile();
         initDebugMenu();
 
-        // Initialisation de l'animation des tags
-        initCardTagsAnimation();
+        // Initialisation de l'animation des tags (uniquement si le conteneur est présent)
+        if(document.querySelector('.tag-wrapper-gsap-loop')) {
+            console.log("-> Élément .tag-wrapper-gsap-loop détecté. Initialisation du module d'animation des tags.");
+            initCardTagsAnimation();
+        }
 
         // --- Code Splitting pour les pages spécifiques ---
         // Page Réservation : on charge le module si l'URL contient "/reservation"
