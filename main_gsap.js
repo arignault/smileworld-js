@@ -21,7 +21,6 @@ function initializeModules() {
     try {
         // Initialise les modules généraux
         initTextAnimation();
-        initFaqItems();
         initMenuDesktop();
         initMenuMobile();
         initDebugMenu();
@@ -92,6 +91,7 @@ window.Webflow.push(function() {
 
 // À la toute fin, une fois que tout (y compris les images) est chargé, on force la fermeture des cartes.
 window.addEventListener('load', () => {
-    console.log('🎬 La page est entièrement chargée. Forçage de l\'état des cartes de centre.');
+    console.log('🎬 La page est entièrement chargée. Initialisation des modules dépendants du contenu.');
     initCentreCards();
+    initFaqItems();
 });
