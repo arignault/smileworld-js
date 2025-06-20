@@ -1,42 +1,58 @@
 import { gsap } from "gsap";
 
 const MODULE_NAME = "card-tags-animation";
-const MODULE_VERSION = "3.0.0"; // Logique d'initialisation via MutationObserver
+const MODULE_VERSION = "3.1.0"; // Added extensive logging
 
 const log = (message, ...args) => console.log(`[SW-TAGS] ${message}`, ...args);
 
 function setupAnimationForCard(cardElement) {
+    log(`1. ENTERING setupAnimationForCard for card:`, cardElement);
     const tagWrapper = cardElement.querySelector(".tag-wrapper-gsap-loop");
 
     if (!tagWrapper) {
-        log(`Wrapper .tag-wrapper-gsap-loop introuvable dans la carte :`, cardElement);
+        log(`1.1. EXIT setupAnimationForCard: Wrapper .tag-wrapper-gsap-loop introuvable.`);
         return;
     }
 
     // On attend un instant pour s'assurer que le rendu est terminé et que les largeurs sont correctes.
     setTimeout(() => {
+        log(`2. INSIDE setTimeout for card:`, cardElement);
         // On s'assure de ne travailler qu'avec les tags originaux, pas les clones
         const tags = Array.from(tagWrapper.children).filter(c => !c.classList.contains('clone'));
         
+        log(`2.1. Found ${tags.length} original tags.`);
+
         // Vider les clones existants au cas où la fonction serait appelée plusieurs fois
-        Array.from(tagWrapper.querySelectorAll('.clone')).forEach(clone => clone.remove());
+        const existingClones = tagWrapper.querySelectorAll('.clone');
+        if (existingClones.length > 0) {
+            log(`2.2. Removing ${existingClones.length} existing clones.`);
+            existingClones.forEach(clone => clone.remove());
+        }
         
         if (tags.length <= 1) {
-            log(`Pas assez de tags pour une animation dans la carte :`, cardElement);
+            log(`2.3. EXIT setupAnimationForCard: Not enough tags to animate (${tags.length}).`);
             return;
         }
 
-        log(`Initialisation de l'animation pour la carte :`, cardElement);
+        log(`3. Initializing animation logic...`);
 
         // La distance de l'animation est la largeur totale des tags originaux
-        const distance = tags.reduce((acc, tag) => acc + tag.offsetWidth, 0);
+        let distance = 0;
+        tags.forEach((tag, i) => {
+            const width = tag.offsetWidth;
+            log(`3.1. Tag ${i} width: ${width}px`, tag);
+            distance += width;
+        });
+
+        log(`3.2. Total animation distance calculated: ${distance}px.`);
         
         // S'il n'y a rien à animer, on arrête
         if (distance === 0) {
-            log(`Largeur totale des tags nulle, animation annulée pour la carte:`, cardElement);
+            log(`3.3. EXIT setupAnimationForCard: Total distance is 0, animation cancelled.`);
             return;
         }
         
+        log(`4. Cloning ${tags.length} tags for seamless loop.`);
         // Clone tags to create a seamless loop only if needed
         tags.forEach(tag => {
             const clone = tag.cloneNode(true);
@@ -51,12 +67,17 @@ function setupAnimationForCard(cardElement) {
             defaults: { ease: "none" }
         });
 
+        const duration = tags.length * 2.5;
+        log(`5. CREATING GSAP timeline. Duration: ${duration}s, Distance: -=${distance}px.`);
+
         timeline.to(tagWrapper, {
             x: `-=${distance}`,
-            duration: tags.length * 2.5, // Ralentir un peu l'animation
+            duration: duration,
         });
+        
+        log(`✅ Animation timeline created and started for card:`, cardElement);
 
-    }, 100); // Court délai pour garantir le calcul de offsetWidth
+    }, 500); // Augmenté pour être sûr que Finsweet a le temps de rendre les éléments.
 }
 
 
@@ -65,28 +86,32 @@ export function initCardTagsAnimation() {
 
     const cardWrappers = document.querySelectorAll('.centre_card_pro_wrapper');
     if (cardWrappers.length === 0) {
-        log("Aucun wrapper de carte '.centre_card_pro_wrapper' trouvé.");
+        log("INIT: Aucun wrapper de carte '.centre_card_pro_wrapper' trouvé.");
         return;
     }
 
-    log(`${cardWrappers.length} wrappers de carte trouvés. Mise en place des observateurs de mutation.`);
+    log(`INIT: ${cardWrappers.length} wrappers de carte trouvés. Mise en place des observateurs.`);
 
-    cardWrappers.forEach(card => {
-        // Vérifier si les tags sont déjà là au cas où le script s'exécute tardivement
+    cardWrappers.forEach((card, index) => {
+        log(`[Card ${index}] Setting up...`, card);
+        
         const initialTagWrapper = card.querySelector(".tag-wrapper-gsap-loop");
         if (initialTagWrapper && initialTagWrapper.children.length > 0) {
-            log(`Tags déjà présents pour la carte, initialisation directe.`, card);
+            log(`[Card ${index}] Tags déjà présents, initialisation directe.`);
             setupAnimationForCard(card);
-            return; // On passe à la carte suivante
+            return;
         }
 
+        log(`[Card ${index}] Tags not present. Creating MutationObserver.`);
         const observer = new MutationObserver((mutationsList, obs) => {
+            log(`[Card ${index}] MutationObserver FIRED. Checking for tags...`);
             const tagWrapper = card.querySelector(".tag-wrapper-gsap-loop");
-            // On s'assure que le wrapper existe ET qu'il a des enfants
+            
             if (tagWrapper && tagWrapper.children.length > 0) {
-                log(`Tags détectés via MutationObserver pour la carte. Initialisation...`, card);
+                log(`[Card ${index}] Tags détectés via MutationObserver. Initialisation...`);
                 setupAnimationForCard(card);
-                obs.disconnect(); // On a trouvé, on arrête d'observer cette carte
+                obs.disconnect();
+                log(`[Card ${index}] Observer disconnected.`);
             }
         });
 
@@ -94,16 +119,20 @@ export function initCardTagsAnimation() {
             childList: true,
             subtree: true
         });
+        log(`[Card ${index}] Observer is now watching.`);
         
-        // Sécurité: on déconnecte l'observateur après un certain temps pour éviter les fuites
         setTimeout(() => {
-            const stillObserving = (observer.takeRecords().length > 0) || document.body.contains(card); // Basic check if still observing
+            const stillObserving = (observer.takeRecords().length > 0) || document.body.contains(card);
             if(stillObserving) {
                  observer.disconnect();
-                 // Vérifier une dernière fois si les tags sont apparus
+                 log(`[Card ${index}] Observer timed out after 10s and disconnected.`);
+                 
                  const finalCheckTagWrapper = card.querySelector(".tag-wrapper-gsap-loop");
                  if (!finalCheckTagWrapper || finalCheckTagWrapper.children.length === 0) {
-                    log(`Timeout: Aucun tag n'est apparu pour la carte après 10 secondes.`, card);
+                    log(`[Card ${index}] Timeout: Aucun tag n'est apparu pour la carte après 10 secondes.`);
+                 } else {
+                    log(`[Card ${index}] Timeout: Tags found on final check. Initializing animation.`);
+                    setupAnimationForCard(card);
                  }
             }
         }, 10000);
