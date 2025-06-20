@@ -1,5 +1,5 @@
-// Version : 6.0.0 – Logique de centre-card-old.js réintégrée
-console.log('🚀 centre-card.js v6.0.0 chargé – Logique old.js réintégrée');
+// Version : 7.0.0 – Intégration des animations rapides
+console.log('🚀 centre-card.js v7.0.0 chargé – Intégration animations rapides');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
@@ -12,19 +12,43 @@ const SELECTORS = {
 const initializedCards = new WeakSet();
 let isAnimating = false;
 
+// Configuration de l'effet de survol
+const HOVER_CONFIG = {
+    maxOffset: 0.1875, // Correspond à --_ui-styles---stroke--s
+    defaultVerticalOffset: 0.1875, // Valeur verticale constante
+    shadowColor: 'var(--colors--black)', // Utilisation de la variable de couleur
+    threshold: 0.4, // Zone de transition plus large (était à 0.2)
+    scaleAmount: 1.05, // Augmentation de la taille
+    scaleDuration: 0.15, // Animation rapide
+    scaleEase: "elastic.out(1, 0.3)" // Effet bouncy rapide
+};
+
 // --- Fonctions d'animation ---
 
+/**
+ * Ferme une carte en animant le contenu et la carte elle-même.
+ * @param {Element} cardElement 
+ */
 async function closeCard(cardElement) {
     if (!cardElement || !cardElement.classList.contains('is-open')) return;
     
     const elementsToAnimate = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
     const arrow = cardElement.querySelector(SELECTORS.ARROW);
+    const scrollWrapper = cardElement.querySelector('.centre-card_scroll_wrapper');
     
     cardElement.classList.remove('is-open');
     
     const tl = window.gsap.timeline({
+        onStart: () => {
+            if (scrollWrapper) {
+                window.gsap.set(scrollWrapper, { height: '10rem' });
+            }
+        },
         onComplete: () => {
             window.gsap.set(elementsToAnimate, { display: 'none' });
+            if (scrollWrapper) {
+                window.gsap.set(scrollWrapper, { height: 0 });
+            }
         }
     });
 
@@ -33,22 +57,42 @@ async function closeCard(cardElement) {
         y: -10,
         duration: 0.2,
         ease: 'power1.in',
-        stagger: 0.02
+        stagger: {
+            each: 0.02,
+            from: 'start'
+        }
     }, 0);
 
     if (arrow) {
-        tl.to(arrow, { rotation: 0, duration: 0.25, ease: 'power2.inOut' }, 0);
+        tl.to(arrow, {
+            rotation: 0,
+            duration: 0.25,
+            ease: 'power2.inOut'
+        }, 0);
     }
-    
+
+    if (scrollWrapper) {
+        tl.to(scrollWrapper, {
+            height: 0,
+            duration: 0.4,
+            ease: "back.in(1.7)"
+        }, 0);
+    }
+
     await tl;
 }
 
+/**
+ * Ouvre une carte en animant la carte, la flèche et le contenu.
+ * @param {Element} cardElement 
+ */
 async function openCard(cardElement) {
     if (!cardElement || cardElement.classList.contains('is-open')) return;
 
     cardElement.classList.add('is-open');
     const elementsToAnimate = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
     const arrow = cardElement.querySelector(SELECTORS.ARROW);
+    const scrollWrapper = cardElement.querySelector('.centre-card_scroll_wrapper');
     
     elementsToAnimate.forEach(el => {
         window.gsap.set(el, { 
@@ -58,10 +102,28 @@ async function openCard(cardElement) {
         });
     });
 
-    const tl = window.gsap.timeline();
+    const tl = window.gsap.timeline({
+        onStart: () => {
+            if (scrollWrapper) {
+                window.gsap.set(scrollWrapper, { height: 0 });
+            }
+        }
+    });
+
+    if (scrollWrapper) {
+        tl.to(scrollWrapper, {
+            height: '10rem',
+            duration: 0.6,
+            ease: 'elastic.out(1.2, 0.5)'
+        }, 0);
+    }
 
     if (arrow) {
-        tl.to(arrow, { rotation: 90, duration: 0.25, ease: 'back.out(1.7)' }, '<');
+        tl.to(arrow, {
+            rotation: 90,
+            duration: 0.25,
+            ease: 'back.out(1.7)'
+        }, '<');
     }
 
     tl.to(elementsToAnimate, {
@@ -69,7 +131,10 @@ async function openCard(cardElement) {
         y: 0,
         duration: 0.3,
         ease: 'power2.out',
-        stagger: 0.035
+        stagger: {
+            each: 0.035,
+            from: 'start'
+        }
     }, '<0.05');
 
     await tl;
@@ -102,6 +167,70 @@ async function toggleCard(cardElement) {
     }
 }
 
+/**
+ * Calcule la position relative de la souris par rapport à l'élément
+ * @param {MouseEvent} e - L'événement de la souris
+ * @param {Element} element - L'élément survolé
+ * @returns {{x: number}} - Position normalisée
+ */
+function calculateMousePosition(e, element) {
+    const rect = element.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    
+    return {
+        x: -(x * 2 - 1)
+    };
+}
+
+/**
+ * Applique l'effet de shadow et de scale en fonction de la position de la souris
+ * @param {MouseEvent} e - L'événement de la souris
+ * @param {Element} card - La carte survolée
+ */
+function handleCardHover(e, card) {
+    if (!card || card.classList.contains('is-open')) return;
+
+    const pos = calculateMousePosition(e, card);
+    const offsetX = pos.x * HOVER_CONFIG.maxOffset;
+
+    card.style.boxShadow = `${offsetX}rem ${HOVER_CONFIG.defaultVerticalOffset}rem 0 0 ${HOVER_CONFIG.shadowColor}`;
+}
+
+/**
+ * Gère l'entrée de la souris sur la carte
+ * @param {MouseEvent} e - L'événement de la souris
+ * @param {Element} card - La carte survolée
+ */
+function handleCardEnter(e, card) {
+    if (!card || card.classList.contains('is-open')) return;
+
+    window.gsap.to(card, {
+        scale: HOVER_CONFIG.scaleAmount,
+        duration: HOVER_CONFIG.scaleDuration,
+        ease: HOVER_CONFIG.scaleEase,
+        overwrite: true
+    });
+
+    handleCardHover(e, card);
+}
+
+/**
+ * Gère la sortie de la souris de la carte
+ * @param {Element} card - La carte survolée
+ */
+function handleCardLeave(card) {
+    if (!card || card.classList.contains('is-open')) return;
+
+    card.style.boxShadow = `0 ${HOVER_CONFIG.defaultVerticalOffset}rem 0 0 ${HOVER_CONFIG.shadowColor}`;
+    
+    window.gsap.to(card, {
+        scale: 1,
+        duration: HOVER_CONFIG.scaleDuration,
+        ease: HOVER_CONFIG.scaleEase,
+        overwrite: true
+    });
+}
+
 // --- Fonctions d'initialisation ---
 
 function initializeCard(card) {
@@ -125,6 +254,12 @@ function initializeCard(card) {
     };
 
     clickableWrap.addEventListener('click', handleCardToggle);
+
+    // Ajout des événements de survol sur la carte visuelle elle-même
+    card.addEventListener('mousemove', (e) => handleCardHover(e, card));
+    card.addEventListener('mouseleave', () => handleCardLeave(card));
+    card.addEventListener('mouseenter', (e) => handleCardEnter(e, card));
+
     initializedCards.add(card);
 }
 
