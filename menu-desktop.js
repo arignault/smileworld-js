@@ -1,4 +1,4 @@
-// menu-desktop.js v15.1.0 - Logique de survol vidéo améliorée
+// menu-desktop.js v15.2.0 - Reverted to ID-based video matching
 const log = (message, ...args) => console.log(`[SW-DESK-MENU] ${message}`, ...args);
 
 /**
@@ -32,7 +32,7 @@ function initActivityHover() {
 
         const targetVideoWrapper = videos.find(v => {
             const videoElement = v.querySelector('video');
-            return videoElement && videoElement.getAttribute('data-video-name') === activityName;
+            return videoElement && videoElement.id === activityName;
         });
 
         if (!targetVideoWrapper) return;
@@ -144,7 +144,7 @@ class WrapperBasedContractHandler {
 }
 
 export function initMenuDesktop() {
-    log("Initialisation v15.1.0... Stratégie 'Wrapper' + Hover Vidéo amélioré");
+    log("Initialisation v15.2.0... Stratégie 'Wrapper' + Hover Vidéo (ID match)");
     new WrapperBasedContractHandler();
     initActivityHover();
 }
