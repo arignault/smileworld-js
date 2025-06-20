@@ -388,39 +388,37 @@ export class SmileWorldReservation {
   }
   
   _injectVideoPlayer() {
-      if (!this.dom.videoBackgroundDiv) return;
-      this.dom.videoBackgroundDiv.innerHTML = `
-        <div style="width: 100%; height: 100%;" class="w-background-video w-background-video-atom">
-          <video playsinline loop muted autoplay data-wf-ignore="true" data-object-fit="cover">
-            <source src="${this.config.defaultVideoUrl}" data-wf-ignore="true"/>
-          </video>
-        </div>`;
+    this.dom.videoBackgroundDiv.innerHTML = `<video playsinline autoplay muted loop class="background-video_element"><source src="${this.config.defaultVideoUrl}" type="video/mp4"></video>`;
   }
   
   _applyUrlParameters() {
-      const params = new URLSearchParams(window.location.search);
-      const activitySlug = params.get('activite');
-      const parkId = params.get('parc');
-      if (!activitySlug && !parkId) return;
+    const params = new URLSearchParams(window.location.search);
+    const activitySlug = params.get('activite');
+    const parkId = params.get('parc');
 
-      setTimeout(() => {
-          if (parkId && activitySlug) {
-              const parkButton = this.dom.initialParksPane.querySelector(`[data-centre-apex-id="${parkId}"]`);
-              if (parkButton) {
-                  this._handleInitialParkSelection(parkId, parkButton);
-                  const finalActivityButton = this.dom.filteredActivitiesPane.querySelector(`[data-activity-slug="${activitySlug}"]`);
-                  if (finalActivityButton) {
-                      this._handleFinalActivitySelection(activitySlug, finalActivityButton);
-                  }
-              }
-          } else if (parkId) {
-              const parkButton = this.dom.initialParksPane.querySelector(`[data-centre-apex-id="${parkId}"]`);
-              if (parkButton) parkButton.click();
-          } else if (activitySlug) {
-              const activityButton = this.dom.initialActivitiesPane.querySelector(`[data-activity-slug="${activitySlug}"]`);
-              if (activityButton) activityButton.click();
-          }
-      }, 100);
+    if (activitySlug) {
+        // Force l'affichage de l'onglet "Activités"
+        if (this.dom.initialActivitiesTabLink) {
+            this.dom.initialActivitiesTabLink.click();
+        }
+        
+        // Sélectionne l'activité correspondante
+        const activityButton = this.dom.initialActivitiesPane.querySelector(`[data-activity-slug="${activitySlug}"]`);
+        if (activityButton) {
+            activityButton.click();
+        }
+    } else if (parkId) {
+        // Force l'affichage de l'onglet "Parcs" (comportement par défaut, mais explicite)
+        if (this.dom.initialParksTabLink) {
+            this.dom.initialParksTabLink.click();
+        }
+
+        // Sélectionne le parc correspondant
+        const parkButton = this.dom.initialParksPane.querySelector(`[data-centre-apex-id="${parkId}"]`);
+        if (parkButton) {
+            parkButton.click();
+        }
+    }
   }
 }
 
