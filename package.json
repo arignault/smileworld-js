@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "main": ".webflow-loader-local-working.js",
   "dependencies": {
-    "@vimeo/player": "^2.29.0",
     "accepts": "^1.3.8",
     "anymatch": "^2.0.0",
     "apache-crypt": "^1.2.6",

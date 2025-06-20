@@ -1,73 +1,59 @@
-import Player from '@vimeo/player';
-
 const MODULE_NAME = "menu-video";
-const MODULE_VERSION = "1.0.0";
+const MODULE_VERSION = "2.0.0"; // Switched to src-swapping method
 
 const log = (message, ...args) => console.log(`[SW-MENU-VIDEO] ${message}`, ...args);
 
 export function initMenuVideo() {
-    const activityLinks = document.querySelectorAll('[data-name]');
-    const videoWrappers = document.querySelectorAll('[data-video-for-name]');
+    const activityLinks = document.querySelectorAll('[data-video-src]');
+    const videoEmbed = document.querySelector('[data-menu-video="target"]');
 
-    if (activityLinks.length === 0 || videoWrappers.length === 0) {
-        log("Éléments nécessaires non trouvés (liens avec [data-name] ou vidéos avec [data-video-for-name]). Module inactif.");
+    if (activityLinks.length === 0 || !videoEmbed) {
+        log("Éléments nécessaires non trouvés (liens avec [data-video-src] ou un embed avec [data-menu-video='target']). Module inactif.");
         return;
     }
 
-    log(`Initialisation pour ${activityLinks.length} activités et ${videoWrappers.length} vidéos.`);
-
-    // Map to store Vimeo Player instances
-    const players = new Map();
-    videoWrappers.forEach(wrapper => {
-        const iframe = wrapper.querySelector('iframe');
-        if (iframe) {
-            const name = wrapper.dataset.videoForName;
-            const player = new Player(iframe);
-            players.set(name, player);
-            // Set all videos to very low volume
-            player.setVolume(0.1);
-            player.pause();
-        }
-        // Initially hide all video wrappers
-        wrapper.style.display = 'none';
-    });
-    
-    // Show the first video by default
-    if (videoWrappers.length > 0) {
-        videoWrappers[0].style.display = 'block';
+    const iframe = videoEmbed.querySelector('iframe');
+    if (!iframe) {
+        log("Aucun iframe trouvé dans l'élément [data-menu-video='target'].");
+        return;
     }
 
+    log(`Initialisation pour ${activityLinks.length} activités et un iframe cible.`);
+
+    // Set the initial video to the first activity's video
+    const firstVideoSrc = activityLinks[0].dataset.videoSrc;
+    if (firstVideoSrc) {
+        // Ensure Vimeo autoplay and muted parameters are present for a good UX
+        const url = new URL(firstVideoSrc);
+        url.searchParams.set('autoplay', '1');
+        url.searchParams.set('muted', '1');
+        url.searchParams.set('background', '1'); // Hides controls, etc.
+        iframe.src = url.toString();
+        log(`Vidéo initiale chargée : ${iframe.src}`);
+    }
 
     activityLinks.forEach(link => {
         link.addEventListener('mouseenter', () => {
-            const name = link.dataset.name;
-            log(`Survol de : ${name}`);
+            const videoSrc = link.dataset.videoSrc;
+            if (!videoSrc) {
+                log(`Lien survolé, mais pas de data-video-src trouvé.`);
+                return;
+            }
 
-            // Pause all videos and hide all wrappers
-            players.forEach((player, playerName) => {
-                if (playerName !== name) {
-                    player.pause();
-                }
-            });
+            const newUrl = new URL(videoSrc);
+            newUrl.searchParams.set('autoplay', '1');
+            newUrl.searchParams.set('muted', '1');
+            newUrl.searchParams.set('background', '1');
+            
+            const newSrcString = newUrl.toString();
 
-            videoWrappers.forEach(wrapper => {
-                wrapper.style.display = 'none';
-            });
-
-            // Find the corresponding video wrapper and player
-            const targetWrapper = document.querySelector(`[data-video-for-name="${name}"]`);
-            const targetPlayer = players.get(name);
-
-            if (targetWrapper && targetPlayer) {
-                targetWrapper.style.display = 'block';
-                targetPlayer.play().catch(error => {
-                    log(`Erreur de lecture automatique pour ${name}:`, error.name);
-                });
-            } else {
-                log(`Vidéo correspondante non trouvée pour : ${name}`);
+            // Only update the src if it's different to avoid unnecessary reloads
+            if (iframe.src !== newSrcString) {
+                log(`Changement de vidéo pour : ${newSrcString}`);
+                iframe.src = newSrcString;
             }
         });
     });
 
-    console.log(`🎬 ${MODULE_NAME}.js v${MODULE_VERSION} chargé et écouteurs actifs.`);
+    console.log(`🎬 ${MODULE_NAME}.js v${MODULE_VERSION} (méthode src-swap) chargé et écouteurs actifs.`);
 } 
