@@ -1,6 +1,4 @@
-import { gsap } from "gsap";
-
-// Version: 1.0.1 - Nettoyage du code
+// Version: 1.0.1 - Nettoyage du code, passage à window.gsap
 
 // Gère l'affichage des images au survol
 export const initMenuDesktopHoverActivite = () => {
@@ -47,7 +45,7 @@ export const initMenuDesktopHoverActivite = () => {
                 if (activeAnimations.has(defaultImage)) {
                     activeAnimations.get(defaultImage).kill();
                 }
-                const defaultAnim = gsap.to(defaultImage, {
+                const defaultAnim = window.gsap.to(defaultImage, {
                     opacity: 0,
                     duration: 0.15,
                     ease: "power2.out",
@@ -62,7 +60,7 @@ export const initMenuDesktopHoverActivite = () => {
             }
 
             targetImage.style.display = 'block';
-            const showAnim = gsap.to(targetImage, {
+            const showAnim = window.gsap.to(targetImage, {
                 opacity: 1,
                 duration: 0.15,
                 ease: "power2.out",
@@ -70,7 +68,7 @@ export const initMenuDesktopHoverActivite = () => {
             });
             activeAnimations.set(targetImage, showAnim);
         } else {
-            const hideAnim = gsap.to(targetImage, {
+            const hideAnim = window.gsap.to(targetImage, {
                 opacity: 0,
                 duration: 0.15,
                 ease: "power2.out",
@@ -81,7 +79,7 @@ export const initMenuDesktopHoverActivite = () => {
                         if (activeAnimations.has(defaultImage)) {
                             activeAnimations.get(defaultImage).kill();
                         }
-                        const showDefaultAnim = gsap.to(defaultImage, {
+                        const showDefaultAnim = window.gsap.to(defaultImage, {
                             opacity: 1,
                             duration: 0.15,
                             ease: "power2.out",
@@ -113,7 +111,7 @@ export const initMenuDesktopHoverActivite = () => {
             ? { scale: 1.1, backgroundColor: '#FFFFFF' }
             : { scale: 1, backgroundColor: '' };
 
-        const anim = gsap.to(item, { ...animProps, ...animConfig });
+        const anim = window.gsap.to(item, { ...animProps, ...animConfig });
         activeAnimations.set(item, anim);
     };
 
