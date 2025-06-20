@@ -2,7 +2,7 @@
 console.log("🚀 main_gsap.js v3.0.1 chargé");
 
 // import { gsap } from "gsap"; // GSAP est maintenant chargé globalement via CDN
-import { initLoadingScreen, hideLoadingScreen } from './loading-screen.js';
+import { initLoadingScreen, requestHideLoadingScreen, forceHideLoadingScreen } from './loading-screen.js';
 import { initTextAnimation } from './text-animation.js';
 import { initFaqItems } from './faq-toggle.js';
 import { initMenuDesktop } from './menu-desktop.js';
@@ -51,12 +51,12 @@ function initializeModules() {
         }
 
         console.log('✨ Tous les modules principaux ont été initialisés.');
-        // L'appel est déplacé dans window.onload pour s'assurer que tout est prêt.
-        // hideLoadingScreen();
+        // Une fois que tout est prêt, on demande à cacher le loader.
+        requestHideLoadingScreen();
 
     } catch (error) {
         console.error("❌ Erreur lors de l'initialisation des modules. Forçage du masquage du loader.", error);
-        hideLoadingScreen(); // On s'assure que l'utilisateur n'est pas bloqué même en cas d'erreur
+        forceHideLoadingScreen(); // On s'assure que l'utilisateur n'est pas bloqué même en cas d'erreur
     }
 }
 
@@ -76,7 +76,7 @@ function waitForGsapAndInitialize() {
             if (attempts > maxAttempts) {
                 clearInterval(intervalId);
                 console.error("GSAP n'a pas pu être chargé après 10 secondes. Annulation de l'initialisation des modules.");
-                hideLoadingScreen(); // On cache le loader pour ne pas bloquer l'utilisateur
+                forceHideLoadingScreen(); // On cache le loader pour ne pas bloquer l'utilisateur
             }
         }
     }, interval);
@@ -90,18 +90,8 @@ window.Webflow.push(function() {
     waitForGsapAndInitialize();
 });
 
-// À la toute fin, une fois que tout (y compris les images) est chargé, on s'occupe des derniers modules.
+// À la toute fin, une fois que tout (y compris les images) est chargé, on force la fermeture des cartes.
 window.addEventListener('load', () => {
-    console.log('🎬 La page est entièrement chargée. Tentative d\'initialisation des cartes et masquage du loader.');
-    
-    try {
-        console.log('-> Initialisation de initCentreCards...');
-        initCentreCards();
-        console.log('✅ initCentreCards initialisé avec succès.');
-    } catch (error) {
-        console.error("❌ Erreur lors de l'initialisation de initCentreCards.", error);
-    } finally {
-        console.log('-> Tentative de masquage du loader (dans le bloc finally).');
-        hideLoadingScreen(); // On masque le loader quoi qu'il arrive.
-    }
+    console.log('🎬 La page est entièrement chargée. Forçage de l\'état des cartes de centre.');
+    initCentreCards();
 });

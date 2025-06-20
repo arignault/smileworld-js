@@ -1,7 +1,7 @@
 // Version: 1.1.3 - Nettoyage du code
 // import { gsap } from 'gsap';
 
-console.log('🚀 loading-screen.js v1.2.0 chargé');
+console.log('🚀 loading-screen.js v1.3.0 chargé');
 
 // Configuration de l'animation
 const config = {
@@ -15,12 +15,19 @@ const config = {
 
 let isInitialized = false;
 let isHiding = false;
-let startTime = 0; // Pour suivre le temps de chargement
+let isReadyToHide = false;
+let minimumTimeElapsed = false;
+
+// Tente de masquer l'écran de chargement si les deux conditions sont remplies
+function tryHide() {
+    if (isReadyToHide && minimumTimeElapsed) {
+        hideLoadingScreen();
+    }
+}
 
 // Initialise l'écran de chargement
 export function initLoadingScreen() {
     console.log('🎬 initLoadingScreen - Début de l\'initialisation');
-    startTime = Date.now(); // On enregistre l'heure de début
     if (isInitialized) {
         console.log('ℹ️ Écran de chargement déjà initialisé');
         return Promise.resolve();
@@ -60,28 +67,29 @@ export function initLoadingScreen() {
         ease: config.ease
     });
 
+    // Lancement du minuteur pour la durée minimale
+    setTimeout(() => {
+        console.log('⏱️ 1.5 secondes écoulées.');
+        minimumTimeElapsed = true;
+        tryHide(); // Tente de masquer si l'autre condition est déjà remplie
+    }, 1500);
+
     // setupInternalLinkListener(); // EXPÉRIMENTATION : On désactive l'écouteur de liens
     isInitialized = true;
     console.log('✅ Écran de chargement initialisé avec succès');
     return Promise.resolve(loadingScreen);
 }
 
-// Masque l'écran de chargement
-export function hideLoadingScreen() {
-    console.log('🎬 hideLoadingScreen - Début du masquage');
-
-    const elapsedTime = Date.now() - startTime;
-    const remainingTime = 1500 - elapsedTime; // 1.5 secondes
-
-    if (remainingTime > 0) {
-        console.log(`⏳ Attente de ${remainingTime}ms supplémentaires pour atteindre la durée minimale.`);
-        setTimeout(performHideAnimation, remainingTime);
-    } else {
-        performHideAnimation();
-    }
+// L'application est prête, on peut demander à masquer l'écran
+export function requestHideLoadingScreen() {
+    console.log('🟢 Application prête, demande de masquage de l\'écran de chargement.');
+    isReadyToHide = true;
+    tryHide(); // Tente de masquer si le temps est déjà écoulé
 }
 
-function performHideAnimation() {
+// Masque l'écran de chargement (logique interne)
+function hideLoadingScreen() {
+    console.log('🎬 hideLoadingScreen - Début du masquage');
     if (!isInitialized) {
         console.warn('⚠️ Écran de chargement non initialisé');
         return;

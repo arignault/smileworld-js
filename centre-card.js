@@ -19,16 +19,12 @@ async function closeCard(cardElement) {
     
     const elementsToAnimate = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
     const arrow = cardElement.querySelector(SELECTORS.ARROW);
-    const scrollWrapper = cardElement.querySelector('.centre-card_scroll_wrapper');
     
     cardElement.classList.remove('is-open');
     
     const tl = window.gsap.timeline({
         onComplete: () => {
             window.gsap.set(elementsToAnimate, { display: 'none' });
-            if (scrollWrapper) {
-                window.gsap.set(scrollWrapper, { height: 0 });
-            }
         }
     });
 
@@ -37,17 +33,13 @@ async function closeCard(cardElement) {
         y: -10,
         duration: 0.2,
         ease: 'power1.in',
-        stagger: { each: 0.02, from: 'start' }
+        stagger: 0.02
     }, 0);
 
     if (arrow) {
         tl.to(arrow, { rotation: 0, duration: 0.25, ease: 'power2.inOut' }, 0);
     }
-
-    if (scrollWrapper) {
-        tl.to(scrollWrapper, { height: 0, duration: 0.4, ease: "back.in(1.7)" }, 0);
-    }
-
+    
     await tl;
 }
 
@@ -57,7 +49,6 @@ async function openCard(cardElement) {
     cardElement.classList.add('is-open');
     const elementsToAnimate = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
     const arrow = cardElement.querySelector(SELECTORS.ARROW);
-    const scrollWrapper = cardElement.querySelector('.centre-card_scroll_wrapper');
     
     elementsToAnimate.forEach(el => {
         window.gsap.set(el, { 
@@ -67,17 +58,7 @@ async function openCard(cardElement) {
         });
     });
 
-    const tl = window.gsap.timeline({
-        onStart: () => {
-            if (scrollWrapper) {
-                window.gsap.set(scrollWrapper, { height: 0 });
-            }
-        }
-    });
-
-    if (scrollWrapper) {
-        tl.to(scrollWrapper, { height: '10rem', duration: 0.6, ease: 'elastic.out(1.2, 0.5)' }, 0);
-    }
+    const tl = window.gsap.timeline();
 
     if (arrow) {
         tl.to(arrow, { rotation: 90, duration: 0.25, ease: 'back.out(1.7)' }, '<');
@@ -88,7 +69,7 @@ async function openCard(cardElement) {
         y: 0,
         duration: 0.3,
         ease: 'power2.out',
-        stagger: { each: 0.035, from: 'start' }
+        stagger: 0.035
     }, '<0.05');
 
     await tl;
