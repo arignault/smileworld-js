@@ -51,8 +51,8 @@ function initializeModules() {
         }
 
         console.log('✨ Tous les modules principaux ont été initialisés.');
-        // Une fois que tout est prêt, on cache le loader.
-        hideLoadingScreen();
+        // L'appel est déplacé dans window.onload pour s'assurer que tout est prêt.
+        // hideLoadingScreen();
 
     } catch (error) {
         console.error("❌ Erreur lors de l'initialisation des modules. Forçage du masquage du loader.", error);
@@ -92,6 +92,7 @@ window.Webflow.push(function() {
 
 // À la toute fin, une fois que tout (y compris les images) est chargé, on force la fermeture des cartes.
 window.addEventListener('load', () => {
-    console.log('🎬 La page est entièrement chargée. Forçage de l\'état des cartes de centre.');
+    console.log('🎬 La page est entièrement chargée. Initialisation des cartes et masquage du loader.');
     initCentreCards();
+    hideLoadingScreen(); // On masque le loader ici
 });
