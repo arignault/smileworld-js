@@ -396,24 +396,43 @@ export class SmileWorldReservation {
     const activitySlug = params.get('activite');
     const parkId = params.get('parc');
 
-    if (activitySlug) {
-        // Force l'affichage de l'onglet "Activités"
+    if (!activitySlug && !parkId) return;
+
+    // Logique de gestion des onglets et sélections
+    if (parkId && activitySlug) {
+        // --- CAS 1: Parc ET Activité sont présélectionnés ---
+        // On commence par la vue "Parcs"
+        if (this.dom.initialParksTabLink) {
+            this.dom.initialParksTabLink.click();
+        }
+        
+        // On attend un court instant que le DOM soit à jour, puis on clique
+        setTimeout(() => {
+            const parkButton = this.dom.initialParksPane.querySelector(`[data-centre-apex-id="${parkId}"]`);
+            if (parkButton) {
+                parkButton.click(); // Sélectionne le parc, ce qui affiche et filtre les activités
+            }
+
+            const finalActivityButton = this.dom.filteredActivitiesPane.querySelector(`[data-activity-slug="${activitySlug}"]`);
+            if (finalActivityButton) {
+                finalActivityButton.click(); // Sélectionne l'activité dans la liste filtrée
+            }
+        }, 100);
+
+    } else if (activitySlug) {
+        // --- CAS 2: Seule l'activité est présélectionnée ---
         if (this.dom.initialActivitiesTabLink) {
             this.dom.initialActivitiesTabLink.click();
         }
-        
-        // Sélectionne l'activité correspondante
         const activityButton = this.dom.initialActivitiesPane.querySelector(`[data-activity-slug="${activitySlug}"]`);
         if (activityButton) {
             activityButton.click();
         }
     } else if (parkId) {
-        // Force l'affichage de l'onglet "Parcs" (comportement par défaut, mais explicite)
+        // --- CAS 3: Seul le parc est présélectionné ---
         if (this.dom.initialParksTabLink) {
             this.dom.initialParksTabLink.click();
         }
-
-        // Sélectionne le parc correspondant
         const parkButton = this.dom.initialParksPane.querySelector(`[data-centre-apex-id="${parkId}"]`);
         if (parkButton) {
             parkButton.click();
