@@ -1,79 +1,102 @@
-// menu-desktop.js v15.2.0 - Reverted to ID-based video matching
+// menu-desktop.js v16.0.0 - Logique de survol vidéo originale restaurée
 const log = (message, ...args) => console.log(`[SW-DESK-MENU] ${message}`, ...args);
 
 /**
- * Gère le survol des activités pour jouer les vidéos correspondantes.
+ * Re-implémentation de la logique de survol de 'menu-desktop-hover-activite.js'
+ * adaptée pour les vidéos, avec une gestion propre des animations.
  * @requires gsap
  */
-function initActivityHover() {
-    log("Initialisation du survol des activités (v2).");
+function initActivityHoverRestored() {
+    log("Initialisation du survol des activités (Logique originale restaurée).");
 
     const videoListContainer = document.querySelector('.desktop_menu_content.right .w-dyn-items');
     const menuItems = document.querySelectorAll('.desktop_menu_list.acitivt-s .default-container');
 
     if (!videoListContainer || menuItems.length === 0) {
-        log("Conteneurs de vidéos ou éléments de menu introuvables. La fonctionnalité de survol est désactivée.");
+        log("Éléments nécessaires (conteneur vidéo ou items de menu) introuvables.");
         return;
     }
 
-    const videos = Array.from(videoListContainer.children);
-    let activeVideoWrapper = null; // Pour suivre la vidéo actuellement visible
+    const videoWrappers = Array.from(videoListContainer.children);
+    const animations = new Map(); // Pour gérer et annuler les animations concurrentes
 
-    log(`${videos.length} wrappers de vidéos trouvés.`);
-
-    // Cacher toutes les vidéos au départ
-    videos.forEach(videoWrapper => {
-        gsap.set(videoWrapper, { display: 'none', opacity: 0 });
+    // Cacher toutes les vidéos au démarrage
+    videoWrappers.forEach(wrapper => {
+        gsap.set(wrapper, { display: 'none', opacity: 0 });
     });
+
+    const handleVideoDisplay = (activityName, isEntering) => {
+        const targetWrapper = videoWrappers.find(wrapper => {
+            const video = wrapper.querySelector('video');
+            return video && video.id === activityName;
+        });
+
+        if (!targetWrapper) return;
+        
+        // Annule toute animation précédente sur cet élément pour éviter les conflits
+        if (animations.has(targetWrapper)) {
+            animations.get(targetWrapper).kill();
+        }
+
+        if (isEntering) {
+            // Arrêter et cacher toutes les autres vidéos
+            videoWrappers.forEach(wrapper => {
+                if (wrapper !== targetWrapper) {
+                    if (animations.has(wrapper)) animations.get(wrapper).kill();
+                    
+                    const anim = gsap.to(wrapper, {
+                        opacity: 0,
+                        duration: 0.15,
+                        onComplete: () => {
+                            gsap.set(wrapper, { display: 'none' });
+                            const video = wrapper.querySelector('video');
+                            if (video) video.pause();
+                        }
+                    });
+                    animations.set(wrapper, anim);
+                }
+            });
+
+            // Afficher et jouer la vidéo cible
+            const video = targetWrapper.querySelector('video');
+            gsap.set(targetWrapper, { display: 'block' });
+            
+            const showAnim = gsap.to(targetWrapper, {
+                opacity: 1,
+                duration: 0.2,
+                onComplete: () => {
+                    if (video) {
+                        video.currentTime = 0;
+                        video.play().catch(e => log(`Erreur de lecture pour ${activityName}: ${e.message}`));
+                    }
+                }
+            });
+            animations.set(targetWrapper, showAnim);
+
+        } else {
+            // Au mouseleave, on se contente de cacher la vidéo qui était affichée.
+            const video = targetWrapper.querySelector('video');
+            const hideAnim = gsap.to(targetWrapper, {
+                opacity: 0,
+                duration: 0.2,
+                onComplete: () => {
+                    gsap.set(targetWrapper, { display: 'none' });
+                    if (video) video.pause();
+                }
+            });
+            animations.set(targetWrapper, hideAnim);
+        }
+    };
 
     menuItems.forEach(item => {
-        const activityName = item.getAttribute('data-name');
-        if (!activityName) return;
+        const name = item.getAttribute('data-name');
+        if (!name) return;
 
-        const targetVideoWrapper = videos.find(v => {
-            const videoElement = v.querySelector('video');
-            return videoElement && videoElement.id === activityName;
-        });
-
-        if (!targetVideoWrapper) return;
-
-        item.addEventListener('mouseenter', () => {
-            // Si on survole le même élément, on ne fait rien
-            if (targetVideoWrapper === activeVideoWrapper) {
-                return;
-            }
-
-            // S'il y a une vidéo active, on la cache proprement
-            if (activeVideoWrapper) {
-                const oldVideo = activeVideoWrapper.querySelector('video');
-                gsap.to(activeVideoWrapper, { 
-                    opacity: 0, 
-                    duration: 0.2, 
-                    onComplete: () => {
-                        gsap.set(activeVideoWrapper, { display: 'none' });
-                        if (oldVideo) {
-                            oldVideo.pause();
-                            oldVideo.currentTime = 0;
-                        }
-                    }
-                });
-            }
-
-            // On active et on joue la nouvelle vidéo
-            activeVideoWrapper = targetVideoWrapper;
-            const newVideo = activeVideoWrapper.querySelector('video');
-            
-            gsap.set(activeVideoWrapper, { display: 'block' });
-            gsap.to(activeVideoWrapper, { opacity: 1, duration: 0.2 });
-            
-            if (newVideo) {
-                // On s'assure que la vidéo est chargée avant de la jouer
-                newVideo.play().catch(error => log(`Erreur de lecture pour ${activityName}:`, error));
-            }
-        });
+        item.addEventListener('mouseenter', () => handleVideoDisplay(name, true));
+        item.addEventListener('mouseleave', () => handleVideoDisplay(name, false));
     });
 
-    log("Survol des activités configuré (v2).");
+    log("Logique de survol vidéo originale restaurée et configurée.");
 }
 
 
@@ -90,19 +113,14 @@ class WrapperBasedContractHandler {
         }
         this.links = this.menuWrapper.querySelectorAll('[data-panel-target]');
         this.panels = this.menuWrapper.querySelectorAll('[data-panel-id]');
-
         this.init();
     }
 
     hideAllPanels() {
         this.panels.forEach(panel => {
             gsap.to(panel, { opacity: 0, duration: 0.2, onComplete: () => panel.style.display = 'none' });
-
-            // Correction : On met en pause toutes les vidéos dans le panneau qui se ferme
             panel.querySelectorAll('video').forEach(video => {
-                if (!video.paused) {
-                    video.pause();
-                }
+                if (!video.paused) video.pause();
             });
         });
         this.links.forEach(link => link.classList.remove('active'));
@@ -116,9 +134,7 @@ class WrapperBasedContractHandler {
         if (targetPanel) {
             targetPanel.style.display = 'block';
             gsap.to(targetPanel, { opacity: 1, duration: 0.2 });
-            if (targetLink) {
-                targetLink.classList.add('active');
-            }
+            if (targetLink) targetLink.classList.add('active');
         }
     }
 
@@ -133,7 +149,6 @@ class WrapperBasedContractHandler {
         });
 
         document.body.addEventListener('click', (e) => {
-            // Si on clique en dehors du conteneur global du menu, on ferme tout
             if (!this.menuWrapper.contains(e.target)) {
                 this.hideAllPanels();
             }
@@ -144,7 +159,7 @@ class WrapperBasedContractHandler {
 }
 
 export function initMenuDesktop() {
-    log("Initialisation v15.2.0... Stratégie 'Wrapper' + Hover Vidéo (ID match)");
+    log("Initialisation v16.0.0... Logique survol vidéo restaurée.");
     new WrapperBasedContractHandler();
-    initActivityHover();
+    initActivityHoverRestored();
 }
