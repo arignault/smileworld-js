@@ -1,17 +1,17 @@
 import { gsap } from "gsap";
 
 const MODULE_NAME = "card-tags-animation";
-const MODULE_VERSION = "4.0.0"; // Correct selector + Two-level observer strategy
+const MODULE_VERSION = "5.0.0"; // Use custom data-attribute for robustness
 
 const log = (message, ...args) => console.log(`[SW-TAGS] ${message}`, ...args);
 
 // The core animation logic for a single card
 function setupAnimationForCard(cardElement) {
-    // Specific selector to target the inner container that actually holds the tags.
-    const tagWrapper = cardElement.querySelector("div.tag_wrapper_gsap_loop[role='list']");
+    // Use the robust data-attribute selector
+    const tagWrapper = cardElement.querySelector('[data-sw-animation="tag-wrapper"]');
 
     if (!tagWrapper) {
-        log(`ERROR: setupAnimationForCard called, but could not find the specific tag wrapper in card:`, cardElement);
+        log(`ERROR: setupAnimationForCard called, but could not find [data-sw-animation="tag-wrapper"] in card:`, cardElement);
         return;
     }
     
@@ -62,7 +62,7 @@ function setupObserverForCard(cardElement) {
     log(`Setting up tag observer for card:`, cardElement);
 
     // First, check if tags are already present when this is called.
-    const initialTagWrapper = cardElement.querySelector("div.tag_wrapper_gsap_loop[role='list']");
+    const initialTagWrapper = cardElement.querySelector('[data-sw-animation="tag-wrapper"]');
     if (initialTagWrapper && initialTagWrapper.children.length > 0) {
         log(`Tags found immediately in card. Setting up animation.`);
         setupAnimationForCard(cardElement);
@@ -71,7 +71,7 @@ function setupObserverForCard(cardElement) {
 
     // If tags are not there, create an observer to wait for them.
     const tagObserver = new MutationObserver((mutations, obs) => {
-        const tagWrapper = cardElement.querySelector("div.tag_wrapper_gsap_loop[role='list']");
+        const tagWrapper = cardElement.querySelector('[data-sw-animation="tag-wrapper"]');
         // Once the container has children, we can proceed.
         if (tagWrapper && tagWrapper.children.length > 0) {
             log(`Tags detected by MutationObserver in card. Setting up animation.`);
