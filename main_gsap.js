@@ -90,9 +90,18 @@ window.Webflow.push(function() {
     waitForGsapAndInitialize();
 });
 
-// À la toute fin, une fois que tout (y compris les images) est chargé, on force la fermeture des cartes.
+// À la toute fin, une fois que tout (y compris les images) est chargé, on s'occupe des derniers modules.
 window.addEventListener('load', () => {
-    console.log('🎬 La page est entièrement chargée. Initialisation des cartes et masquage du loader.');
-    initCentreCards();
-    hideLoadingScreen(); // On masque le loader ici
+    console.log('🎬 La page est entièrement chargée. Tentative d\'initialisation des cartes et masquage du loader.');
+    
+    try {
+        console.log('-> Initialisation de initCentreCards...');
+        initCentreCards();
+        console.log('✅ initCentreCards initialisé avec succès.');
+    } catch (error) {
+        console.error("❌ Erreur lors de l'initialisation de initCentreCards.", error);
+    } finally {
+        console.log('-> Tentative de masquage du loader (dans le bloc finally).');
+        hideLoadingScreen(); // On masque le loader quoi qu'il arrive.
+    }
 });
