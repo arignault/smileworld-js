@@ -12,6 +12,7 @@ import { initDebugMenu } from './debug-menu.js';
 import { initReservation } from './reservation.js';
 import { initMap } from './map-integration.js';
 import { initPrivateRoomPopup } from './privateroom.js';
+import { initPreselection } from './preselect.js';
 
 function initializeModules() {
     console.log("✅ GSAP est prêt. Initialisation des modules...");
@@ -39,6 +40,12 @@ function initializeModules() {
         if (document.querySelector('.salles_privatisable_holder')) {
             console.log("-> Élément .salles_privatisable_holder détecté. Initialisation du module.");
             initPrivateRoomPopup();
+        }
+
+        // Présélection pour la réservation (uniquement si des boutons sont présents)
+        if (document.querySelector('[data-attribute="preselect-booking-button"]')) {
+            console.log("-> Bouton de présélection détecté. Initialisation du module.");
+            initPreselection();
         }
 
         console.log('✨ Tous les modules principaux ont été initialisés.');
