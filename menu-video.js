@@ -1,59 +1,113 @@
+import Player from '@vimeo/player';
+import { gsap } from 'gsap';
+
 const MODULE_NAME = "menu-video";
-const MODULE_VERSION = "2.0.0"; // Switched to src-swapping method
+const MODULE_VERSION = "3.0.0"; // Logic based on old script (show/hide with GSAP)
 
 const log = (message, ...args) => console.log(`[SW-MENU-VIDEO] ${message}`, ...args);
 
 export function initMenuVideo() {
-    const activityLinks = document.querySelectorAll('[data-video-src]');
-    const videoEmbed = document.querySelector('[data-menu-video="target"]');
+    const activityLinks = document.querySelectorAll('.desktop_menu_list.acitivt-s .default-container');
+    const videoList = document.querySelector('.desktop_menu_content.left .w-dyn-items');
 
-    if (activityLinks.length === 0 || !videoEmbed) {
-        log("Éléments nécessaires non trouvés (liens avec [data-video-src] ou un embed avec [data-menu-video='target']). Module inactif.");
+    if (!activityLinks.length || !videoList) {
+        log("Éléments nécessaires non trouvés. Vérifiez les sélecteurs. Module inactif.");
         return;
     }
 
-    const iframe = videoEmbed.querySelector('iframe');
-    if (!iframe) {
-        log("Aucun iframe trouvé dans l'élément [data-menu-video='target'].");
-        return;
-    }
+    log(`Initialisation pour ${activityLinks.length} activités.`);
 
-    log(`Initialisation pour ${activityLinks.length} activités et un iframe cible.`);
+    // Prepare players and video elements map
+    const videos = new Map();
+    const players = new Map();
 
-    // Set the initial video to the first activity's video
-    const firstVideoSrc = activityLinks[0].dataset.videoSrc;
-    if (firstVideoSrc) {
-        // Ensure Vimeo autoplay and muted parameters are present for a good UX
-        const url = new URL(firstVideoSrc);
-        url.searchParams.set('autoplay', '1');
-        url.searchParams.set('muted', '1');
-        url.searchParams.set('background', '1'); // Hides controls, etc.
-        iframe.src = url.toString();
-        log(`Vidéo initiale chargée : ${iframe.src}`);
-    }
-
-    activityLinks.forEach(link => {
-        link.addEventListener('mouseenter', () => {
-            const videoSrc = link.dataset.videoSrc;
-            if (!videoSrc) {
-                log(`Lien survolé, mais pas de data-video-src trouvé.`);
-                return;
-            }
-
-            const newUrl = new URL(videoSrc);
-            newUrl.searchParams.set('autoplay', '1');
-            newUrl.searchParams.set('muted', '1');
-            newUrl.searchParams.set('background', '1');
-            
-            const newSrcString = newUrl.toString();
-
-            // Only update the src if it's different to avoid unnecessary reloads
-            if (iframe.src !== newSrcString) {
-                log(`Changement de vidéo pour : ${newSrcString}`);
-                iframe.src = newSrcString;
-            }
-        });
+    Array.from(videoList.children).forEach(videoWrapper => {
+        const name = videoWrapper.getAttribute('data-video-for');
+        const iframe = videoWrapper.querySelector('iframe');
+        if (name && iframe) {
+            videos.set(name, videoWrapper);
+            players.set(name, new Player(iframe));
+            gsap.set(videoWrapper, { display: 'none', opacity: 0 });
+        }
     });
 
-    console.log(`🎬 ${MODULE_NAME}.js v${MODULE_VERSION} (méthode src-swap) chargé et écouteurs actifs.`);
+    // Set a default video to show
+    const defaultVideoName = "Bowling"; // Change if needed
+    const defaultVideoWrapper = videos.get(defaultVideoName);
+    const defaultPlayer = players.get(defaultVideoName);
+
+    if (defaultVideoWrapper) {
+        gsap.set(defaultVideoWrapper, { display: 'block', opacity: 1 });
+    }
+
+    let activeVideoWrapper = defaultVideoWrapper;
+    let activePlayer = defaultPlayer;
+
+    activityLinks.forEach(link => {
+        const name = link.getAttribute('data-name');
+        if (!name) return;
+
+        link.addEventListener('mouseenter', () => {
+            const newVideoWrapper = videos.get(name);
+            const newPlayer = players.get(name);
+
+            if (!newVideoWrapper || newVideoWrapper === activeVideoWrapper) return;
+            
+            // Hide the currently active video
+            if (activeVideoWrapper) {
+                gsap.to(activeVideoWrapper, { 
+                    opacity: 0, 
+                    duration: 0.2, 
+                    onComplete: () => {
+                        if (activeVideoWrapper !== newVideoWrapper) { // Don't hide if it's the new target
+                           gsap.set(activeVideoWrapper, { display: 'none' });
+                        }
+                    } 
+                });
+                if (activePlayer) {
+                    activePlayer.pause();
+                }
+            }
+            
+            // Show the new video
+            gsap.set(newVideoWrapper, { display: 'block' });
+            gsap.to(newVideoWrapper, { opacity: 1, duration: 0.2 });
+            
+            if (newPlayer) {
+                newPlayer.setVolume(0);
+                newPlayer.play().catch(e => log(`Autoplay error for ${name}: ${e.name}`));
+            }
+
+            activeVideoWrapper = newVideoWrapper;
+            activePlayer = newPlayer;
+        });
+    });
+    
+    // Optional: Handle mouse leaving the entire menu area to reset to default
+    const menuWrapper = document.querySelector('.desktop_menu_content.left');
+    if (menuWrapper) {
+        menuWrapper.addEventListener('mouseleave', () => {
+            if (activeVideoWrapper !== defaultVideoWrapper) {
+                gsap.to(activeVideoWrapper, { 
+                    opacity: 0, 
+                    duration: 0.2, 
+                    onComplete: () => gsap.set(activeVideoWrapper, { display: 'none' }) 
+                });
+                if (activePlayer) {
+                    activePlayer.pause();
+                }
+
+                if (defaultVideoWrapper) {
+                    gsap.set(defaultVideoWrapper, { display: 'block' });
+                    gsap.to(defaultVideoWrapper, { opacity: 1, duration: 0.2 });
+                    // No need to autoplay the default one
+                }
+                
+                activeVideoWrapper = defaultVideoWrapper;
+                activePlayer = defaultPlayer;
+            }
+        });
+    }
+
+    console.log(`🎬 ${MODULE_NAME}.js v${MODULE_VERSION} (GSAP show/hide) chargé.`);
 } 
