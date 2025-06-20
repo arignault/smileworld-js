@@ -11,6 +11,7 @@ import { initCentreCards } from './centre-card.js';
 import { initDebugMenu } from './debug-menu.js';
 import { initReservation } from './reservation.js';
 import { initMap } from './map-integration.js';
+import { initPrivateRoomPopup } from './privateroom.js';
 
 function initializeModules() {
     console.log("✅ GSAP est prêt. Initialisation des modules...");
@@ -33,6 +34,12 @@ function initializeModules() {
 
         // Initialisation des modules qui dépendent d'éléments spécifiques
         initMap();
+
+        // Salles privatisables (uniquement si le conteneur est présent)
+        if (document.querySelector('.salles_privatisable_holder')) {
+            console.log("-> Élément .salles_privatisable_holder détecté. Initialisation du module.");
+            initPrivateRoomPopup();
+        }
 
         console.log('✨ Tous les modules principaux ont été initialisés.');
         // Une fois que tout est prêt, on cache le loader.
