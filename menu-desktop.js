@@ -1,143 +1,138 @@
-// menu-desktop.js v14.0.0 - Stratégie "Wrapper"
-console.log('🚀 menu-desktop.js v14.0.0 chargé - Stratégie "Wrapper"');
+// menu-desktop.js v15.0.0 - Réintégration du hover vidéo
+const log = (message, ...args) => console.log(`[SW-DESK-MENU] ${message}`, ...args);
 
+/**
+ * Gère le survol des activités pour jouer les vidéos correspondantes.
+ * @requires gsap
+ */
+function initActivityHover() {
+    log("Initialisation du survol des activités.");
+
+    const videoListContainer = document.querySelector('.desktop_menu_content.right .w-dyn-items');
+    const menuItems = document.querySelectorAll('.desktop_menu_list.acitivt-s .default-container');
+
+    if (!videoListContainer || menuItems.length === 0) {
+        log("Conteneurs de vidéos ou éléments de menu introuvables. La fonctionnalité de survol est désactivée.");
+        return;
+    }
+
+    const videos = Array.from(videoListContainer.children);
+    log(`${videos.length} wrappers de vidéos trouvés.`);
+
+    // On cache toutes les vidéos au départ
+    videos.forEach(videoWrapper => {
+        gsap.set(videoWrapper, { display: 'none', opacity: 0 });
+    });
+
+    menuItems.forEach(item => {
+        const activityName = item.getAttribute('data-name');
+        if (!activityName) {
+            log("Attribut data-name manquant sur l'élément de menu :", item);
+            return;
+        }
+
+        const targetVideoWrapper = videos.find(v => {
+            const videoElement = v.querySelector('video');
+            return videoElement && videoElement.getAttribute('data-video-name') === activityName;
+        });
+
+        if (!targetVideoWrapper) {
+            log(`Aucun wrapper de vidéo trouvé pour l'activité : ${activityName}`);
+            return;
+        }
+
+        const videoElement = targetVideoWrapper.querySelector('video');
+        if (!videoElement) {
+            log(`Aucune balise <video> trouvée dans le wrapper pour : ${activityName}`);
+            return;
+        }
+
+        item.addEventListener('mouseenter', () => {
+            // Cacher toutes les autres vidéos d'abord
+            videos.forEach(otherVideoWrapper => {
+                if (otherVideoWrapper !== targetVideoWrapper) {
+                    gsap.to(otherVideoWrapper, { opacity: 0, duration: 0.2, onComplete: () => {
+                        gsap.set(otherVideoWrapper, { display: 'none' });
+                        const otherVideo = otherVideoWrapper.querySelector('video');
+                        if (otherVideo) {
+                            otherVideo.pause();
+                            otherVideo.currentTime = 0; // Rembobine la vidéo
+                        }
+                    }});
+                }
+            });
+            
+            // Afficher et lancer la vidéo cible
+            gsap.set(targetVideoWrapper, { display: 'block' });
+            gsap.to(targetVideoWrapper, { opacity: 1, duration: 0.2 });
+            videoElement.play().catch(error => log(`Erreur de lecture vidéo pour ${activityName}:`, error));
+        });
+    });
+
+    log("Survol des activités configuré.");
+}
+
+
+/**
+ * Gère l'ouverture et la fermeture des panneaux du menu desktop
+ * en se basant sur une stratégie de conteneur global.
+ */
 class WrapperBasedContractHandler {
     constructor() {
-        this.activePanel = null;
-        this.isAnimating = false;
-        
-        this.triggerSelector = '[data-attribute^="nav-link-desktop-"]';
-        this.wrapperSelector = '.desktop_menu_wrapper'; // Le sélecteur pour votre conteneur
-        this.panelClassMap = {
-            'parcs': '.parc_menu_desktop',
-            'activites': '.activites_menu_desktop',
-            'offres': '.offres_menu_desktop'
-        };
+        this.menuWrapper = document.querySelector('.desktop_menu_wrapper');
+        if (!this.menuWrapper) {
+            log("Erreur : Le conteneur .desktop_menu_wrapper est introuvable.");
+            return;
+        }
+        this.links = this.menuWrapper.querySelectorAll('[data-panel-target]');
+        this.panels = this.menuWrapper.querySelectorAll('[data-panel-id]');
 
-        this._addGlobalListener();
-        console.log('✅ Gestionnaire de clic "Stratégie Wrapper" est actif.');
+        this.init();
     }
 
-    _addGlobalListener() {
+    hideAllPanels() {
+        this.panels.forEach(panel => {
+            gsap.to(panel, { opacity: 0, duration: 0.2, onComplete: () => panel.style.display = 'none' });
+        });
+        this.links.forEach(link => link.classList.remove('active'));
+    }
+
+    showPanel(panelId) {
+        this.hideAllPanels();
+        const targetPanel = this.menuWrapper.querySelector(`[data-panel-id="${panelId}"]`);
+        const targetLink = this.menuWrapper.querySelector(`[data-panel-target="${panelId}"]`);
+
+        if (targetPanel) {
+            targetPanel.style.display = 'block';
+            gsap.to(targetPanel, { opacity: 1, duration: 0.2 });
+            if (targetLink) {
+                targetLink.classList.add('active');
+            }
+        }
+    }
+
+    init() {
+        this.links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const panelId = link.dataset.panelTarget;
+                this.showPanel(panelId);
+            });
+        });
+
         document.body.addEventListener('click', (e) => {
-            if (this.isAnimating) return;
-
-            const trigger = e.target.closest(this.triggerSelector);
-            const wrapper = document.querySelector(this.wrapperSelector);
-            
-            // Clic en dehors du PANNEAU (mais potentiellement dans le wrapper)
-            if (this.activePanel && !trigger && !this.activePanel.contains(e.target)) {
-                this._closeAll();
-                return;
-            }
-
-            // Si ce n'est ni un clic sur un trigger, ni un clic "dehors", on ignore
-            if (!trigger) return;
-
-            // ---- A partir d'ici, on a cliqué sur un trigger ----
-            e.preventDefault();
-            e.stopPropagation();
-
-            if (!wrapper) {
-                console.error(`Wrapper introuvable avec le sélecteur: ${this.wrapperSelector}`);
-                return;
-            }
-
-            const key = trigger.getAttribute('data-attribute').replace('nav-link-desktop-', '');
-            const targetPanel = wrapper.querySelector(this.panelClassMap[key]);
-
-            if (!targetPanel) {
-                console.error(`Panneau cible pour la clé "${key}" non trouvé dans le wrapper.`);
-                return;
-            }
-
-            const isSamePanel = this.activePanel === targetPanel;
-            const noPanelOpen = !this.activePanel;
-
-            if (isSamePanel) {
-                this._closeAll();
-            } else if (noPanelOpen) {
-                this._openWrapperAndPanel(targetPanel);
-            } else {
-                this._switchPanels(this.activePanel, targetPanel);
-            }
-        });
-    }
-
-    _openWrapperAndPanel(panel) {
-        const wrapper = document.querySelector(this.wrapperSelector);
-        this.isAnimating = true;
-
-        // Prépare les états avant animation
-        window.gsap.set(wrapper, { display: 'flex', opacity: 0 });
-        // On s'assure que seul le bon panneau est visible
-        Object.values(this.panelClassMap).forEach(selector => {
-            const p = wrapper.querySelector(selector);
-            if (p) window.gsap.set(p, { display: 'none' });
-        });
-        window.gsap.set(panel, { display: 'flex' });
-
-        // Animation d'apparition du wrapper
-        window.gsap.to(wrapper, {
-            opacity: 1,
-            duration: 0.3,
-            ease: 'power2.out',
-            onComplete: () => {
-                this.isAnimating = false;
-                this.activePanel = panel;
-            }
-        });
-    }
-
-    _closeAll() {
-        const wrapper = document.querySelector(this.wrapperSelector);
-        if (!this.activePanel || !wrapper) return;
-        
-        this.isAnimating = true;
-
-        // Animation de disparition du wrapper
-        window.gsap.to(wrapper, {
-            opacity: 0,
-            duration: 0.2,
-            ease: 'power1.in',
-            onComplete: () => {
-                window.gsap.set(wrapper, { display: 'none' });
-                // On cache aussi le panneau par sécurité
-                if (this.activePanel) {
-                    window.gsap.set(this.activePanel, { display: 'none' });
-                }
-                this.activePanel = null;
-                this.isAnimating = false;
-            }
-        });
-    }
-
-    _switchPanels(oldPanel, newPanel) {
-        this.isAnimating = true;
-
-        const tl = window.gsap.timeline({
-            onComplete: () => {
-                this.isAnimating = false;
-                this.activePanel = newPanel;
+            if (!this.menuWrapper.contains(e.target)) {
+                this.hideAllPanels();
             }
         });
 
-        // Cache l'ancien panneau
-        tl.to(oldPanel, {
-            opacity: 0,
-            duration: 0.15,
-            onComplete: () => window.gsap.set(oldPanel, { display: 'none' })
-        });
-
-        // Affiche le nouveau
-        tl.set(newPanel, { display: 'flex', opacity: 0 });
-        tl.to(newPanel, {
-            opacity: 1,
-            duration: 0.15
-        });
+        log('Gestionnaire de clic "Stratégie Wrapper" est actif.');
     }
 }
 
 export function initMenuDesktop() {
+    log("Initialisation v15.0.0... Stratégie 'Wrapper' + Hover Vidéo");
     new WrapperBasedContractHandler();
+    initActivityHover();
 }
