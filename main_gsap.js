@@ -26,9 +26,9 @@ function initializeModules() {
         initMenuMobile();
         initDebugMenu();
 
-        // Initialisation de l'animation des tags (uniquement si le conteneur est présent)
-        if(document.querySelector('.tag-wrapper-gsap-loop')) {
-            console.log("-> Élément .tag-wrapper-gsap-loop détecté. Initialisation du module d'animation des tags.");
+        // Initialisation de l'animation des tags sur la page d'accueil
+        if(window.location.pathname === '/') {
+            console.log("-> Page d'accueil détectée. Initialisation du module d'animation des tags.");
             initCardTagsAnimation();
         }
 
