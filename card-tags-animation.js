@@ -1,7 +1,7 @@
 console.log('🏷️ card-tags-animation.js prêt à être initialisé');
 
 export function initCardTagsAnimation() {
-    const cardWrappers = document.querySelectorAll('.centre-card_wrapper');
+    const cardWrappers = document.querySelectorAll('.centre_card_pro_wrapper');
 
     if (cardWrappers.length === 0) {
         return; // Pas de cartes, pas d'animation.
@@ -10,9 +10,9 @@ export function initCardTagsAnimation() {
     console.log(`✅ ${cardWrappers.length} cartes trouvées. Initialisation de l'animation des tags.`);
 
     cardWrappers.forEach((card, index) => {
-        const tagWrapper = card.querySelector('#tag_wrapper_gsap_loop');
+        const tagWrapper = card.querySelector('.tag-wrapper-gsap-loop');
         if (!tagWrapper) {
-            console.warn(`-> Wrapper de tags #tag_wrapper_gsap_loop non trouvé dans la carte ${index + 1}.`);
+            console.warn(`-> Wrapper de tags .tag-wrapper-gsap-loop non trouvé dans la carte ${index + 1}.`);
             return;
         }
 
