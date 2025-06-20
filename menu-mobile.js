@@ -1,148 +1,250 @@
-// menu-mobile.js v4.0.0 - Stratégie "Ultra Patiente"
-// import { gsap } from 'gsap';
+// Version: 1.0.7 - Adaptation au build
+// import { updateCardLayout } from './centre-card.js'; // Supprimé car géré globalement
 
-console.log('🚀 menu-mobile.js v4.0.0 chargé - Stratégie "Ultra Patiente"');
-
-class MenuMobileManager {
-    constructor() {
-        // On ne stocke que les sélecteurs, pas les éléments eux-mêmes.
-        this.selectors = {
-            mainPanel: '#main-menu-mobile',
-            openButton: '#hamburger-menu',
-            closeButton: '.button-close_menu-mobile',
-            navLinks: {
-                parcs: '#parcs-nav_button_mobile',
-                activites: '#activites-nav_button_mobile',
-                offres: '#formules-nav_button_mobile',
-            },
-            panels: {
-                main: '#main-menu-mobile',
-                parcs: '#parc-menu-mobile',
-                activites: '#activite-menu-mobile',
-                offres: '#offres-menu-mobile',
-            },
-            backButtons: '.button-back-menu',
-        };
-
-        this.activePanelKey = 'main';
-        this.isAnimating = false;
-        
-        this._setupEventListeners();
-        console.log('✅ Menu Mobile "Ultra Patient" initialisé.');
+// Initialise le menu mobile
+export function initMenuMobile() {
+    // Sélecteurs principaux
+    const menuButton = document.querySelector('#hamburger-menu');
+    const mainMenu = document.querySelector('#main-menu-mobile');
+    const body = document.body;
+    const html = document.documentElement;
+    
+    // Sélecteurs des boutons de sous-menu
+    const parcButton = document.querySelector('#parcs-nav_button_mobile');
+    const activitesButton = document.querySelector('#activites-nav_button_mobile');
+    const formulesButton = document.querySelector('#formules-nav_button_mobile');
+    
+    // Sélecteurs des sous-menus
+    const parcMenu = document.querySelector('#parc-menu-mobile');
+    const activiteMenu = document.querySelector('#activite-menu-mobile');
+    const offresMenu = document.querySelector('#offres-menu-mobile');
+    
+    // Sélecteurs des boutons close et back
+    const closeButtons = document.querySelectorAll('.button-close');
+    const backButtons = document.querySelectorAll('.button-back-menu');
+    
+    // État des menus
+    let isMenuOpen = false;
+    let scrollPosition = 0;
+    
+    // Timeline principale pour toute la navigation
+    let mainTimeline = window.gsap.timeline({ paused: true });
+    
+    // Timeline pour l'animation du bouton hamburger
+    const hamburgerTimeline = window.gsap.timeline({ paused: true });
+    hamburgerTimeline.to(menuButton, {
+        rotation: 90,
+        duration: 0.4,
+        ease: "elastic.out(1, 0.5)",
+        transformOrigin: "center center"
+    });
+    
+    // Configuration initiale
+    [mainMenu, parcMenu, activiteMenu, offresMenu].forEach(menu => {
+        menu.style.display = 'none';
+    });
+    
+    // Désactive le scroll
+    function disableScroll() {
+        scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+        body.style.overflow = 'hidden';
+        body.style.position = 'fixed';
+        body.style.width = '100%';
+        body.style.top = `-${scrollPosition}px`;
     }
-
-    _setupEventListeners() {
-        document.body.addEventListener('click', e => {
-            if (this.isAnimating) return;
-
-            // --- Open / Close ---
-            if (e.target.closest(this.selectors.openButton)) {
-                e.preventDefault();
-                this._openMainMenu();
-                return;
-            }
-            if (e.target.closest(this.selectors.closeButton)) {
-                e.preventDefault();
-                this._closeMainMenu();
-                return;
-            }
-
-            // --- Navigation vers sous-menu ---
-            const clickedNavKey = Object.keys(this.selectors.navLinks).find(key => 
-                e.target.closest(this.selectors.navLinks[key])
-            );
-            if (clickedNavKey) {
-                e.preventDefault();
-                this._navigateToPanel(clickedNavKey);
-                return;
-            }
-
-            // --- Navigation retour ---
-            if (e.target.closest(this.selectors.backButtons)) {
-                e.preventDefault();
-                this._navigateToPanel('main', true);
-                return;
-            }
-        });
+    
+    // Réactive le scroll
+    function enableScroll() {
+        body.style.overflow = '';
+        body.style.position = '';
+        body.style.width = '';
+        body.style.top = '';
+        window.scrollTo(0, scrollPosition);
     }
-
-    _openMainMenu() {
-        const mainPanel = document.querySelector(this.selectors.mainPanel);
-        if (!mainPanel) return console.warn('[MenuMobile] Panneau principal #main-menu-mobile introuvable au clic.');
-
-        this.isAnimating = true;
-        // Styles appliqués juste avant l'animation
-        window.gsap.set(mainPanel, { display: 'block', x: '100%' });
-        
-        window.gsap.to(mainPanel, { 
-            x: '0%', 
-            duration: 0.5, 
-            ease: 'power3.out',
-            onComplete: () => { this.isAnimating = false; }
-        });
-        document.body.style.overflow = 'hidden';
+    
+    // Crée la timeline principale
+    function createMainTimeline() {
+        return window.gsap.timeline({ paused: true })
+            .add(() => {
+                mainMenu.style.display = 'flex';
+                [parcMenu, activiteMenu, offresMenu].forEach(menu => {
+                    menu.style.display = 'none';
+                });
+            }, "openMainMenu")
+            .add(() => {
+                mainMenu.style.display = 'none';
+                parcMenu.style.display = 'flex';
+            }, "openParcMenu")
+            .add(() => {
+                mainMenu.style.display = 'none';
+                activiteMenu.style.display = 'flex';
+            }, "openActiviteMenu")
+            .add(() => {
+                mainMenu.style.display = 'none';
+                offresMenu.style.display = 'flex';
+            }, "openOffresMenu");
     }
+    
+    // Initialisation de la timeline
+    mainTimeline = createMainTimeline();
+    
+    // Fonction pour gérer l'état des boutons
+    function updateButtonStates(activeButtonId = null) {
+        const allButtons = [
+            parcButton,
+            activitesButton,
+            formulesButton,
+            document.querySelector('#parcs-nav_button'),
+            document.querySelector('#activites-nav_button'),
+            document.querySelector('#formules-nav_button')
+        ];
 
-    _closeMainMenu() {
-        const mainPanel = document.querySelector(this.selectors.mainPanel);
-        if (!mainPanel) return; // Si le menu n'est plus là, on ne fait rien
-        
-        this.isAnimating = true;
-        this._resetToMainPanel(); // On s'assure de revenir au menu principal
-        
-        window.gsap.to(mainPanel, {
-            x: '100%',
-            duration: 0.4,
-            ease: 'power3.in',
-            onComplete: () => {
-                window.gsap.set(mainPanel, { display: 'none' });
-                this.isAnimating = false;
-                document.body.style.overflow = '';
+        allButtons.forEach(button => {
+            if (button) {
+                if (activeButtonId && button.id === activeButtonId) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
             }
         });
     }
     
-    _navigateToPanel(targetPanelKey, isGoingBack = false) {
-        const currentPanel = document.querySelector(this.selectors.panels[this.activePanelKey]);
-        const targetPanel = document.querySelector(this.selectors.panels[targetPanelKey]);
+    // Fonction pour gérer l'animation du bouton hamburger
+    function updateHamburgerState(isOpen) {
+        if (isOpen) {
+            hamburgerTimeline.play();
+        } else {
+            hamburgerTimeline.reverse();
+        }
+    }
+    
+    // Modification de la fonction handleBottomNavClick
+    function handleBottomNavClick(buttonId) {
+        const buttonMap = {
+            'parcs-nav_button': parcMenu,
+            'activites-nav_button': activiteMenu,
+            'formules-nav_button': offresMenu,
+            'parcs-nav_button_mobile': parcMenu,
+            'activites-nav_button_mobile': activiteMenu,
+            'formules-nav_button_mobile': offresMenu
+        };
 
-        if (!currentPanel || !targetPanel || this.activePanelKey === targetPanelKey) return;
+        const targetMenu = buttonMap[buttonId];
+        if (!targetMenu) return;
 
-        this.isAnimating = true;
-        const movePercent = isGoingBack ? 100 : -100;
+        // On force le display: none sur tous les menus de manière synchrone
+        mainMenu.style.display = 'none';
+        parcMenu.style.display = 'none';
+        activiteMenu.style.display = 'none';
+        offresMenu.style.display = 'none';
 
-        window.gsap.set(targetPanel, { display: 'flex', x: `${-movePercent}%`, opacity: 1 });
+        // Si le menu cible est déjà ouvert, on le ferme simplement
+        if (isMenuOpen && targetMenu.style.display === 'flex') {
+            isMenuOpen = false;
+            enableScroll();
+            updateButtonStates();
+            updateHamburgerState(false);
+            return;
+        }
 
-        const tl = window.gsap.timeline({
-            onComplete: () => {
-                window.gsap.set(currentPanel, { display: 'none' });
-                this.activePanelKey = targetPanelKey;
-                this.isAnimating = false;
+        // On s'assure que le menu cible est bien affiché
+        requestAnimationFrame(() => {
+            targetMenu.style.display = 'flex';
+            isMenuOpen = true;
+            disableScroll();
+            updateButtonStates(buttonId);
+            updateHamburgerState(true);
+
+            // Mise à jour spéciale pour le menu des parcs
+            if (targetMenu === parcMenu) {
+                // setTimeout(() => {
+                //     const cards = document.querySelectorAll('.centre-card_wrapper.effect-cartoon-shadow');
+                //     cards.forEach(card => {
+                //         updateCardLayout(card);
+                //     });
+                // }, 100);
             }
         });
-
-        tl.to(currentPanel, { x: `${movePercent}%`, duration: 0.4, ease: 'power2.inOut' })
-          .to(targetPanel, { x: '0%', duration: 0.4, ease: 'power2.inOut' }, '-=0.4');
     }
 
-    _resetToMainPanel() {
-        Object.keys(this.selectors.panels).forEach(key => {
-            const panel = document.querySelector(this.selectors.panels[key]);
-            if (panel) {
-                const isMainPanel = key === 'main';
-                window.gsap.set(panel, { 
-                    display: isMainPanel ? 'flex' : 'none', 
-                    x: '0%' 
-                });
-            }
+    // Modification de la fonction resetAllMenus
+    function resetAllMenus() {
+        if (mainTimeline) {
+            mainTimeline.kill();
+        }
+        isMenuOpen = false;
+        [mainMenu, parcMenu, activiteMenu, offresMenu].forEach(menu => {
+            menu.style.display = 'none';
         });
-        this.activePanelKey = 'main';
+        enableScroll();
+        updateButtonStates();
+        updateHamburgerState(false);
+        mainTimeline = createMainTimeline();
     }
-}
+    
+    // Revient au menu principal
+    function backToMainMenu() {
+        [parcMenu, activiteMenu, offresMenu].forEach(menu => {
+            menu.style.display = 'none';
+        });
+        mainMenu.style.display = 'flex';
+        isMenuOpen = true;
+    }
+    
+    // Ouvre un sous-menu
+    function openSubMenu(subMenu) {
+        mainMenu.style.display = 'none';
+        isMenuOpen = true;
+        subMenu.style.display = 'flex';
 
-export function initMenuMobile() {
-    // On initialise directement, l'écouteur sur 'body' est toujours disponible.
-    new MenuMobileManager();
+        if (subMenu === parcMenu) {
+            // setTimeout(() => {
+            //     const cards = document.querySelectorAll('.centre-card_wrapper.effect-cartoon-shadow');
+            //     cards.forEach(card => {
+            //         updateCardLayout(card);
+            //     });
+            // }, 100);
+        }
+    }
+    
+    // Modification de la gestion du clic sur le bouton burger
+    menuButton.addEventListener('click', () => {
+        if (!isMenuOpen) {
+            [parcMenu, activiteMenu, offresMenu].forEach(menu => {
+                menu.style.display = 'none';
+            });
+            mainMenu.style.display = 'flex';
+            isMenuOpen = true;
+            disableScroll();
+            updateHamburgerState(true);
+        } else {
+            resetAllMenus();
+        }
+    });
+    
+    // Gestion des clics sur les boutons de sous-menu
+    parcButton.addEventListener('click', () => openSubMenu(parcMenu));
+    activitesButton.addEventListener('click', () => openSubMenu(activiteMenu));
+    formulesButton.addEventListener('click', () => openSubMenu(offresMenu));
+    
+    // Gestion des boutons close
+    closeButtons.forEach(button => {
+        button.addEventListener('click', resetAllMenus);
+    });
+    
+    // Gestion des boutons retour
+    backButtons.forEach(button => {
+        button.addEventListener('click', backToMainMenu);
+    });
+
+    // Ajout des écouteurs d'événements pour tous les boutons de navigation
+    document.querySelectorAll('#parcs-nav_button, #activites-nav_button, #formules-nav_button, #parcs-nav_button_mobile, #activites-nav_button_mobile, #formules-nav_button_mobile').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleBottomNavClick(button.id);
+        });
+    });
 }
   
   

@@ -5,7 +5,7 @@ console.log("🚀 main_gsap.js v3.0.1 chargé");
 import { initLoadingScreen, hideLoadingScreen } from './loading-screen.js';
 import { initTextAnimation } from './text-animation.js';
 import { initFaqItems } from './faq-toggle.js';
-import { initMenuDesktop } from './menu-desktop.js';
+// import { initMenuDesktop } from './menu-desktop.js'; // Fichier supprimé
 import { initMenuMobile } from './menu-mobile.js';
 import { initCentreCards } from './centre-card.js';
 import { initDebugMenu } from './debug-menu.js';
@@ -19,7 +19,7 @@ function initializeModules() {
         // Initialise les modules généraux
         initTextAnimation();
         initFaqItems();
-        initMenuDesktop();
+        // initMenuDesktop(); // Fichier supprimé
         initMenuMobile();
         initDebugMenu();
 
