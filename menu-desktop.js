@@ -1,4 +1,4 @@
-// menu-desktop.js v15.0.0 - Réintégration du hover vidéo
+// menu-desktop.js v15.1.0 - Logique de survol vidéo améliorée
 const log = (message, ...args) => console.log(`[SW-DESK-MENU] ${message}`, ...args);
 
 /**
@@ -6,7 +6,7 @@ const log = (message, ...args) => console.log(`[SW-DESK-MENU] ${message}`, ...ar
  * @requires gsap
  */
 function initActivityHover() {
-    log("Initialisation du survol des activités.");
+    log("Initialisation du survol des activités (v2).");
 
     const videoListContainer = document.querySelector('.desktop_menu_content.right .w-dyn-items');
     const menuItems = document.querySelectorAll('.desktop_menu_list.acitivt-s .default-container');
@@ -17,59 +17,63 @@ function initActivityHover() {
     }
 
     const videos = Array.from(videoListContainer.children);
+    let activeVideoWrapper = null; // Pour suivre la vidéo actuellement visible
+
     log(`${videos.length} wrappers de vidéos trouvés.`);
 
-    // On cache toutes les vidéos au départ
+    // Cacher toutes les vidéos au départ
     videos.forEach(videoWrapper => {
         gsap.set(videoWrapper, { display: 'none', opacity: 0 });
     });
 
     menuItems.forEach(item => {
         const activityName = item.getAttribute('data-name');
-        if (!activityName) {
-            log("Attribut data-name manquant sur l'élément de menu :", item);
-            return;
-        }
+        if (!activityName) return;
 
         const targetVideoWrapper = videos.find(v => {
             const videoElement = v.querySelector('video');
             return videoElement && videoElement.getAttribute('data-video-name') === activityName;
         });
 
-        if (!targetVideoWrapper) {
-            log(`Aucun wrapper de vidéo trouvé pour l'activité : ${activityName}`);
-            return;
-        }
-
-        const videoElement = targetVideoWrapper.querySelector('video');
-        if (!videoElement) {
-            log(`Aucune balise <video> trouvée dans le wrapper pour : ${activityName}`);
-            return;
-        }
+        if (!targetVideoWrapper) return;
 
         item.addEventListener('mouseenter', () => {
-            // Cacher toutes les autres vidéos d'abord
-            videos.forEach(otherVideoWrapper => {
-                if (otherVideoWrapper !== targetVideoWrapper) {
-                    gsap.to(otherVideoWrapper, { opacity: 0, duration: 0.2, onComplete: () => {
-                        gsap.set(otherVideoWrapper, { display: 'none' });
-                        const otherVideo = otherVideoWrapper.querySelector('video');
-                        if (otherVideo) {
-                            otherVideo.pause();
-                            otherVideo.currentTime = 0; // Rembobine la vidéo
+            // Si on survole le même élément, on ne fait rien
+            if (targetVideoWrapper === activeVideoWrapper) {
+                return;
+            }
+
+            // S'il y a une vidéo active, on la cache proprement
+            if (activeVideoWrapper) {
+                const oldVideo = activeVideoWrapper.querySelector('video');
+                gsap.to(activeVideoWrapper, { 
+                    opacity: 0, 
+                    duration: 0.2, 
+                    onComplete: () => {
+                        gsap.set(activeVideoWrapper, { display: 'none' });
+                        if (oldVideo) {
+                            oldVideo.pause();
+                            oldVideo.currentTime = 0;
                         }
-                    }});
-                }
-            });
+                    }
+                });
+            }
+
+            // On active et on joue la nouvelle vidéo
+            activeVideoWrapper = targetVideoWrapper;
+            const newVideo = activeVideoWrapper.querySelector('video');
             
-            // Afficher et lancer la vidéo cible
-            gsap.set(targetVideoWrapper, { display: 'block' });
-            gsap.to(targetVideoWrapper, { opacity: 1, duration: 0.2 });
-            videoElement.play().catch(error => log(`Erreur de lecture vidéo pour ${activityName}:`, error));
+            gsap.set(activeVideoWrapper, { display: 'block' });
+            gsap.to(activeVideoWrapper, { opacity: 1, duration: 0.2 });
+            
+            if (newVideo) {
+                // On s'assure que la vidéo est chargée avant de la jouer
+                newVideo.play().catch(error => log(`Erreur de lecture pour ${activityName}:`, error));
+            }
         });
     });
 
-    log("Survol des activités configuré.");
+    log("Survol des activités configuré (v2).");
 }
 
 
@@ -93,6 +97,13 @@ class WrapperBasedContractHandler {
     hideAllPanels() {
         this.panels.forEach(panel => {
             gsap.to(panel, { opacity: 0, duration: 0.2, onComplete: () => panel.style.display = 'none' });
+
+            // Correction : On met en pause toutes les vidéos dans le panneau qui se ferme
+            panel.querySelectorAll('video').forEach(video => {
+                if (!video.paused) {
+                    video.pause();
+                }
+            });
         });
         this.links.forEach(link => link.classList.remove('active'));
     }
@@ -122,6 +133,7 @@ class WrapperBasedContractHandler {
         });
 
         document.body.addEventListener('click', (e) => {
+            // Si on clique en dehors du conteneur global du menu, on ferme tout
             if (!this.menuWrapper.contains(e.target)) {
                 this.hideAllPanels();
             }
@@ -132,7 +144,7 @@ class WrapperBasedContractHandler {
 }
 
 export function initMenuDesktop() {
-    log("Initialisation v15.0.0... Stratégie 'Wrapper' + Hover Vidéo");
+    log("Initialisation v15.1.0... Stratégie 'Wrapper' + Hover Vidéo amélioré");
     new WrapperBasedContractHandler();
     initActivityHover();
 }
