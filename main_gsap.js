@@ -13,7 +13,6 @@ import { initReservation } from './reservation.js';
 import { initMap } from './map-integration.js';
 import { initPrivateRoomPopup } from './privateroom.js';
 import { initPreselection } from './preselect.js';
-import { initCardTagsAnimation } from './card-tags-animation.js';
 
 function initializeModules() {
     console.log("✅ GSAP est prêt. Initialisation des modules...");
@@ -25,12 +24,6 @@ function initializeModules() {
         initMenuDesktop();
         initMenuMobile();
         initDebugMenu();
-
-        // Initialisation de l'animation des tags sur la page d'accueil (logique assouplie)
-        if(window.location.pathname === '/' || window.location.pathname.includes('accueil')) {
-            console.log("-> Page d'accueil détectée. Initialisation du module d'animation des tags.");
-            initCardTagsAnimation();
-        }
 
         // --- Code Splitting pour les pages spécifiques ---
         // Page Réservation : on charge le module si l'URL contient "/reservation"
