@@ -1,20 +1,20 @@
 import { gsap } from "gsap";
 
 const MODULE_NAME = "marquee-animation";
-const MODULE_VERSION = "1.0.0";
+const MODULE_VERSION = "1.1.0";
 
 const log = (message, ...args) => console.log(`[SW-MARQUEE] ${message}`, ...args);
 
 function initMarquee(marqueeElement) {
-    const track = marqueeElement.querySelector('.cms_slider_wrapper');
+    const track = marqueeElement.querySelector('.cms_slider_list');
     if (!track) {
-        log(`No '.cms_slider_wrapper' found inside`, marqueeElement);
+        log(`No '.cms_slider_list' (the track) found inside`, marqueeElement);
         return;
     }
 
-    const items = Array.from(track.children).filter(child => child.classList.contains('activite-item'));
+    const items = Array.from(track.children);
     if (items.length === 0) {
-        log('No ".activite-item" items to animate in track', track);
+        log('No items to animate in track', track);
         return;
     }
 
@@ -72,7 +72,7 @@ function initMarquee(marqueeElement) {
 
 export function initMarqueeAnimation() {
     console.log(`🎬 ${MODULE_NAME}.js v${MODULE_VERSION} chargé`);
-    const marquees = document.querySelectorAll('.activit_wrapper');
+    const marquees = document.querySelectorAll('.acitvit_wrapper');
     if (marquees.length > 0) {
         log(`${marquees.length} marquee container(s) found. Initializing...`);
         marquees.forEach(initMarquee);
