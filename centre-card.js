@@ -1,15 +1,12 @@
-// Version : 8.0.0 – Fusion de l'animation Marquee
-console.log('🚀 centre-card.js v8.0.0 chargé – Fusion animation marquee');
+// Version : 7.0.1 – Forçage du commit
+console.log('🚀 centre-card.js v7.0.1 chargé – Intégration animations rapides (force commit)');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
     CLICKABLE_WRAP: '.clickable_wrap[data-attribute="data-card-toggle"]',
     TOGGLE_ELEMENTS: ['.centre-card_scroll_wrapper', '.centre-card_list', '.centre-card_button-holder', '.tag_holder_wrapper'],
     ARROW: '.svg-holder.arrow',
-    INTERNAL_LINKS: '.centre-card_button-holder a, .centre-card_button-holder button',
-    MARQUEE_COMPONENT: '.tag_wrapper_gsap_loop:not(.w-dyn-list):not(.w-dyn-items)',
-    MARQUEE_LIST_CONTAINER: '.tag_wrapper_gsap_loop.w-dyn-list',
-    MARQUEE_ITEMS_LIST: '.w-dyn-items',
+    INTERNAL_LINKS: '.centre-card_button-holder a, .centre-card_button-holder button'
 };
 
 const initializedCards = new WeakSet();
@@ -83,11 +80,6 @@ async function closeCard(cardElement) {
     }
 
     await tl;
-
-    // Relance l'animation marquee si elle existe
-    if (cardElement.marqueeTween) {
-        cardElement.marqueeTween.play();
-    }
 }
 
 /**
@@ -98,12 +90,6 @@ async function openCard(cardElement) {
     if (!cardElement || cardElement.classList.contains('is-open')) return;
 
     cardElement.classList.add('is-open');
-
-    // Met en pause l'animation marquee si elle existe
-    if (cardElement.marqueeTween) {
-        cardElement.marqueeTween.pause();
-    }
-
     const elementsToAnimate = cardElement.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
     const arrow = cardElement.querySelector(SELECTORS.ARROW);
     const scrollWrapper = cardElement.querySelector('.centre-card_scroll_wrapper');
@@ -225,11 +211,6 @@ function handleCardEnter(e, card) {
         overwrite: true
     });
 
-    // Ralentit le marquee
-    if (card.marqueeTween) {
-        gsap.to(card.marqueeTween, { timeScale: 0.2, duration: 0.5 });
-    }
-
     handleCardHover(e, card);
 }
 
@@ -248,97 +229,18 @@ function handleCardLeave(card) {
         ease: HOVER_CONFIG.scaleEase,
         overwrite: true
     });
-
-    // Ré-accélère le marquee
-    if (card.marqueeTween) {
-        gsap.to(card.marqueeTween, { timeScale: 1, duration: 0.5 });
-    }
 }
 
 // --- Fonctions d'initialisation ---
 
-/**
- * Initialise l'animation marquee pour une carte donnée.
- * @param {Element} card 
- */
-function _initializeMarquee(card) {
-    const component = card.querySelector(SELECTORS.MARQUEE_COMPONENT);
-    if (!component) return;
-    
-    const listContainer = component.querySelector(SELECTORS.MARQUEE_LIST_CONTAINER);
-    const itemsList = listContainer ? listContainer.querySelector(SELECTORS.MARQUEE_ITEMS_LIST) : null;
-
-    if (!itemsList || itemsList.children.length <= 1) {
-        return;
-    }
-
-    if (listContainer.dataset.marqueeInitialized) return;
-    listContainer.dataset.marqueeInitialized = 'true';
-
-    component.style.overflow = 'hidden';
-    listContainer.style.display = 'flex';
-    listContainer.style.flexWrap = 'nowrap';
-
-    const applyStylesToList = (list) => {
-        list.style.display = 'flex';
-        list.style.flexWrap = 'nowrap';
-        list.style.width = 'auto';
-        list.style.flexShrink = '0';
-    };
-
-    applyStylesToList(itemsList);
-    
-    const listClone = itemsList.cloneNode(true);
-    applyStylesToList(listClone);
-    listContainer.appendChild(listClone);
-
-    const speed = 50;
-    const duration = itemsList.offsetWidth / speed;
-
-    card.marqueeTween = gsap.to([itemsList, listClone], {
-        xPercent: -100,
-        duration: duration,
-        ease: 'none',
-        repeat: -1,
-        modifiers: {
-            xPercent: gsap.utils.unitize(gsap.utils.wrap(-100, 0))
-        }
-    });
-}
-
-/**
- * Configure l'état visuel initial d'une carte (contenu fermé, marquee lancé).
- * Ne doit être appelée que sur une carte visible.
- * @param {Element} card 
- */
-function _setCardVisualState(card) {
-    if (!card || card.dataset.visualStateInitialized) return;
-
-    // Masque le contenu dépliable
-    const elementsToToggle = card.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
-    elementsToToggle.forEach(el => {
-        // Sauvegarde l'affichage original uniquement si ce n'est pas déjà fait
-        if (!el.dataset.originalDisplay) {
-            el.dataset.originalDisplay = window.getComputedStyle(el).display;
-        }
-    });
-    window.gsap.set(elementsToToggle, { display: 'none', opacity: 0, y: -20 });
-
-    // Lance l'animation marquee
-    _initializeMarquee(card);
-    
-    card.dataset.visualStateInitialized = 'true';
-}
-
 function initializeCard(card) {
-    if (initializedCards.has(card)) return;
+    if (!card || initializedCards.has(card)) return;
 
-    // --- Ajout des comportements (une seule fois par carte) ---
     const clickableWrap = card.parentElement.querySelector(SELECTORS.CLICKABLE_WRAP);
     if (!clickableWrap) return;
 
-    // Masque le contenu dépliable
     const elementsToToggle = card.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
+    
     elementsToToggle.forEach(el => {
         el.dataset.originalDisplay = window.getComputedStyle(el).display;
     });
@@ -353,23 +255,48 @@ function initializeCard(card) {
 
     clickableWrap.addEventListener('click', handleCardToggle);
 
+    // Ajout des événements de survol sur la carte visuelle elle-même
     card.addEventListener('mousemove', (e) => handleCardHover(e, card));
     card.addEventListener('mouseleave', () => handleCardLeave(card));
     card.addEventListener('mouseenter', (e) => handleCardEnter(e, card));
 
     initializedCards.add(card);
+}
 
-    // Initialise l'animation marquee pour cette carte
-    _initializeMarquee(card);
+function setupMutationObserver() {
+    const cardsContainer = document.querySelector('.collection-list-centre-wrapper');
+    if (!cardsContainer) return;
+
+    const observer = new MutationObserver((mutationsList) => {
+        for (const mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType === 1) {
+                        if (node.matches(SELECTORS.CARD)) {
+                            initializeCard(node);
+                        }
+                        node.querySelectorAll(SELECTORS.CARD).forEach(initializeCard);
+                    }
+                });
+            }
+        }
+    });
+
+    observer.observe(cardsContainer, { childList: true, subtree: true });
 }
 
 export function initCentreCards() {
     const cards = document.querySelectorAll(SELECTORS.CARD);
-    cards.forEach(initializeCard);
-}
 
-export function reinitCardsInContainer(container) {
-    if (!container) return;
-    const cardsInContainer = container.querySelectorAll(SELECTORS.CARD);
-    cardsInContainer.forEach(initializeCard);
+    /* Lignes supprimées pour tester l'hypothèse
+    // Sécurité : s'assurer qu'aucune carte n'est ouverte au chargement
+    cards.forEach(card => {
+        if (card.classList.contains('is-open')) {
+            card.classList.remove('is-open');
+        }
+    });
+    */
+
+    cards.forEach(initializeCard);
+    setupMutationObserver();
 }

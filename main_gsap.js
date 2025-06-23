@@ -14,6 +14,7 @@ import { initMap } from './map-integration.js';
 import { initPrivateRoomPopup } from './privateroom.js';
 import { initPreselection } from './preselect.js';
 import { initMenuDesktopHoverActivite } from './menu-desktop-hover-activite.js';
+import { initActivitesMarquee } from './activites-marquee.js';
 
 function initializeModules() {
     console.log("✅ GSAP est prêt. Initialisation des modules...");
@@ -25,6 +26,7 @@ function initializeModules() {
         initMenuMobile();
         initDebugMenu();
         initMenuDesktopHoverActivite();
+        initActivitesMarquee();
 
         // --- Code Splitting pour les pages spécifiques ---
         // Page Réservation : on charge le module si l'URL contient "/reservation"
@@ -60,38 +62,25 @@ function initializeModules() {
 }
 
 function waitForGsapAndInitialize() {
-    const pageWrapper = document.querySelector('.page-wrapper');
-    if (pageWrapper) {
-        window.gsap.set(pageWrapper, { autoAlpha: 0 });
-    }
+    initLoadingScreen(); // On lance l'animation du loader immédiatement
 
     let attempts = 0;
-    const maxAttempts = 100;
-    const interval = setInterval(() => {
-        if (window.gsap && window.gsap.timeline) {
-            clearInterval(interval);
-            console.log('✅ GSAP est prêt. Lancement des initialisations...');
-            
-            // On lance le loader ET on attend qu'il ait fini
-            initLoadingScreen().then(() => {
-                console.log('🎬 Le loader a terminé, affichage du contenu principal.');
-                if (pageWrapper) {
-                    window.gsap.to(pageWrapper, { autoAlpha: 1, duration: 0.4 });
-                }
-                
-                // On peut initialiser les autres modules maintenant
-                initializeModules();
-            });
+    const maxAttempts = 100; // Attend max 10 secondes
+    const interval = 100;
 
-        } else if (attempts > maxAttempts) {
-            clearInterval(interval);
-            console.error("GSAP n'a pas pu être chargé après 10 secondes. Affichage forcé du contenu.");
-            if (pageWrapper) {
-                window.gsap.set(pageWrapper, { autoAlpha: 1 });
+    const intervalId = setInterval(() => {
+        if (window.gsap) {
+            clearInterval(intervalId);
+            initializeModules();
+        } else {
+            attempts++;
+            if (attempts > maxAttempts) {
+                clearInterval(intervalId);
+                console.error("GSAP n'a pas pu être chargé après 10 secondes. Annulation de l'initialisation des modules.");
+                forceHideLoadingScreen(); // On cache le loader pour ne pas bloquer l'utilisateur
             }
         }
-        attempts++;
-    }, 100);
+    }, interval);
 }
 
 // Lancement du processus
@@ -102,10 +91,9 @@ window.Webflow.push(function() {
     waitForGsapAndInitialize();
 });
 
-// À la toute fin, une fois que tout (y compris les images) est chargé
+// À la toute fin, une fois que tout (y compris les images) est chargé, on force la fermeture des cartes.
 window.addEventListener('load', () => {
     console.log('🎬 La page est entièrement chargée. Initialisation des modules dépendants du contenu.');
-    
     initCentreCards();
     initFaqItems();
 });

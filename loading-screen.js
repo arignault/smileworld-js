@@ -27,35 +27,57 @@ function tryHide() {
 
 // Initialise l'écran de chargement
 export function initLoadingScreen() {
-    return new Promise((resolve) => {
-        if (!window.gsap) {
-            console.error("GSAP n'est pas chargé.");
-            resolve();
-            return;
-        }
+    console.log('🎬 initLoadingScreen - Début de l\'initialisation');
+    if (isInitialized) {
+        console.log('ℹ️ Écran de chargement déjà initialisé');
+        return Promise.resolve();
+    }
+    
+    const loadingScreen = document.querySelector('.loadingscreen');
+    const logoWrap = document.querySelector('.loading_logo_wrap');
 
-        const loader = document.querySelector('.loadingscreen');
-
-        if (!loader) {
-            console.warn("Élément .loadingscreen introuvable. L'animation ne peut pas démarrer.");
-            resolve(); // On résout pour ne pas bloquer la suite
-            return;
-        }
-
-        const tl = window.gsap.timeline({
-            onComplete: () => {
-                console.log("Animation du loader terminée.");
-                if (loader) loader.style.display = 'none';
-                resolve(); // On signale que l'animation est finie
-            }
-        });
-
-        tl.to(loader, {
-            autoAlpha: 0,
-            duration: 0.5,
-            delay: 1
-        });
+    console.log('🔍 Éléments trouvés:', {
+        loadingScreen: !!loadingScreen,
+        logoWrap: !!logoWrap
     });
+
+    if (!loadingScreen || !logoWrap) {
+        console.warn('⚠️ Éléments manquants:', {
+            loadingScreen: !loadingScreen ? 'Non trouvé' : 'OK',
+            logoWrap: !logoWrap ? 'Non trouvé' : 'OK'
+        });
+        isInitialized = false;
+        return Promise.resolve(null);
+    }
+
+    console.log('🎨 Configuration des styles initiaux');
+    window.gsap.set(loadingScreen, { 
+        opacity: 1, 
+        display: 'flex',
+        backgroundColor: 'white'
+    });
+    
+    // Animation d'entrée pour le logo
+    window.gsap.set(logoWrap, { opacity: 0, scale: 0.9 });
+    window.gsap.to(logoWrap, {
+        opacity: 1,
+        scale: 1,
+        duration: 0.5,
+        delay: 0.1,
+        ease: config.ease
+    });
+
+    // Lancement du minuteur pour la durée minimale
+    setTimeout(() => {
+        console.log('⏱️ 1.5 secondes écoulées.');
+        minimumTimeElapsed = true;
+        tryHide(); // Tente de masquer si l'autre condition est déjà remplie
+    }, 1500);
+
+    // setupInternalLinkListener(); // EXPÉRIMENTATION : On désactive l'écouteur de liens
+    isInitialized = true;
+    console.log('✅ Écran de chargement initialisé avec succès');
+    return Promise.resolve(loadingScreen);
 }
 
 // L'application est prête, on peut demander à masquer l'écran

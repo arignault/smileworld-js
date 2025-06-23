@@ -1,6 +1,5 @@
-// menu-desktop.js v15.0.0 - Initialisation explicite des cartes
-console.log('🚀 menu-desktop.js v15.0.0 chargé - Initialisation explicite');
-import { reinitCardsInContainer } from './centre-card.js';
+// menu-desktop.js v14.0.0 - Stratégie "Wrapper"
+console.log('🚀 menu-desktop.js v14.0.0 chargé - Stratégie "Wrapper"');
 
 class WrapperBasedContractHandler {
     constructor() {
@@ -86,8 +85,6 @@ class WrapperBasedContractHandler {
             onComplete: () => {
                 this.isAnimating = false;
                 this.activePanel = panel;
-                // On demande explicitement de réinitialiser les cartes dans le panneau qui vient d'apparaître
-                reinitCardsInContainer(panel);
             }
         });
     }
@@ -122,8 +119,6 @@ class WrapperBasedContractHandler {
             onComplete: () => {
                 this.isAnimating = false;
                 this.activePanel = newPanel;
-                // On demande explicitement de réinitialiser les cartes dans le nouveau panneau
-                reinitCardsInContainer(newPanel);
             }
         });
 
