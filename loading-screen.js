@@ -27,43 +27,34 @@ function tryHide() {
 
 // Initialise l'écran de chargement
 export function initLoadingScreen() {
-    if (!window.gsap) {
-        console.error("GSAP n'est pas chargé.");
-        return;
-    }
-
-    // Utilisation de sélecteurs plus robustes et conformes aux conventions Webflow
-    const loader = document.querySelector('[data-component="loading-screen"]'); 
-    const content = document.querySelector('.page-wrapper');
-
-    if (!loader) {
-        console.warn("L'élément de l'écran de chargement [data-component='loading-screen'] est introuvable. Le contenu ne sera pas masqué.");
-        if (content) window.gsap.set(content, { autoAlpha: 1 });
-        return;
-    }
-
-    if (!content) {
-        console.warn("Le conteneur de page principal (.page-wrapper) est introuvable.");
-    }
-
-    // On cache le contenu principal et on s'assure que le loader est visible.
-    if (content) window.gsap.set(content, { autoAlpha: 0 });
-    window.gsap.set(loader, { autoAlpha: 1 });
-
-    const tl = window.gsap.timeline({
-        onComplete: () => {
-            console.log("Animation du loader terminée, affichage du contenu.");
-            if (content) window.gsap.to(content, { autoAlpha: 1, duration: 0.5 });
+    return new Promise((resolve) => {
+        if (!window.gsap) {
+            console.error("GSAP n'est pas chargé.");
+            resolve();
+            return;
         }
-    });
 
-    tl.to(loader, {
-        autoAlpha: 0,
-        duration: 0.5,
-        delay: 1, // On garde un délai pour voir l'animation
-        onComplete: () => {
-            loader.style.display = 'none';
+        const loader = document.querySelector('.loadingscreen');
+
+        if (!loader) {
+            console.warn("Élément .loadingscreen introuvable. L'animation ne peut pas démarrer.");
+            resolve(); // On résout pour ne pas bloquer la suite
+            return;
         }
+
+        const tl = window.gsap.timeline({
+            onComplete: () => {
+                console.log("Animation du loader terminée.");
+                if (loader) loader.style.display = 'none';
+                resolve(); // On signale que l'animation est finie
+            }
+        });
+
+        tl.to(loader, {
+            autoAlpha: 0,
+            duration: 0.5,
+            delay: 1
+        });
     });
 }
 

@@ -60,25 +60,38 @@ function initializeModules() {
 }
 
 function waitForGsapAndInitialize() {
-    initLoadingScreen(); // On lance l'animation du loader immédiatement
+    const pageWrapper = document.querySelector('.page-wrapper');
+    if (pageWrapper) {
+        window.gsap.set(pageWrapper, { autoAlpha: 0 });
+    }
 
     let attempts = 0;
-    const maxAttempts = 100; // Attend max 10 secondes
-    const interval = 100;
+    const maxAttempts = 100;
+    const interval = setInterval(() => {
+        if (window.gsap && window.gsap.timeline) {
+            clearInterval(interval);
+            console.log('✅ GSAP est prêt. Lancement des initialisations...');
+            
+            // On lance le loader ET on attend qu'il ait fini
+            initLoadingScreen().then(() => {
+                console.log('🎬 Le loader a terminé, affichage du contenu principal.');
+                if (pageWrapper) {
+                    window.gsap.to(pageWrapper, { autoAlpha: 1, duration: 0.4 });
+                }
+                
+                // On peut initialiser les autres modules maintenant
+                initializeModules();
+            });
 
-    const intervalId = setInterval(() => {
-        if (window.gsap) {
-            clearInterval(intervalId);
-            initializeModules();
-        } else {
-            attempts++;
-            if (attempts > maxAttempts) {
-                clearInterval(intervalId);
-                console.error("GSAP n'a pas pu être chargé après 10 secondes. Annulation de l'initialisation des modules.");
-                forceHideLoadingScreen(); // On cache le loader pour ne pas bloquer l'utilisateur
+        } else if (attempts > maxAttempts) {
+            clearInterval(interval);
+            console.error("GSAP n'a pas pu être chargé après 10 secondes. Affichage forcé du contenu.");
+            if (pageWrapper) {
+                window.gsap.set(pageWrapper, { autoAlpha: 1 });
             }
         }
-    }, interval);
+        attempts++;
+    }, 100);
 }
 
 // Lancement du processus
