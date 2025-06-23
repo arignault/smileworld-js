@@ -8,7 +8,7 @@ async function closeCard(faqItem) {
     isAnimating = true;
 
     const respondElement = faqItem.querySelector('.faq_respond');
-    const arrow = faqItem.querySelector('.svg-holder.medium');
+    const arrow = faqItem.querySelector('.svg-holder');
 
     faqItem.classList.remove('is-open');
 
@@ -32,7 +32,7 @@ async function openCard(faqItem) {
     isAnimating = true;
 
     const respondElement = faqItem.querySelector('.faq_respond');
-    const arrow = faqItem.querySelector('.svg-holder.medium');
+    const arrow = faqItem.querySelector('.svg-holder');
 
     faqItem.classList.add('is-open');
 
@@ -72,10 +72,10 @@ async function toggleCard(faqItem) {
 }
 
 export function initFaqItems() {
-    const faqItems = document.querySelectorAll('.faq_item.effect-cartoon-shadow');
+    const faqItems = document.querySelectorAll('.faq_item');
     
     faqItems.forEach(item => {
-        const trigger = item.querySelector('.faq_wrapper');
+        const trigger = item.querySelector('.faq_question');
         if (trigger) {
             // Empêcher les doubles attachements d'événements
             if (trigger.dataset.faqInitialized) return;
