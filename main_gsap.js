@@ -62,12 +62,6 @@ function initializeModules() {
 function waitForGsapAndInitialize() {
     initLoadingScreen(); // On lance l'animation du loader immédiatement
 
-    // On cache immédiatement le conteneur des cartes pour éviter le "flash"
-    const cardsContainer = document.querySelector('.collection-list-centre-wrapper');
-    if (cardsContainer) {
-        window.gsap.set(cardsContainer, { autoAlpha: 0 });
-    }
-
     let attempts = 0;
     const maxAttempts = 100; // Attend max 10 secondes
     const interval = 100;
@@ -99,14 +93,6 @@ window.Webflow.push(function() {
 window.addEventListener('load', () => {
     console.log('🎬 La page est entièrement chargée. Initialisation des modules dépendants du contenu.');
     
-    // Initialise les cartes (ce qui va cacher leur contenu en coulisses)
     initCentreCards();
-    
-    // Maintenant que les cartes sont prêtes, on les fait apparaître
-    const cardsContainer = document.querySelector('.collection-list-centre-wrapper');
-    if (cardsContainer) {
-        window.gsap.to(cardsContainer, { autoAlpha: 1, duration: 0.4, ease: 'power1.out' });
-    }
-
     initFaqItems();
 });

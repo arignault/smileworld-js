@@ -27,57 +27,47 @@ function tryHide() {
 
 // Initialise l'écran de chargement
 export function initLoadingScreen() {
-    console.log('🎬 initLoadingScreen - Début de l\'initialisation');
-    if (isInitialized) {
-        console.log('ℹ️ Écran de chargement déjà initialisé');
-        return Promise.resolve();
-    }
-    
-    const loadingScreen = document.querySelector('.loadingscreen');
-    const logoWrap = document.querySelector('.loading_logo_wrap');
-
-    console.log('🔍 Éléments trouvés:', {
-        loadingScreen: !!loadingScreen,
-        logoWrap: !!logoWrap
-    });
-
-    if (!loadingScreen || !logoWrap) {
-        console.warn('⚠️ Éléments manquants:', {
-            loadingScreen: !loadingScreen ? 'Non trouvé' : 'OK',
-            logoWrap: !logoWrap ? 'Non trouvé' : 'OK'
-        });
-        isInitialized = false;
-        return Promise.resolve(null);
+    if (!window.gsap) {
+        console.error("GSAP n'est pas chargé.");
+        return;
     }
 
-    console.log('🎨 Configuration des styles initiaux');
-    window.gsap.set(loadingScreen, { 
-        opacity: 1, 
-        display: 'flex',
-        backgroundColor: 'white'
+    const loader = document.querySelector('.loading-screen_component');
+    const content = document.querySelector('.page-wrapper');
+    const cardsContainer = document.querySelector('.collection-list-centre-wrapper');
+
+    if (!loader || !content) {
+        console.warn("Éléments de l'écran de chargement ou contenu principal non trouvés.");
+        if (content) content.style.visibility = 'visible';
+        if (cardsContainer) window.gsap.set(cardsContainer, { autoAlpha: 1 });
+        return;
+    }
+
+    window.gsap.set(content, { autoAlpha: 0 });
+    if (cardsContainer) {
+        window.gsap.set(cardsContainer, { autoAlpha: 0 });
+    }
+
+    const tl = window.gsap.timeline({
+        onComplete: () => {
+            console.log("Animation du loader terminée, affichage du contenu.");
+            window.gsap.to(content, { autoAlpha: 1, duration: 0.5 });
+
+            // On s'assure que les cartes sont aussi visibles
+            if (cardsContainer) {
+                window.gsap.to(cardsContainer, { autoAlpha: 1, duration: 0.5 });
+            }
+        }
     });
-    
-    // Animation d'entrée pour le logo
-    window.gsap.set(logoWrap, { opacity: 0, scale: 0.9 });
-    window.gsap.to(logoWrap, {
-        opacity: 1,
-        scale: 1,
+
+    tl.to(loader, {
+        opacity: 0,
         duration: 0.5,
-        delay: 0.1,
-        ease: config.ease
+        delay: 1,
+        onComplete: () => {
+            loader.style.display = 'none';
+        }
     });
-
-    // Lancement du minuteur pour la durée minimale
-    setTimeout(() => {
-        console.log('⏱️ 1.5 secondes écoulées.');
-        minimumTimeElapsed = true;
-        tryHide(); // Tente de masquer si l'autre condition est déjà remplie
-    }, 1500);
-
-    // setupInternalLinkListener(); // EXPÉRIMENTATION : On désactive l'écouteur de liens
-    isInitialized = true;
-    console.log('✅ Écran de chargement initialisé avec succès');
-    return Promise.resolve(loadingScreen);
 }
 
 // L'application est prête, on peut demander à masquer l'écran
