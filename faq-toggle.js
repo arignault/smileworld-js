@@ -1,5 +1,5 @@
 // faq-toggle.js v2.0.0 - Logique d'accordéon intégrée
-console.log('🚀 faq-toggle.js v2.0.0 chargé');
+// console.log('🚀 faq-toggle.js v2.0.0 chargé');
 
 let isAnimating = false;
 
@@ -12,19 +12,25 @@ async function closeCard(faqItem) {
 
     faqItem.classList.remove('is-open');
 
-    await window.gsap.to(respondElement, {
-        height: 0,
-        opacity: 0,
-        duration: 0.3,
-        ease: "power1.in"
+    const tl = window.gsap.timeline({
+        onComplete: () => {
+            if (respondElement) {
+                respondElement.style.display = 'none';
+            }
+            isAnimating = false;
+        }
     });
-    
-    if (arrow) {
-        window.gsap.to(arrow, { rotation: 0, duration: 0.2, ease: 'power1.inOut' });
-    }
 
-    respondElement.style.display = 'none';
-    isAnimating = false;
+    if (arrow) {
+        tl.to(arrow, { rotation: 0, duration: 0.25, ease: 'power2.inOut' }, 0);
+    }
+    
+    if (respondElement) {
+        tl.to(respondElement, { opacity: 0, y: -10, duration: 0.2, ease: 'power1.in' }, 0);
+        tl.to(respondElement, { height: 0, duration: 0.4, ease: 'back.in(1.7)' }, 0);
+    }
+    
+    await tl;
 }
 
 async function openCard(faqItem) {
@@ -36,23 +42,31 @@ async function openCard(faqItem) {
 
     faqItem.classList.add('is-open');
 
-    window.gsap.set(respondElement, { display: 'block', height: 'auto', opacity: 0 });
-    const finalHeight = respondElement.scrollHeight;
+    const tl = window.gsap.timeline({
+        onComplete: () => {
+            isAnimating = false;
+        }
+    });
+    
+    if (respondElement) {
+        window.gsap.set(respondElement, { display: 'block', opacity: 0, y: -20, height: 0 });
+        
+        window.getComputedStyle(respondElement).height;
 
-    if (arrow) {
-        window.gsap.to(arrow, { rotation: 90, duration: 0.3, ease: 'back.out(1.7)' });
+        window.gsap.set(respondElement, { height: 'auto' });
+        const finalHeight = respondElement.scrollHeight;
+        
+        window.gsap.set(respondElement, { height: 0 });
+        
+        tl.to(respondElement, { height: finalHeight, duration: 0.6, ease: 'elastic.out(1.2, 0.5)' }, 0);
+        tl.to(respondElement, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }, '<0.05');
     }
 
-    await window.gsap.fromTo(respondElement, 
-        { height: 0, opacity: 0 },
-        {
-            height: finalHeight,
-            opacity: 1,
-            duration: 0.5,
-            ease: 'elastic.out(1.2, 0.5)'
-        }
-    );
-    isAnimating = false;
+    if (arrow) {
+        tl.to(arrow, { rotation: 90, duration: 0.25, ease: 'back.out(1.7)' }, 0);
+    }
+
+    await tl;
 }
 
 
@@ -74,22 +88,40 @@ async function toggleCard(faqItem) {
 export function initFaqItems() {
     const faqItems = document.querySelectorAll('.faq_item');
     
-    faqItems.forEach(item => {
-        const trigger = item.querySelector('.faq_question');
-        if (trigger) {
-            // Empêcher les doubles attachements d'événements
-            if (trigger.dataset.faqInitialized) return;
-            trigger.dataset.faqInitialized = 'true';
-            
-            trigger.addEventListener('click', (e) => {
-                // Ne pas déclencher si on clique sur un lien dans la réponse
-                if (e.target.closest('.faq_respond a, .faq_respond button')) {
-                    return;
-                }
-                e.preventDefault();
-                toggleCard(item);
-            });
+    if (faqItems.length === 0) {
+        return;
+    }
+    
+    faqItems.forEach((item) => {
+
+        if (!item) {
+            return;
         }
+
+        // --- Initialisation de l'état par défaut (fermé) ---
+        item.classList.remove('is-open');
+        if (item.querySelector('.faq_respond')) {
+            window.gsap.set(item.querySelector('.faq_respond'), { height: 0, opacity: 0, display: 'none' });
+        }
+        if (item.querySelector('.svg-holder')) {
+            window.gsap.set(item.querySelector('.svg-holder'), { rotation: 0 });
+        }
+        // ---------------------------------------------------
+
+        // Empêcher les doubles attachements d'événements
+        if (item.dataset.faqInitialized) {
+            return;
+        }
+        item.dataset.faqInitialized = 'true';
+        
+        item.addEventListener('click', (e) => {
+            // Ne pas déclencher si on clique sur un lien dans la réponse
+            if (e.target.closest('.faq_respond a, .faq_respond button')) {
+                return;
+            }
+            e.preventDefault();
+            toggleCard(item);
+        });
     });
 }
 

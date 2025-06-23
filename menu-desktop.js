@@ -1,5 +1,6 @@
-// menu-desktop.js v14.0.0 - Stratégie "Wrapper"
-console.log('🚀 menu-desktop.js v14.0.0 chargé - Stratégie "Wrapper"');
+// menu-desktop.js v15.0.0 - Initialisation explicite des cartes
+console.log('🚀 menu-desktop.js v15.0.0 chargé - Initialisation explicite');
+import { reinitCardsInContainer } from './centre-card.js';
 
 class WrapperBasedContractHandler {
     constructor() {
@@ -35,14 +36,14 @@ class WrapperBasedContractHandler {
             if (!trigger) return;
 
             // ---- A partir d'ici, on a cliqué sur un trigger ----
-            e.preventDefault();
-            e.stopPropagation();
+                e.preventDefault();
+                e.stopPropagation();
 
             if (!wrapper) {
                 console.error(`Wrapper introuvable avec le sélecteur: ${this.wrapperSelector}`);
-                return;
-            }
-
+                    return;
+                }
+                
             const key = trigger.getAttribute('data-attribute').replace('nav-link-desktop-', '');
             const targetPanel = wrapper.querySelector(this.panelClassMap[key]);
 
@@ -79,12 +80,14 @@ class WrapperBasedContractHandler {
 
         // Animation d'apparition du wrapper
         window.gsap.to(wrapper, {
-            opacity: 1,
-            duration: 0.3,
-            ease: 'power2.out',
+                opacity: 1,
+                duration: 0.3,
+                ease: 'power2.out',
             onComplete: () => {
                 this.isAnimating = false;
                 this.activePanel = panel;
+                // On demande explicitement de réinitialiser les cartes dans le panneau qui vient d'apparaître
+                reinitCardsInContainer(panel);
             }
         });
     }
@@ -119,6 +122,8 @@ class WrapperBasedContractHandler {
             onComplete: () => {
                 this.isAnimating = false;
                 this.activePanel = newPanel;
+                // On demande explicitement de réinitialiser les cartes dans le nouveau panneau
+                reinitCardsInContainer(newPanel);
             }
         });
 

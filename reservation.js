@@ -392,11 +392,11 @@ export class SmileWorldReservation {
   }
   
   _applyUrlParameters() {
-    const params = new URLSearchParams(window.location.search);
-    const activitySlug = params.get('activite');
-    const parkId = params.get('parc');
+      const params = new URLSearchParams(window.location.search);
+      const activitySlug = params.get('activite');
+      const parkId = params.get('parc');
 
-    if (!activitySlug && !parkId) return;
+      if (!activitySlug && !parkId) return;
 
     // Logique de gestion des onglets et sélections
     if (parkId && activitySlug) {
@@ -407,16 +407,16 @@ export class SmileWorldReservation {
         }
         
         // On attend un court instant que le DOM soit à jour, puis on clique
-        setTimeout(() => {
-            const parkButton = this.dom.initialParksPane.querySelector(`[data-centre-apex-id="${parkId}"]`);
-            if (parkButton) {
+      setTimeout(() => {
+              const parkButton = this.dom.initialParksPane.querySelector(`[data-centre-apex-id="${parkId}"]`);
+              if (parkButton) {
                 parkButton.click(); // Sélectionne le parc, ce qui affiche et filtre les activités
             }
 
             // On attend encore un peu pour que la seconde interaction se fasse bien
             setTimeout(() => {
-                const finalActivityButton = this.dom.filteredActivitiesPane.querySelector(`[data-activity-slug="${activitySlug}"]`);
-                if (finalActivityButton) {
+                  const finalActivityButton = this.dom.filteredActivitiesPane.querySelector(`[data-activity-slug="${activitySlug}"]`);
+                  if (finalActivityButton) {
                     finalActivityButton.click(); // Sélectionne l'activité dans la liste filtrée
                 }
             }, 100);
@@ -431,21 +431,21 @@ export class SmileWorldReservation {
             const activityButton = this.dom.initialActivitiesPane.querySelector(`[data-activity-slug="${activitySlug}"]`);
             if (activityButton) {
                 activityButton.click();
-            }
+                  }
         }, 100);
 
-    } else if (parkId) {
+          } else if (parkId) {
         // --- CAS 3: Seul le parc est présélectionné ---
         if (this.dom.initialParksTabLink) {
             this.dom.initialParksTabLink.click();
         }
         setTimeout(() => {
-            const parkButton = this.dom.initialParksPane.querySelector(`[data-centre-apex-id="${parkId}"]`);
+              const parkButton = this.dom.initialParksPane.querySelector(`[data-centre-apex-id="${parkId}"]`);
             if (parkButton) {
                 parkButton.click();
-            }
-        }, 100);
-    }
+          }
+      }, 100);
+  }
   }
 }
 

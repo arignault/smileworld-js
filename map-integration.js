@@ -15,7 +15,7 @@ const mapManager = {
             console.error('Erreur : L\'élément #map est introuvable dans le DOM.');
             return;
         }
-        
+
         const mapId = mapElement.dataset.mapId;
         if (!mapId) {
             console.warn("⚠️ data-map-id n'est pas défini sur l'élément #map. Les marqueurs avancés pourraient ne pas fonctionner.");

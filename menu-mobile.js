@@ -109,7 +109,7 @@ export function initMenuMobile() {
             }
         });
     }
-    
+
     // Fonction pour gérer l'animation du bouton hamburger
     function updateHamburgerState(isOpen) {
         if (isOpen) {
@@ -167,7 +167,7 @@ export function initMenuMobile() {
             }
         });
     }
-
+    
     // Modification de la fonction resetAllMenus
     function resetAllMenus() {
         if (mainTimeline) {
