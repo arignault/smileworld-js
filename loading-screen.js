@@ -32,38 +32,35 @@ export function initLoadingScreen() {
         return;
     }
 
-    const loader = document.querySelector('.loading-screen_component');
+    // Utilisation de sélecteurs plus robustes et conformes aux conventions Webflow
+    const loader = document.querySelector('[data-component="loading-screen"]'); 
     const content = document.querySelector('.page-wrapper');
-    const cardsContainer = document.querySelector('.collection-list-centre-wrapper');
 
-    if (!loader || !content) {
-        console.warn("Éléments de l'écran de chargement ou contenu principal non trouvés.");
-        if (content) content.style.visibility = 'visible';
-        if (cardsContainer) window.gsap.set(cardsContainer, { autoAlpha: 1 });
+    if (!loader) {
+        console.warn("L'élément de l'écran de chargement [data-component='loading-screen'] est introuvable. Le contenu ne sera pas masqué.");
+        if (content) window.gsap.set(content, { autoAlpha: 1 });
         return;
     }
 
-    window.gsap.set(content, { autoAlpha: 0 });
-    if (cardsContainer) {
-        window.gsap.set(cardsContainer, { autoAlpha: 0 });
+    if (!content) {
+        console.warn("Le conteneur de page principal (.page-wrapper) est introuvable.");
     }
+
+    // On cache le contenu principal et on s'assure que le loader est visible.
+    if (content) window.gsap.set(content, { autoAlpha: 0 });
+    window.gsap.set(loader, { autoAlpha: 1 });
 
     const tl = window.gsap.timeline({
         onComplete: () => {
             console.log("Animation du loader terminée, affichage du contenu.");
-            window.gsap.to(content, { autoAlpha: 1, duration: 0.5 });
-
-            // On s'assure que les cartes sont aussi visibles
-            if (cardsContainer) {
-                window.gsap.to(cardsContainer, { autoAlpha: 1, duration: 0.5 });
-            }
+            if (content) window.gsap.to(content, { autoAlpha: 1, duration: 0.5 });
         }
     });
 
     tl.to(loader, {
-        opacity: 0,
+        autoAlpha: 0,
         duration: 0.5,
-        delay: 1,
+        delay: 1, // On garde un délai pour voir l'animation
         onComplete: () => {
             loader.style.display = 'none';
         }
