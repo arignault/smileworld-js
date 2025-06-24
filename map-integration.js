@@ -65,7 +65,7 @@ const mapManager = {
         });
     },
 
-    focusOnCenter: async function(placeId) {
+        focusOnCenter: async function(placeId) {
         if (!placeId || !this.map) return;
         console.log(`🔎 Zoom sur le centre avec Place ID : ${placeId}`);
 
@@ -98,6 +98,8 @@ const mapManager = {
             console.error(`Erreur lors de la récupération des détails pour le Place ID ${placeId}:`, error);
         }
     },
+
+
 
     buildInfoWindowContent: function(place) {
         let photoHtml = '';
@@ -185,8 +187,7 @@ export function initMap() {
 
     console.log('🗺️ Chargement de l\'API Google Maps...');
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&callback=initGoogleMap&language=fr`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&callback=initGoogleMap&loading=async&language=fr`;
     script.async = true;
-    script.setAttribute('loading', 'async');
     document.head.appendChild(script);
 } 

@@ -1,5 +1,5 @@
-// Version : 6.0.0 – Logique de centre-card-old.js réintégrée
-console.log('🚀 centre-card.js v6.0.0 chargé – Logique old.js réintégrée');
+// Version : 6.1.0 – Corrections pour problèmes d'affichage
+console.log('🚀 centre-card.js v6.1.0 chargé – Version corrigée');
 
 const SELECTORS = {
     CARD: '.centre-card_wrapper.effect-cartoon-shadow',
@@ -87,15 +87,16 @@ async function toggleCard(cardElement) {
             await Promise.all(Array.from(otherOpenCards).map(card => closeCard(card)));
             await openCard(cardElement);
 
-            /* DÉBUT DE LA MODIFICATION : Lignes supprimées
+            // Réactivation des événements map
             const placeId = cardElement.closest('.w-dyn-item')?.dataset.placeId;
             if (placeId) {
                 document.dispatchEvent(new CustomEvent('map:focus', { detail: { placeId } }));
+                console.log('📍 Événement map:focus émis pour:', placeId);
             }
-            */
         } else {
             await closeCard(cardElement);
-            // document.dispatchEvent(new CustomEvent('map:reset')); // Ligne supprimée
+            document.dispatchEvent(new CustomEvent('map:reset'));
+            console.log('🗺️ Événement map:reset émis');
         }
     } finally {
         isAnimating = false;
@@ -105,27 +106,60 @@ async function toggleCard(cardElement) {
 // --- Fonctions d'initialisation ---
 
 function initializeCard(card) {
-    if (!card || initializedCards.has(card)) return;
+    if (!card || initializedCards.has(card)) {
+        console.log('⏭️ Carte déjà initialisée, ignorée');
+        return;
+    }
 
-    const clickableWrap = card.parentElement.querySelector(SELECTORS.CLICKABLE_WRAP);
-    if (!clickableWrap) return;
+    console.log('🔧 Initialisation de la carte:', card);
+
+    // Chercher clickable wrap avec fallback
+    let clickableWrap = card.parentElement?.querySelector(SELECTORS.CLICKABLE_WRAP);
+    if (!clickableWrap) {
+        // Fallback : chercher sans attribut spécifique
+        clickableWrap = card.parentElement?.querySelector('.clickable_wrap');
+        if (clickableWrap) {
+            console.log('✅ Clickable wrap trouvé sans attribut data-card-toggle');
+        }
+    }
+    
+    if (!clickableWrap) {
+        console.log('❌ Clickable wrap non trouvé pour la carte:', card);
+        return;
+    }
 
     const elementsToToggle = card.querySelectorAll(SELECTORS.TOGGLE_ELEMENTS.join(','));
+    console.log(`📋 Éléments à basculer trouvés: ${elementsToToggle.length}`);
     
+    // Sauvegarder l'état d'affichage original
     elementsToToggle.forEach(el => {
-        el.dataset.originalDisplay = window.getComputedStyle(el).display;
+        const computedStyle = window.getComputedStyle(el);
+        el.dataset.originalDisplay = computedStyle.display;
+        console.log(`💾 Display original sauvé pour ${el.className}: ${computedStyle.display}`);
     });
-    window.gsap.set(elementsToToggle, { display: 'none', opacity: 0, y: -20 });
+    
+    // S'assurer que la carte démarre fermée SEULEMENT si elle n'est pas déjà ouverte
+    if (!card.classList.contains('is-open')) {
+        window.gsap.set(elementsToToggle, { display: 'none', opacity: 0, y: -20 });
+        console.log('🔒 Carte fermée par défaut');
+    } else {
+        console.log('🔓 Carte déjà ouverte, état préservé');
+    }
 
     const handleCardToggle = (event) => {
-        if (event.target.closest(SELECTORS.INTERNAL_LINKS)) return;
+        if (event.target.closest(SELECTORS.INTERNAL_LINKS)) {
+            console.log('🔗 Clic sur lien interne, toggle ignoré');
+            return;
+        }
         event.preventDefault();
         event.stopPropagation();
+        console.log('👆 Clic sur carte détecté');
         toggleCard(card);
     };
 
     clickableWrap.addEventListener('click', handleCardToggle);
     initializedCards.add(card);
+    console.log('✅ Carte initialisée avec succès');
 }
 
 function setupMutationObserver() {
@@ -151,17 +185,58 @@ function setupMutationObserver() {
 }
 
 export function initCentreCards() {
-    const cards = document.querySelectorAll(SELECTORS.CARD);
+    console.log('🚀 === INITIALISATION DES CARTES DE CENTRE ===');
+    
+    if (!window.gsap) {
+        console.log('❌ GSAP non disponible, initialisation annulée');
+        return;
+    }
 
-    /* Lignes supprimées pour tester l'hypothèse
-    // Sécurité : s'assurer qu'aucune carte n'est ouverte au chargement
+    // Chercher les cartes avec fallback
+    let cards = document.querySelectorAll(SELECTORS.CARD);
+    
+    if (cards.length === 0) {
+        console.log('⚠️ Aucune carte trouvée avec le sélecteur principal. Tentative avec sélecteurs alternatifs...');
+        
+        // Sélecteurs de fallback
+        const fallbackSelectors = [
+            '.centre-card_wrapper',
+            '[class*="centre-card"]',
+            '.card-centre_wrapper'
+        ];
+        
+        for (const selector of fallbackSelectors) {
+            cards = document.querySelectorAll(selector);
+            if (cards.length > 0) {
+                console.log(`✅ Cartes trouvées avec sélecteur alternatif: ${selector} (${cards.length} éléments)`);
+                break;
+            }
+        }
+    }
+
+    console.log(`📊 ${cards.length} cartes trouvées au total`);
+
+    if (cards.length === 0) {
+        console.log('❌ Aucune carte trouvée, initialisation annulée');
+        return;
+    }
+
+    // S'assurer qu'aucune carte n'est ouverte au démarrage (réactivé)
     cards.forEach(card => {
         if (card.classList.contains('is-open')) {
+            console.log('🔒 Fermeture forcée de carte ouverte au démarrage');
             card.classList.remove('is-open');
         }
     });
-    */
 
-    cards.forEach(initializeCard);
+    // Initialiser chaque carte
+    cards.forEach((card, index) => {
+        console.log(`🔧 Initialisation carte ${index + 1}/${cards.length}`);
+        initializeCard(card);
+    });
+    
+    // Configurer l'observateur de mutations
     setupMutationObserver();
+    
+    console.log('✅ === INITIALISATION TERMINÉE ===');
 }

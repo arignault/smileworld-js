@@ -13,117 +13,369 @@ Le projet utilise un **système de build moderne** (Vite.js) pour regrouper tous
 
 ## 2. Structure des Fichiers
 
-- **Fichiers source (à la racine) :** Ce sont les fichiers sur lesquels nous travaillons. Chaque fichier a une responsabilité unique.
-  - `main_gsap.js`: Le chef d'orchestre.
-  - `menu-desktop.js`: Logique du menu pour ordinateur.
-  - `centre-card.js`: Logique des cartes de centres sur la page d'accueil/réservation.
-  - etc.
-- **Fichiers de build (`/dist`) :** C'est le résultat de la compilation. Ce dossier contient le code optimisé à utiliser en production.
-  - `smileworld-bundle.iife.js`: Le seul fichier à charger dans Webflow.
-- **Fichiers de configuration :**
-  - `vite.config.js`: Configure le processus de build.
-  - `package.json`: Liste les dépendances et les scripts du projet.
+### Fichiers source (à la racine)
+Ce sont les fichiers sur lesquels nous travaillons. Chaque fichier a une responsabilité unique :
 
-## 3. Processus de Build
+#### **Modules principaux :**
+- `main_gsap.js`: Le chef d'orchestre - Point d'entrée de l'application
+- `centre-card.js`: Logique des cartes de centres avec système d'accordéon
+- `reservation.js`: Module complexe de gestion des réservations
+- `map-integration.js`: Intégration Google Maps avec Places API
 
-Pour mettre à jour le code en production, il faut suivre ces étapes :
+#### **Modules d'interface :**
+- `menu-desktop.js`: Menu principal desktop avec système de panneaux
+- `menu-mobile.js`: Menu mobile "hamburger" avec navigation latérale
+- `menu-desktop-hover-activite.js`: Gestion des survols dans le menu activités
+- `loading-screen.js`: Écran de chargement avec animations GSAP
 
-1.  **Modifier les fichiers source** à la racine du projet.
-2.  Lancer la commande `npm run build` dans le terminal.
-3.  Cela va automatiquement mettre à jour le fichier `dist/smileworld-bundle.iife.js`.
-4.  **Sauvegarder les modifications sur GitHub** (`git add .`, `git commit`, `git push`).
-5.  Récupérer le nouveau lien **jsDelivr** pointant vers le dernier commit.
+#### **Modules de contenu :**
+- `faq-toggle.js`: Système d'accordéon pour la FAQ
+- `text-animation.js`: Animation des mots qui défilent verticalement
+- `privateroom.js`: Popup Matterport pour les salles privatisables
+- `preselect.js`: Présélection d'activités/parcs pour la réservation
+
+#### **Modules utilitaires :**
+- `debug-menu.js`: Outils de débogage (activé avec `#debug`)
+
+### Fichiers de configuration
+- `vite.config.js`: Configuration du processus de build et serveur de développement
+- `package.json`: Dépendances (GSAP, Vimeo Player, live-server) et scripts
+- `.gitignore`: Ignore `node_modules/`, `dist/`, et `dev-server/`
+
+### Fichiers de build (`/dist`)
+- `smileworld-bundle.iife.js`: Le seul fichier à charger dans Webflow (format IIFE)
+
+### Serveur de développement (`/dev-server`)
+- Configuration automatique pour tests locaux
+- Port 3002 avec support CORS pour Webflow
+- Headers `Access-Control-Allow-Private-Network: true` pour Chrome
+
+## 3. Processus de Build et Développement
+
+### Développement local
+Pour un développement rapide sans passer par jsDelivr :
+
+1. **Lancer le serveur de développement :**
+   ```bash
+   cd dev-server && node server.js
+   ```
+
+2. **Tester dans Webflow :**
+   ```html
+   <script src="http://localhost:3002/smileworld-bundle.iife.js"></script>
+   ```
+
+3. **Build et test :**
+   ```bash
+   npm run build  # Génère le bundle
+   # Le serveur local se met à jour automatiquement
+   ```
+
+### Déploiement en production
+1. **Modifier les fichiers source** à la racine du projet
+2. **Build :** `npm run build` 
+3. **Commit :** `git add .`, `git commit`, `git push`
+4. **URL jsDelivr :** `https://cdn.jsdelivr.net/gh/[USER]/[REPO]@[COMMIT]/dist/smileworld-bundle.iife.js`
 
 ## 4. Le Chef d'Orchestre : `main_gsap.js`
 
-Ce fichier est le point d'entrée de toute l'application. Son rôle est d'initialiser tous les autres modules dans le bon ordre.
+Ce fichier est le point d'entrée de toute l'application. Version actuelle : **v3.0.1**
 
-Voici sa séquence de chargement :
+### Séquence de chargement :
 
-1.  **`window.Webflow.push()` :** Attend que le moteur de Webflow soit prêt.
-2.  **`waitForGsapAndInitialize()` :** Attend que la librairie GSAP (chargée via CDN) soit disponible.
-3.  **`initializeModules()` :** Une fois GSAP prêt, cette fonction est appelée et exécute :
-    - Les modules généraux : `initTextAnimation()`, `initFaqItems()`, `initMenuDesktop()`, `initMenuMobile()`, `initDebugMenu()`.
-    - Le chargement conditionnel pour la page de réservation (basé sur l'URL ` /reservation`).
-    - L'initialisation du module de carte : `initMap()`.
-4.  **`hideLoadingScreen()` :** Une fois que tous les modules principaux sont initialisés, l'écran de chargement est masqué.
-5.  **`window.addEventListener('load', ...)` :** En tout dernier, une fois que la page et **toutes ses ressources (images, etc.)** sont chargées, on initialise les cartes de centres (`initCentreCards()`). C'est une étape cruciale pour s'assurer que leur état initial (fermé) n'est pas écrasé par d'autres scripts.
+1. **`window.Webflow.push()` :** Attend que le moteur de Webflow soit prêt
+2. **`waitForGsapAndInitialize()` :** Attend que GSAP (chargé via CDN) soit disponible
+3. **`initializeModules()` :** Lance l'initialisation de tous les modules :
+   - **Modules généraux :** `initTextAnimation()`, `initMenuDesktop()`, `initMenuMobile()`, `initDebugMenu()`, `initMenuDesktopHoverActivite()`
+   - **Chargement conditionnel :** Page `/reservation` → `initReservation()`
+   - **Modules contextuels :** 
+     - `initMap()` (si élément `#map` présent)
+     - `initPrivateRoomPopup()` (si `.salles_privatisable_holder` présent)
+     - `initPreselection()` (si boutons de présélection présents)
+4. **`requestHideLoadingScreen()` :** Masque l'écran de chargement
+5. **`window.addEventListener('load', ...)` :** **Après chargement complet** :
+   - `initCentreCards()` - **Timing crucial** pour éviter les conflits
+   - `initFaqItems()` - Initialisation des FAQ
 
 ## 5. Description Détaillée des Modules
 
-### `main_gsap.js`
-Chef d'orchestre du projet.
-- **`waitForGsapAndInitialize()`**: Boucle d'attente qui vérifie la présence de `window.gsap` avant de lancer l'initialisation principale. Gère un timeout pour ne pas bloquer l'utilisateur.
-- **`initializeModules()`**: Appelle les fonctions `init` de tous les modules dans un ordre logique. Charge `reservation.js` de manière asynchrone si l'URL correspond.
-- **`window.addEventListener('load', ...)`**: Écouteur d'événement qui déclenche `initCentreCards()` une fois la page entièrement chargée, assurant que son initialisation est la dernière à s'exécuter.
+### `centre-card.js` - **v6.1.0** ⭐ Module critique
+**Problèmes récurrents résolus :**
+- **Double initialisation** (appelé dans `initializeModules()` ET `window.addEventListener('load')`)
+- **Sélecteurs robustes** avec fallbacks pour `.centre-card_wrapper`
+- **Diagnostic intégré** avec logs détaillés
+- **Gestion d'erreurs** améliorée
 
-### `menu-desktop.js`
-Gère le menu principal sur grand écran.
-- **`WrapperBasedContractHandler` (classe)**: Contient toute la logique du menu.
-- **`_addGlobalListener()`**: Ajoute un seul écouteur de clic sur `document.body` qui gère toutes les interactions (ouverture, fermeture, changement de panneau).
-- **`_openWrapperAndPanel()`**: Affiche le conteneur du menu et le panneau cible avec une animation d'apparition.
-- **`_closeAll()`**: Cache le conteneur du menu avec une animation de disparition.
-- **`_switchPanels()`**: Gère la transition animée entre deux panneaux lorsque le menu est déjà ouvert.
-- **`initMenuDesktop()` (exportée)**: Fonction d'entrée appelée par `main_gsap.js` pour créer une instance de la classe et activer le menu.
+**Fonctionnalités :**
+- **`initializeCard()`**: Prépare chaque carte (cache contenu, attache écouteurs)
+- **`toggleCard()`**: Logique d'accordéon + émission d'événements `map:focus`/`map:reset`
+- **`openCard()`/`closeCard()`**: Animations GSAP fluides
+- **`setupMutationObserver()`**: Détection automatique de nouvelles cartes
+- **WeakSet `initializedCards`**: Évite les doubles initialisations
 
-### `menu-mobile.js`
-Gère le menu "hamburger" sur mobile.
-- **`MenuMobileManager` (classe)**: Contient la logique du menu.
-- **`_setupEventListeners()`**: Ajoute les écouteurs pour ouvrir/fermer le menu et naviguer entre les panneaux.
-- **`_openMainMenu()` / `_closeMainMenu()`**: Animent l'apparition/disparition du menu depuis le côté de l'écran.
-- **`_navigateToPanel()`**: Gère la transition latérale entre le menu principal et les sous-menus (parcs, activités, etc.).
-- **`initMenuMobile()` (exportée)**: Active le menu mobile.
+### `reservation.js` - **v7.0.0** - Classe `SmileWorldReservation`
+**Module le plus complexe** avec logique de sélection avancée :
 
-### `centre-card.js`
-Logique complexe des cartes de centres cliquables.
-- **`closeCard()` / `openCard()`**: Fonctions internes qui gèrent les animations de fermeture/ouverture d'une carte.
-- **`toggleCard()`**: Orchestre la logique d'accordéon : ferme les autres cartes ouvertes avant d'en ouvrir une nouvelle. Envoie les événements `map:focus` ou `map:reset`.
-- **`initializeCard()`**: Fonction clé qui prépare chaque carte. Elle cache le contenu par défaut et attache l'écouteur de clic.
-- **`setupMutationObserver()`**: Observe le DOM pour initialiser automatiquement les cartes qui seraient ajoutées dynamiquement (par ex: par un filtre).
-- **`initCentreCards()` (exportée)**: Fonction d'entrée qui trouve toutes les cartes sur la page et lance leur initialisation.
+**États gérés :**
+- `primarySelectionType`: 'activities' ou 'parks'
+- `selectedInitialSlugs`: Set des activités sélectionnées
+- `selectedInitialParkId`: ID du parc sélectionné
+- `finalSelectedParkId`/`finalSelectedSlugs`: Sélections finales
 
-### `faq-toggle.js`
-Logique simple d'accordéon pour la page FAQ.
-- **`toggleCard()`**: Gère l'ouverture/fermeture d'un item de la FAQ et ferme les autres.
-- **`initFaqItems()` (exportée)**: Trouve tous les items de la FAQ et attache les écouteurs de clic.
+**Fonctionnalités clés :**
+- **Filtrage dynamique** : Activités ↔ Parcs compatibles
+- **Gestion vidéo** : Player Vimeo intégré avec vidéos de centres
+- **Interface adaptative** : Affichage initial → Filtré
+- **URL Parameters** : Support `?activite=X&parc=Y`
+- **État persistant** : Bouton "Réserver" avec validation
 
-### `loading-screen.js`
-Gère l'écran de chargement initial.
-- **`initLoadingScreen()` (exportée)**: Configure les styles initiaux de l'écran de chargement.
-- **`hideLoadingScreen()` (exportée)**: Gère l'animation de disparition de l'écran de chargement.
+### `map-integration.js` - **v2.0.1** - Objet `mapManager`
+**Intégration Google Maps avancée :**
 
-### `text-animation.js`
-Gère l'animation des mots qui défilent verticalement.
-- **`initTextAnimation()` (exportée)**: Trouve l'élément et lance la boucle d'animation GSAP.
+**Configuration :**
+- **API** : Places + Advanced Markers
+- **Langue** : Français (`&language=fr`)
+- **Chargement** : Asynchrone (`loading=async`)
 
-### `map-integration.js`
-Charge et gère la carte Google Maps.
-- **`mapManager` (objet)**: Contient toutes les fonctions et l'état de la carte (marqueurs, etc.).
-- **`createMarkers()`**: Scanne le DOM pour trouver les éléments de centre et place un marqueur sur la carte pour chacun.
-- **`focusOnCenter()`**: Centre la carte et zoome sur un marqueur spécifique.
-- **`listenForFocusEvents()`**: Ajoute des écouteurs pour les événements `map:focus` et `map:reset` envoyés par d'autres modules (comme `centre-card.js`).
-- **`initMap()` (exportée)**: Fonction d'entrée qui lit la clé API depuis le DOM et charge le script Google Maps.
+**Fonctionnalités :**
+- **`createMarkers()`**: Scan du DOM pour `[data-place-id]`
+- **`focusOnCenter()`**: Places API pour infos détaillées
+- **`buildInfoWindowContent()`**: InfoWindow riche (photos, avis, horaires)
+- **Événements** : Écoute `map:focus` et `map:reset` des cartes
 
-### `reservation.js`
-Logique de la page de réservation.
-- **`SmileWorldReservation` (classe)**: Contient toute la logique complexe de la page : sélection, filtrage des parcs/activités, mise à jour de l'interface, etc.
-- **`_handleSelection()`**: Gère les clics sur les différentes options.
-- **`_updateStateAndButton()`**: Met à jour l'état interne et l'apparence du bouton "Réserver".
-- **`_fullReset()`**: Réinitialise complètement le formulaire de sélection.
-- **`initReservation()` (exportée)**: Fonction d'entrée qui crée une instance de la classe pour lancer le module.
+### `menu-desktop.js` - **v14.0.0** - Classe `WrapperBasedContractHandler`
+**Menu principal desktop avec stratégie "Wrapper" :**
+
+**Architecture :**
+- **Un wrapper** : `.desktop_menu_wrapper`
+- **Trois panneaux** : `.parc_menu_desktop`, `.activites_menu_desktop`, `.offres_menu_desktop`
+- **Triggers** : `[data-attribute^="nav-link-desktop-"]`
+
+**Logique :**
+- **`_addGlobalListener()`**: Un seul écouteur sur `document.body`
+- **`_openWrapperAndPanel()`**: Animation d'apparition
+- **`_switchPanels()`**: Transition fluide entre panneaux
+- **`_closeAll()`**: Fermeture avec animation
+
+### `menu-mobile.js` - **v1.0.7** - Classe `MenuMobileManager`
+**Menu mobile "hamburger" :**
+
+**Éléments gérés :**
+- **Menu principal** : `#main-menu-mobile`
+- **Sous-menus** : `#parc-menu-mobile`, `#activite-menu-mobile`, `#offres-menu-mobile`
+- **Navigation** : Transitions latérales
+
+**Fonctionnalités :**
+- **`disableScroll()`/`enableScroll()`**: Gestion du scroll lors de l'ouverture
+- **`hamburgerTimeline`**: Animation du bouton (rotation élastique)
+- **`handleBottomNavClick()`**: Navigation entre panneaux
+- **État persistant** : Boutons actifs + gestion mémoire
+
+### `loading-screen.js` - **v1.3.0**
+**Écran de chargement sophistiqué :**
+
+**Timing intelligent :**
+- **Durée minimale** : 1.5 secondes (UX)
+- **Conditions** : `isReadyToHide` + `minimumTimeElapsed`
+- **`tryHide()`**: Logique de masquage conditionnel
+
+**Animations GSAP :**
+- **Entrée** : Logo avec scale + opacity
+- **Sortie** : Fade out fluide
+- **Force** : `forceHideLoadingScreen()` en cas d'erreur
+
+### `text-animation.js` - **v2.1.0**
+**Animation verticale des mots :**
+
+**Configuration :**
+```javascript
+positions: {
+    start: "0%",
+    middle: "-34%", 
+    end: "-68%"
+}
+```
+
+**Timeline :**
+- **Durée** : 0.6s avec `back.out(1.7)`
+- **Pause** : 1.5s entre positions
+- **Cycle** : Retour au début avec délai de 0.5s
+
+### `privateroom.js` - Popup Matterport
+**Gestion du popup de salle privatisable :**
+
+**Éléments :**
+- `[data-attribute="matterport_button"]`: Bouton d'ouverture
+- `[data-attribute="matterport_popup"]`: Popup container
+- `[data-attribute="close_popup"]`: Bouton de fermeture
+
+**Animations :**
+- **Ouverture** : Scale 0.95→1 + opacity + translation Y
+- **Fermeture** : Animation inverse
+
+### `preselect.js` - Présélection pour réservation
+**Redirection intelligente vers `/reservation` :**
+
+**Données lues :**
+- `[data-preselect-activity-slug]`: Slug d'activité
+- `[data-preselect-park-id]`: ID de centre
+
+**URL générée :**
+```
+/reservation?activite=bowling&parc=centre-id
+```
+
+### `faq-toggle.js` - **v2.0.0**
+**Système d'accordéon pour FAQ :**
+
+**Animations :**
+- **Fermeture** : Hauteur → 0 + opacity + rotation flèche
+- **Ouverture** : `elastic.out(1.2, 0.5)` pour effet rebond
+- **Logique** : Fermeture des autres items avant ouverture
+
+### `menu-desktop-hover-activite.js` - **v1.0.1**
+**Affichage d'images au survol du menu activités :**
+
+**Système :**
+- **Image par défaut** : Bowling
+- **Mapping** : `data-name` → `img#[name]`
+- **Animations** : Cross-fade 0.15s
+- **Cache** : `Map` des animations actives
 
 ### `debug-menu.js`
-Module d'aide au débogage.
-- **`initDebugMenu()` (exportée)**: Vérifie si l'URL contient `#debug`. Si c'est le cas, il affiche un résumé des éléments clés (wrapper, panneaux, etc.) dans la console.
+**Outils de débogage :**
 
-## 6. Déploiement sur Webflow
+**Activation :** URL avec `#debug`
+**Informations affichées :**
+- Wrapper menu desktop
+- Boutons de navigation
+- Conteneurs de menu
 
-1.  Assurez-vous d'avoir le dernier lien jsDelivr pointant vers le commit le plus récent. Le format est :
-    `https://cdn.jsdelivr.net/gh/arignault/smileworld-js@[COMMIT_HASH]/dist/smileworld-bundle.iife.js`
-2.  Dans Webflow, allez dans les paramètres du site (`Site Settings > Custom Code`).
-3.  Dans la section "Footer Code", supprimez tous les anciens appels aux scripts individuels.
-4.  Ajoutez une seule ligne pour charger le bundle :
-    ```html
-    <script src="LIEN_JSDELIVR_ICI"></script>
-    ```
-5.  Publiez votre site. 
+## 6. Configuration Technique
+
+### Vite.js (`vite.config.js`)
+**Build configuration :**
+```javascript
+{
+  lib: {
+    entry: 'main_gsap.js',
+    name: 'SmileWorld',
+    fileName: 'smileworld-bundle',
+    formats: ['iife']  // OBLIGATOIRE pour Webflow
+  },
+  external: ['gsap'],  // GSAP via CDN
+  outDir: 'dist'
+}
+```
+
+**Serveur de développement :**
+- **Port** : 3005 (config) / 3002 (dev-server réel)
+- **CORS** : `https://smile-world-c1bc36.webflow.io`
+- **Headers** : `Access-Control-Allow-Private-Network: true`
+
+### Dependencies (`package.json`)
+**Principales dépendances :**
+- **`gsap`** : v3.13.0 (animations)
+- **`@vimeo/player`** : v2.29.0 (vidéos)
+- **`vite`** : v5.3.1 (build)
+- **`live-server`** : v1.2.2 (dev)
+
+## 7. Événements et Communication Inter-Modules
+
+### Système d'événements personnalisés :
+
+**`map:focus` :** Émis par `centre-card.js`
+```javascript
+document.dispatchEvent(new CustomEvent('map:focus', { 
+    detail: { placeId } 
+}));
+```
+
+**`map:reset` :** Émis par `centre-card.js`
+```javascript
+document.dispatchEvent(new CustomEvent('map:reset'));
+```
+
+**Écouté par :** `map-integration.js` via `listenForFocusEvents()`
+
+## 8. Bonnes Pratiques et Patterns
+
+### Initialisation sécurisée :
+```javascript
+export function initModule() {
+    const element = document.querySelector('.selector');
+    if (!element) {
+        console.warn('Module non initialisé : élément manquant');
+        return;
+    }
+    // ... logique d'initialisation
+}
+```
+
+### Gestion des animations :
+```javascript
+let isAnimating = false;
+async function animateElement() {
+    if (isAnimating) return;
+    isAnimating = true;
+    try {
+        await gsap.to(element, { /* config */ });
+    } finally {
+        isAnimating = false;
+    }
+}
+```
+
+### Éviter les doubles initialisations :
+```javascript
+const initializedElements = new WeakSet();
+// ou
+if (element.dataset.moduleInitialized) return;
+element.dataset.moduleInitialized = 'true';
+```
+
+## 9. Déploiement sur Webflow
+
+### 🚨 Configuration critique :
+
+1. **Site Settings > Custom Code > Footer Code :**
+   ```html
+   <script src="https://cdn.jsdelivr.net/gh/[USER]/[REPO]@[COMMIT]/dist/smileworld-bundle.iife.js"></script>
+   ```
+
+2. **⚠️ Ne PAS utiliser `type="module"`** - Le bundle IIFE se charge directement
+
+3. **GSAP doit être chargé AVANT** le bundle (Webflow le fait automatiquement)
+
+4. **Google Maps** : 
+   ```html
+   <script src="https://maps.googleapis.com/maps/api/js?key=API_KEY&libraries=places,marker&loading=async&language=fr"></script>
+   ```
+
+### Workflow complet :
+
+1. **Développement local** : Serveur sur port 3002
+2. **Test** : `npm run build` + rechargement auto
+3. **Commit** : Messages sans point d'exclamation (préférence utilisateur)
+4. **URL finale** : jsDelivr avec hash de commit spécifique
+
+---
+
+## 10. Problèmes Connus et Solutions
+
+### `centre-card.js` - Historique des problèmes :
+- **Symptôme** : Cartes ne s'affichent plus
+- **Causes** : Double initialisation, sélecteurs obsolètes, éléments cachés sans révélation
+- **Solution** : Version 6.1.0 avec diagnostic intégré et sélecteurs robustes
+
+### Performance :
+- **Bundle size** : ~37.70 kB (optimisé)
+- **14 cartes** trouvées et initialisées correctement
+- **Lazy loading** des modules par page
+
+### Compatibilité :
+- **CORS** configuré pour Webflow
+- **Private Network Access** pour Chrome
+- **Fallbacks** pour sélecteurs CSS
+
+Ce document constitue la référence complète du projet SmileWorld JS. Pour toute modification, consulter d'abord cette architecture avant d'intervenir sur le code. 

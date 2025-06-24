@@ -31,4 +31,7 @@ watch-js.log
 .cursor/
 
 # Fichiers de backup
-Autre/centre-card-backup 
+Autre/centre-card-backup
+
+# Serveur de développement local
+dev-server/ 
