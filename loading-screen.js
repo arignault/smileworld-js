@@ -1,4 +1,7 @@
 // Version: 1.1.3 - Nettoyage du code
+// import { gsap } from 'gsap';
+
+console.log('🚀 loading-screen.js v1.3.0 chargé');
 
 // Configuration de l'animation
 const config = {
@@ -12,6 +15,15 @@ const config = {
 
 let isInitialized = false;
 let isHiding = false;
+let isReadyToHide = false;
+let minimumTimeElapsed = false;
+
+// Tente de masquer l'écran de chargement si les deux conditions sont remplies
+function tryHide() {
+    if (isReadyToHide && minimumTimeElapsed) {
+        hideLoadingScreen();
+    }
+}
 
 // Initialise l'écran de chargement
 export function initLoadingScreen() {
@@ -39,15 +51,15 @@ export function initLoadingScreen() {
     }
 
     console.log('🎨 Configuration des styles initiaux');
-    gsap.set(loadingScreen, { 
+    window.gsap.set(loadingScreen, { 
         opacity: 1, 
         display: 'flex',
         backgroundColor: 'white'
     });
     
     // Animation d'entrée pour le logo
-    gsap.set(logoWrap, { opacity: 0, scale: 0.9 });
-    gsap.to(logoWrap, {
+    window.gsap.set(logoWrap, { opacity: 0, scale: 0.9 });
+    window.gsap.to(logoWrap, {
         opacity: 1,
         scale: 1,
         duration: 0.5,
@@ -55,14 +67,28 @@ export function initLoadingScreen() {
         ease: config.ease
     });
 
-    setupInternalLinkListener();
+    // Lancement du minuteur pour la durée minimale
+    setTimeout(() => {
+        console.log('⏱️ 1.5 secondes écoulées.');
+        minimumTimeElapsed = true;
+        tryHide(); // Tente de masquer si l'autre condition est déjà remplie
+    }, 1500);
+
+    // setupInternalLinkListener(); // EXPÉRIMENTATION : On désactive l'écouteur de liens
     isInitialized = true;
     console.log('✅ Écran de chargement initialisé avec succès');
     return Promise.resolve(loadingScreen);
 }
 
-// Masque l'écran de chargement
-export function hideLoadingScreen() {
+// L'application est prête, on peut demander à masquer l'écran
+export function requestHideLoadingScreen() {
+    console.log('🟢 Application prête, demande de masquage de l\'écran de chargement.');
+    isReadyToHide = true;
+    tryHide(); // Tente de masquer si le temps est déjà écoulé
+}
+
+// Masque l'écran de chargement (logique interne)
+function hideLoadingScreen() {
     console.log('🎬 hideLoadingScreen - Début du masquage');
     if (!isInitialized) {
         console.warn('⚠️ Écran de chargement non initialisé');
@@ -89,10 +115,10 @@ export function hideLoadingScreen() {
     }
 
     console.log('🎬 Démarrage de l\'animation de masquage');
-    const tl = gsap.timeline({
+    const tl = window.gsap.timeline({
         onComplete: () => {
             console.log('✅ Animation de masquage terminée');
-            gsap.set(loadingScreen, { display: 'none' });
+            window.gsap.set(loadingScreen, { display: 'none' });
             isHiding = false;
         }
     });
@@ -109,7 +135,13 @@ export function hideLoadingScreen() {
 export function forceHideLoadingScreen() {
     const loadingScreen = document.querySelector('.loadingscreen');
     if (loadingScreen) {
-        gsap.set(loadingScreen, { display: 'none' });
+        window.gsap.to(loadingScreen, {
+            opacity: 0,
+            duration: 0.5,
+            onComplete: () => {
+                window.gsap.set(loadingScreen, { display: 'none' });
+            }
+        });
     }
     isHiding = false;
 }
@@ -122,29 +154,29 @@ function showLoadingScreenForTransition(onComplete) {
         return;
     }
 
-    gsap.timeline({ onComplete })
+    window.gsap.timeline({ onComplete })
         .set(loadingScreen, { display: 'flex', opacity: 0, backgroundColor: 'white' })
         .to(loadingScreen, { opacity: 1, duration: config.fadeInDuration, ease: config.ease });
 }
 
 // Écoute les clics sur les liens internes pour les transitions
 function setupInternalLinkListener() {
-    document.addEventListener('click', (e) => {
-        const link = e.target.closest('a');
+    // document.addEventListener('click', (e) => {
+    //     const link = e.target.closest('a');
 
-        if (!link) return;
+    //     if (!link) return;
 
-        const href = link.getAttribute('href');
-        const target = link.getAttribute('target');
+    //     const href = link.getAttribute('href');
+    //     const target = link.getAttribute('target');
 
-        if (!href || href.startsWith('#') || href.startsWith('http') || target === '_blank' || href.startsWith('mailto:') || href.startsWith('tel:')) {
-            return;
-        }
+    //     if (!href || href.startsWith('#') || href.startsWith('http') || target === '_blank' || href.startsWith('mailto:') || href.startsWith('tel:')) {
+    //         return;
+    //     }
         
-        e.preventDefault();
+    //     e.preventDefault();
         
-        showLoadingScreenForTransition(() => {
-            window.location.href = href;
-        });
-    }, true);
+    //     showLoadingScreenForTransition(() => {
+    //         window.location.href = href;
+    //     });
+    // }, true);
 } 

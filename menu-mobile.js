@@ -1,6 +1,5 @@
-// Version: 1.0.6 - Ajout de la rotation du bouton hamburger
-
-import { updateCardLayout } from './centre-card.js';
+// Version: 1.0.7 - Adaptation au build
+// import { updateCardLayout } from './centre-card.js'; // Supprimé car géré globalement
 
 // Initialise le menu mobile
 export function initMenuMobile() {
@@ -29,10 +28,10 @@ export function initMenuMobile() {
     let scrollPosition = 0;
     
     // Timeline principale pour toute la navigation
-    let mainTimeline = gsap.timeline({ paused: true });
+    let mainTimeline = window.gsap.timeline({ paused: true });
     
     // Timeline pour l'animation du bouton hamburger
-    const hamburgerTimeline = gsap.timeline({ paused: true });
+    const hamburgerTimeline = window.gsap.timeline({ paused: true });
     hamburgerTimeline.to(menuButton, {
         rotation: 90,
         duration: 0.4,
@@ -65,7 +64,7 @@ export function initMenuMobile() {
     
     // Crée la timeline principale
     function createMainTimeline() {
-        return gsap.timeline({ paused: true })
+        return window.gsap.timeline({ paused: true })
             .add(() => {
                 mainMenu.style.display = 'flex';
                 [parcMenu, activiteMenu, offresMenu].forEach(menu => {
@@ -110,7 +109,7 @@ export function initMenuMobile() {
             }
         });
     }
-    
+
     // Fonction pour gérer l'animation du bouton hamburger
     function updateHamburgerState(isOpen) {
         if (isOpen) {
@@ -159,16 +158,16 @@ export function initMenuMobile() {
 
             // Mise à jour spéciale pour le menu des parcs
             if (targetMenu === parcMenu) {
-                setTimeout(() => {
-                    const cards = document.querySelectorAll('.centre-card_wrapper.effect-cartoon-shadow');
-                    cards.forEach(card => {
-                        updateCardLayout(card);
-                    });
-                }, 100);
+                // setTimeout(() => {
+                //     const cards = document.querySelectorAll('.centre-card_wrapper.effect-cartoon-shadow');
+                //     cards.forEach(card => {
+                //         updateCardLayout(card);
+                //     });
+                // }, 100);
             }
         });
     }
-
+    
     // Modification de la fonction resetAllMenus
     function resetAllMenus() {
         if (mainTimeline) {
@@ -200,12 +199,12 @@ export function initMenuMobile() {
         subMenu.style.display = 'flex';
 
         if (subMenu === parcMenu) {
-            setTimeout(() => {
-                const cards = document.querySelectorAll('.centre-card_wrapper.effect-cartoon-shadow');
-                cards.forEach(card => {
-                    updateCardLayout(card);
-                });
-            }, 100);
+            // setTimeout(() => {
+            //     const cards = document.querySelectorAll('.centre-card_wrapper.effect-cartoon-shadow');
+            //     cards.forEach(card => {
+            //         updateCardLayout(card);
+            //     });
+            // }, 100);
         }
     }
     

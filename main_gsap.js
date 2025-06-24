@@ -1,181 +1,97 @@
-// Version: 1.0.2 - Ajout toggle FAQ
+// main_gsap.js v3.0.1 - Réintégration du loading screen
+console.log("🚀 main_gsap.js v3.0.1 chargé");
 
-console.log('🔍 main_gsap.js - Module chargé et exécution commencée');
-
-import { initLoadingScreen, hideLoadingScreen, forceHideLoadingScreen } from './loading-screen.js';
-import { initMenuMobile } from './menu-mobile.js';
-import { initMenuDesktop } from './menu-desktop.js';
-import { initCentreCards } from './centre-card.js';
-import { initMenuDesktopHoverActivite } from './menu-desktop-hover-activite.js';
+// import { gsap } from "gsap"; // GSAP est maintenant chargé globalement via CDN
+import { initLoadingScreen, requestHideLoadingScreen, forceHideLoadingScreen } from './loading-screen.js';
 import { initTextAnimation } from './text-animation.js';
 import { initFaqItems } from './faq-toggle.js';
-import { initMapIntegration } from './map-integration.js';
+import { initMenuDesktop } from './menu-desktop.js';
+import { initMenuMobile } from './menu-mobile.js';
+import { initCentreCards } from './centre-card.js';
+import { initDebugMenu } from './debug-menu.js';
+import { initReservation } from './reservation.js';
+import { initMap } from './map-integration.js';
+import { initPrivateRoomPopup } from './privateroom.js';
+import { initPreselection } from './preselect.js';
+import { initMenuDesktopHoverActivite } from './menu-desktop-hover-activite.js';
 
-console.log('📦 main_gsap.js - Début du chargement');
-
-// Variable globale pour suivre l'état d'initialisation
-let isInitializing = false;
-let initializationAttempted = false;
-let modulesLoaded = {
-    menuMobile: false,
-    menuDesktop: false,
-    centreCards: false,
-    textAnimation: false,
-    menuDesktopHoverActivite: false,
-    faqItems: false
-};
-
-// Définit les états initiaux
-function setInitialStates() {
-    const menuWrapper = document.querySelector('.desktop_menu_wrapper');
-    if (menuWrapper) {
-        menuWrapper.style.display = 'none';
-        menuWrapper.style.opacity = '0';
-    }
-
-    const menuContainers = document.querySelectorAll('.parc_menu_desktop, .activites_menu_desktop, .offres_menu_desktop');
-    menuContainers.forEach(container => {
-        if (container) {
-            container.style.display = 'none';
-            container.style.opacity = '0';
-        }
-    });
-
-    const menuMobile = document.querySelector('.menu-mobile');
-    if (menuMobile) {
-        menuMobile.style.display = 'none';
-        menuMobile.style.opacity = '0';
-    }
-}
-
-// Vérifie si tous les modules sont chargés
-function checkModulesLoaded() {
-    return Object.values(modulesLoaded).every(loaded => loaded);
-}
-
-// Vérifie si le DOM est prêt
-function isDOMReady() {
-    return document.readyState === 'complete' || document.readyState === 'interactive';
-}
-
-// Initialise avec un délai
-async function initializeWithDelay() {
-    console.log('🔄 initializeWithDelay - Début de l\'initialisation');
+function initializeModules() {
+    console.log("✅ GSAP est prêt. Initialisation des modules...");
     
-    if (isInitializing || initializationAttempted) {
-        console.log('⚠️ Initialisation déjà en cours ou tentée');
-        return;
-    }
-
-    initializationAttempted = true;
-    isInitializing = true;
-
     try {
-        // Vérification de GSAP
-        if (!window.gsap) {
-            throw new Error('GSAP n\'est pas chargé');
-        }
-        console.log('✅ GSAP est disponible');
+        // Initialise les modules généraux
+        initTextAnimation();
+        initMenuDesktop();
+        initMenuMobile();
+        initDebugMenu();
+        initMenuDesktopHoverActivite();
 
-        // Vérification du DOM
-        if (!isDOMReady()) {
-            console.log('⏳ Attente du chargement du DOM...');
-            await new Promise((resolve, reject) => {
-                const timeout = setTimeout(() => {
-                    reject(new Error('Timeout: Le DOM n\'a pas été chargé après 10 secondes'));
-                }, 10000);
-
-                const checkDOM = setInterval(() => {
-                    if (isDOMReady()) {
-                        console.log('✅ DOM chargé');
-                        clearInterval(checkDOM);
-                        clearTimeout(timeout);
-                        resolve();
-                    }
-                }, 100);
-            });
+        // --- Code Splitting pour les pages spécifiques ---
+        // Page Réservation : on charge le module si l'URL contient "/reservation"
+        if (window.location.pathname.includes('/reservation')) {
+            console.log("-> Page Réservation détectée via l'URL. Chargement du module...");
+            initReservation();
+                    console.log("✅ Module Réservation chargé et initialisé.");
         }
 
-        console.log('🎬 Début de l\'initialisation des modules');
-        const loadingScreen = await initLoadingScreen();
-        console.log('✅ Écran de chargement initialisé:', !!loadingScreen);
-        
-        // Vérification des éléments essentiels
-        const essentialElements = {
-            menuWrapper: document.querySelector('.desktop_menu_wrapper'),
-            menuMobile: document.querySelector('.menu-mobile'),
-            centreCards: document.querySelectorAll('.centre-card_wrapper.effect-cartoon-shadow'),
-            textAnimation: document.querySelector('.span_mover')
-        };
+        // Initialisation des modules qui dépendent d'éléments spécifiques
+        initMap();
 
-        console.log('🔍 Éléments essentiels trouvés:', {
-            menuWrapper: !!essentialElements.menuWrapper,
-            menuMobile: !!essentialElements.menuMobile,
-            centreCards: essentialElements.centreCards.length,
-            textAnimation: !!essentialElements.textAnimation
-        });
-
-        setInitialStates();
-        console.log('✅ États initiaux définis');
-
-        // Initialisation des modules avec gestion d'erreur individuelle
-        const initModule = async (name, initFn) => {
-            try {
-                console.log(`🚀 Initialisation de ${name}...`);
-                await initFn();
-                console.log(`✅ ${name} initialisé avec succès`);
-                return true;
-            } catch (error) {
-                console.error(`❌ Erreur lors de l'initialisation de ${name}:`, error);
-                return false;
-            }
-        };
-
-        const results = await Promise.all([
-            initModule('Menu Mobile', initMenuMobile),
-            initModule('Menu Desktop', initMenuDesktop),
-            initModule('Cartes', initCentreCards),
-            initModule('Hover Activités', initMenuDesktopHoverActivite),
-            initModule('Animation Texte', initTextAnimation),
-            initModule('FAQ', initFaqItems),
-            initModule('Carte Google', initMapIntegration)
-        ]);
-
-        const allSuccessful = results.every(result => result);
-        
-        if (allSuccessful) {
-            console.log('✨ Tous les modules ont été initialisés avec succès');
-            if (loadingScreen) {
-                console.log('🎬 Fermeture de l\'écran de chargement');
-                hideLoadingScreen();
-            }
-        } else {
-            console.warn('⚠️ Certains modules n\'ont pas été initialisés correctement');
-            if (loadingScreen) {
-                console.log('🔄 Tentative de fermeture forcée de l\'écran de chargement');
-                forceHideLoadingScreen();
-            } 
+        // Salles privatisables (uniquement si le conteneur est présent)
+        if (document.querySelector('.salles_privatisable_holder')) {
+            console.log("-> Élément .salles_privatisable_holder détecté. Initialisation du module.");
+            initPrivateRoomPopup();
         }
+
+        // Présélection pour la réservation (uniquement si des boutons sont présents)
+        if (document.querySelector('[data-attribute="preselect-booking-button"]')) {
+            console.log("-> Bouton de présélection détecté. Initialisation du module.");
+            initPreselection();
+        }
+
+        console.log('✨ Tous les modules principaux ont été initialisés.');
+        // Une fois que tout est prêt, on demande à cacher le loader.
+        requestHideLoadingScreen();
+
     } catch (error) {
-        console.error('❌ Erreur fatale lors de l\'initialisation:', error);
-        console.error('Stack trace:', error.stack);
-        forceHideLoadingScreen();
-        throw error;
-    } finally {
-        isInitializing = false;
-        console.log('🏁 Fin du processus d\'initialisation');
+        console.error("❌ Erreur lors de l'initialisation des modules. Forçage du masquage du loader.", error);
+        forceHideLoadingScreen(); // On s'assure que l'utilisateur n'est pas bloqué même en cas d'erreur
     }
 }
 
-// Démarre l'initialisation
-export function startInitialization() {
-    console.log('🎬 Démarrage de l\'initialisation');
-    initializeWithDelay().catch(error => {
-        console.error('❌ Erreur fatale lors de l\'initialisation:', error);
-        isInitializing = false;
-        forceHideLoadingScreen();
-    });
+function waitForGsapAndInitialize() {
+    initLoadingScreen(); // On lance l'animation du loader immédiatement
+
+    let attempts = 0;
+    const maxAttempts = 100; // Attend max 10 secondes
+    const interval = 100;
+
+    const intervalId = setInterval(() => {
+        if (window.gsap) {
+            clearInterval(intervalId);
+            initializeModules();
+        } else {
+            attempts++;
+            if (attempts > maxAttempts) {
+                clearInterval(intervalId);
+                console.error("GSAP n'a pas pu être chargé après 10 secondes. Annulation de l'initialisation des modules.");
+                forceHideLoadingScreen(); // On cache le loader pour ne pas bloquer l'utilisateur
+            }
+        }
+    }, interval);
 }
 
-// Ne pas démarrer automatiquement l'initialisation
-// L'initialisation sera déclenchée par webflow-loader.js
+// Lancement du processus
+// On encapsule dans window.Webflow.push pour s'assurer que le moteur de Webflow est prêt.
+window.Webflow = window.Webflow || [];
+window.Webflow.push(function() {
+    console.log("🚀 Webflow est prêt, lancement de l'attente de GSAP.");
+    waitForGsapAndInitialize();
+});
+
+// À la toute fin, une fois que tout (y compris les images) est chargé, on force la fermeture des cartes.
+window.addEventListener('load', () => {
+    console.log('🎬 La page est entièrement chargée. Initialisation des modules dépendants du contenu.');
+    initCentreCards();
+    initFaqItems();
+});

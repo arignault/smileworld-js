@@ -23,7 +23,6 @@ yarn-error.log*
 .env.*.local
 
 # Build files
-dist/
 build/
 
 # Fichiers de logs et temporaires
