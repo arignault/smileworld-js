@@ -1,13 +1,13 @@
 /**
- * Mandatory Filter Selection v1.1.0
+ * Mandatory Filter Selection v1.1.1
  * Force la sélection d'un filtre (parc ou type d'offre) avant d'afficher la liste CMS
- * Gère automatiquement le texte d'aide avec id="helper-text"
+ * Gère automatiquement le slider CMS avec id="cms-slider-offres"
  * Chargé uniquement sur /offres et /anniversaires
  */
 
 class MandatoryFilterSelection {
     constructor() {
-        this.version = '1.1.0';
+        this.version = '1.1.1';
         this.initialized = false;
         this.selectors = {
             collectionList: '[fs-list-element="list"]',
@@ -15,7 +15,7 @@ class MandatoryFilterSelection {
             filterInputs: 'input[fs-list-field]',
             noItemsMessage: '.w-dyn-empty',
             filterForms: '[fs-list-element="filters"]',
-            helperText: '#helper-text'
+            helperText: '#cms-slider-offres'
         };
         this.messages = {
             selectFilter: '👆 Sélectionnez un parc ou un type d\'offre pour voir nos offres disponibles',
@@ -69,7 +69,7 @@ class MandatoryFilterSelection {
         // Créer et afficher le message de sélection
         this.showSelectionMessage();
         
-        // Afficher le texte d'aide s'il existe
+        // Afficher le slider CMS s'il existe
         this.showHelperText();
         
         console.log(`🔒 ${collectionItems.length} offres cachées - En attente de sélection de filtre`);
@@ -211,24 +211,24 @@ class MandatoryFilterSelection {
     }
 
     /**
-     * Affiche le texte d'aide
+     * Affiche le slider CMS des offres
      */
     showHelperText() {
         const helperText = document.querySelector(this.selectors.helperText);
         if (helperText) {
             helperText.style.display = '';
-            console.log('👁️ Texte d\'aide affiché');
+            console.log('👁️ Slider CMS des offres affiché');
         }
     }
 
     /**
-     * Cache le texte d'aide
+     * Cache le slider CMS des offres
      */
     hideHelperText() {
         const helperText = document.querySelector(this.selectors.helperText);
         if (helperText) {
             helperText.style.display = 'none';
-            console.log('🙈 Texte d\'aide masqué');
+            console.log('🙈 Slider CMS des offres masqué');
         }
     }
 
@@ -296,4 +296,4 @@ if (document.readyState === 'loading') {
 // Export pour utilisation dans d'autres modules
 export { MandatoryFilterSelection };
 
-console.log('🚀 mandatory-filter-selection.js v1.1.0 chargé'); 
+console.log('🚀 mandatory-filter-selection.js v1.1.1 chargé'); 
