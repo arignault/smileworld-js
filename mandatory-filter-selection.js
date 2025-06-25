@@ -1,13 +1,13 @@
 /**
- * Mandatory Filter Selection v1.2.0
+ * Mandatory Filter Selection v1.2.1
  * Force la sélection d'un filtre (parc ou type d'offre) avant d'afficher la liste CMS
- * Gère automatiquement le slider CMS avec id="cms-slider-offres"
+ * Gère automatiquement le slider CMS avec id="cms-slider-offres" et le texte d'aide id="helper-text"
  * Chargé uniquement sur /offres et /anniversaires
  */
 
 class MandatoryFilterSelection {
     constructor() {
-        this.version = '1.2.0';
+        this.version = '1.2.1';
         this.initialized = false;
         this.selectors = {
             collectionList: '[fs-list-element="list"]',
@@ -15,7 +15,8 @@ class MandatoryFilterSelection {
             filterInputs: 'input[fs-list-field]',
             noItemsMessage: '.w-dyn-empty',
             filterForms: '[fs-list-element="filters"]',
-            helperText: '#cms-slider-offres'
+            cmsSlider: '#cms-slider-offres',
+            helperText: '#helper-text'
         };
         this.messages = {
             selectFilter: '👆 Sélectionnez un parc ou un type d\'offre pour voir nos offres disponibles',
@@ -70,7 +71,9 @@ class MandatoryFilterSelection {
         this.showSelectionMessage();
         
         // Cacher le slider CMS au départ (aucun filtre sélectionné)
-        this.hideHelperText();
+        this.hideCmsSlider();
+        // Afficher le texte d'aide au départ
+        this.showHelperText();
         
         console.log(`🔒 ${collectionItems.length} offres cachées - En attente de sélection de filtre`);
     }
@@ -158,12 +161,14 @@ class MandatoryFilterSelection {
             console.log(`✅ ${checkedFilters.length} filtre(s) sélectionné(s) - Affichage des offres`);
             this.showCollectionItems();
             this.hideSelectionMessage();
-            this.showHelperText(); // AFFICHE le slider CMS quand un filtre est sélectionné
+            this.showCmsSlider(); // AFFICHE le slider CMS quand un filtre est sélectionné
+            this.hideHelperText(); // CACHE le texte d'aide quand un filtre est sélectionné
         } else {
             console.log('🔒 Aucun filtre sélectionné - Masquage des offres');
             this.hideCollectionItems();
             this.showSelectionMessage();
-            this.hideHelperText(); // CACHE le slider CMS quand aucun filtre
+            this.hideCmsSlider(); // CACHE le slider CMS quand aucun filtre
+            this.showHelperText(); // AFFICHE le texte d'aide quand aucun filtre
         }
     }
 
@@ -213,10 +218,10 @@ class MandatoryFilterSelection {
     /**
      * Affiche le slider CMS des offres (quand un filtre est sélectionné)
      */
-    showHelperText() {
-        const helperText = document.querySelector(this.selectors.helperText);
-        if (helperText) {
-            helperText.style.display = '';
+    showCmsSlider() {
+        const cmsSlider = document.querySelector(this.selectors.cmsSlider);
+        if (cmsSlider) {
+            cmsSlider.style.display = '';
             console.log('👁️ Slider CMS des offres affiché (filtre sélectionné)');
         }
     }
@@ -224,11 +229,33 @@ class MandatoryFilterSelection {
     /**
      * Cache le slider CMS des offres (quand aucun filtre sélectionné)
      */
+    hideCmsSlider() {
+        const cmsSlider = document.querySelector(this.selectors.cmsSlider);
+        if (cmsSlider) {
+            cmsSlider.style.display = 'none';
+            console.log('🙈 Slider CMS des offres masqué (aucun filtre)');
+        }
+    }
+
+    /**
+     * Affiche le texte d'aide (quand aucun filtre sélectionné)
+     */
+    showHelperText() {
+        const helperText = document.querySelector(this.selectors.helperText);
+        if (helperText) {
+            helperText.style.display = '';
+            console.log('👁️ Texte d\'aide affiché (aucun filtre)');
+        }
+    }
+
+    /**
+     * Cache le texte d'aide (quand un filtre est sélectionné)
+     */
     hideHelperText() {
         const helperText = document.querySelector(this.selectors.helperText);
         if (helperText) {
             helperText.style.display = 'none';
-            console.log('🙈 Slider CMS des offres masqué (aucun filtre)');
+            console.log('🙈 Texte d\'aide masqué (filtre sélectionné)');
         }
     }
 
@@ -275,7 +302,8 @@ class MandatoryFilterSelection {
     reset() {
         this.hideSelectionMessage();
         this.showCollectionItems();
-        this.hideHelperText(); // Reset: cache le slider CMS
+        this.hideCmsSlider(); // Reset: cache le slider CMS
+        this.showHelperText(); // Reset: affiche le texte d'aide
         this.initialized = false;
         console.log('🔄 Filtrage obligatoire réinitialisé');
     }
@@ -296,4 +324,4 @@ if (document.readyState === 'loading') {
 // Export pour utilisation dans d'autres modules
 export { MandatoryFilterSelection };
 
-console.log('🚀 mandatory-filter-selection.js v1.2.0 chargé'); 
+console.log('🚀 mandatory-filter-selection.js v1.2.1 chargé'); 
