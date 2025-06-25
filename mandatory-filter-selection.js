@@ -1,5 +1,5 @@
 /**
- * Mandatory Filter Selection v1.1.1
+ * Mandatory Filter Selection v1.2.0
  * Force la sélection d'un filtre (parc ou type d'offre) avant d'afficher la liste CMS
  * Gère automatiquement le slider CMS avec id="cms-slider-offres"
  * Chargé uniquement sur /offres et /anniversaires
@@ -7,7 +7,7 @@
 
 class MandatoryFilterSelection {
     constructor() {
-        this.version = '1.1.1';
+        this.version = '1.2.0';
         this.initialized = false;
         this.selectors = {
             collectionList: '[fs-list-element="list"]',
@@ -69,8 +69,8 @@ class MandatoryFilterSelection {
         // Créer et afficher le message de sélection
         this.showSelectionMessage();
         
-        // Afficher le slider CMS s'il existe
-        this.showHelperText();
+        // Cacher le slider CMS au départ (aucun filtre sélectionné)
+        this.hideHelperText();
         
         console.log(`🔒 ${collectionItems.length} offres cachées - En attente de sélection de filtre`);
     }
@@ -158,12 +158,12 @@ class MandatoryFilterSelection {
             console.log(`✅ ${checkedFilters.length} filtre(s) sélectionné(s) - Affichage des offres`);
             this.showCollectionItems();
             this.hideSelectionMessage();
-            this.hideHelperText();
+            this.showHelperText(); // AFFICHE le slider CMS quand un filtre est sélectionné
         } else {
             console.log('🔒 Aucun filtre sélectionné - Masquage des offres');
             this.hideCollectionItems();
             this.showSelectionMessage();
-            this.showHelperText();
+            this.hideHelperText(); // CACHE le slider CMS quand aucun filtre
         }
     }
 
@@ -211,24 +211,24 @@ class MandatoryFilterSelection {
     }
 
     /**
-     * Affiche le slider CMS des offres
+     * Affiche le slider CMS des offres (quand un filtre est sélectionné)
      */
     showHelperText() {
         const helperText = document.querySelector(this.selectors.helperText);
         if (helperText) {
             helperText.style.display = '';
-            console.log('👁️ Slider CMS des offres affiché');
+            console.log('👁️ Slider CMS des offres affiché (filtre sélectionné)');
         }
     }
 
     /**
-     * Cache le slider CMS des offres
+     * Cache le slider CMS des offres (quand aucun filtre sélectionné)
      */
     hideHelperText() {
         const helperText = document.querySelector(this.selectors.helperText);
         if (helperText) {
             helperText.style.display = 'none';
-            console.log('🙈 Slider CMS des offres masqué');
+            console.log('🙈 Slider CMS des offres masqué (aucun filtre)');
         }
     }
 
@@ -275,7 +275,7 @@ class MandatoryFilterSelection {
     reset() {
         this.hideSelectionMessage();
         this.showCollectionItems();
-        this.showHelperText();
+        this.hideHelperText(); // Reset: cache le slider CMS
         this.initialized = false;
         console.log('🔄 Filtrage obligatoire réinitialisé');
     }
@@ -296,4 +296,4 @@ if (document.readyState === 'loading') {
 // Export pour utilisation dans d'autres modules
 export { MandatoryFilterSelection };
 
-console.log('🚀 mandatory-filter-selection.js v1.1.1 chargé'); 
+console.log('🚀 mandatory-filter-selection.js v1.2.0 chargé'); 
