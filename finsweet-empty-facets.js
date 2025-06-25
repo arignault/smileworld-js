@@ -1,11 +1,30 @@
 /**
- * Finsweet Empty Facets Handler v1.0.0
- * Gestion des filtres vides avec désactivation et styles
+ * Finsweet Empty Facets Handler v2.0.0
+ * Utilise le callback pattern officiel de Finsweet
  */
 
 export function initializeEmptyFacetsHandler() {
-  console.log('🔧 Initialisation du gestionnaire de filtres vides...');
+  console.log('🔧 Configuration du gestionnaire de filtres vides...');
 
+  // ✅ Utiliser le callback pattern officiel de Finsweet
+  if (!window.FinsweetAttributes) {
+    window.FinsweetAttributes = [];
+  }
+
+  window.FinsweetAttributes.push([
+    'list',
+    (listInstances) => {
+      console.log('✅ Finsweet chargé, configuration des filtres vides...');
+      
+      // Maintenant que Finsweet est chargé, on peut configurer nos filtres
+      setupEmptyFacets();
+    },
+  ]);
+
+  console.log('📋 Callback Finsweet configuré pour les filtres vides');
+}
+
+function setupEmptyFacets() {
   // Gestion de tous les inputs avec fs-list-field
   document.querySelectorAll('input[fs-list-field]').forEach(checkbox => {
     const parentFacet = checkbox.closest('.is-list-emptyfacet');
@@ -47,5 +66,5 @@ export function initializeEmptyFacetsHandler() {
     });
   });
 
-  console.log('✅ Gestionnaire de filtres vides initialisé');
+  console.log('🎯 Filtres vides configurés avec succès');
 } 
