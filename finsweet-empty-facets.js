@@ -1,35 +1,42 @@
 /**
- * Finsweet Empty Facets Handler v2.0.0
- * Utilise le callback pattern officiel de Finsweet
+ * Finsweet Empty Facets Handler v2.1.0
+ * Correction: utilisation de window.fsAttributes (pas FinsweetAttributes)
  */
 
 export function initializeEmptyFacetsHandler() {
-  console.log('🔧 Configuration du gestionnaire de filtres vides...');
+  console.log('🔧 Configuration du gestionnaire de filtres vides v2.1.0...');
 
-  // ✅ Utiliser le callback pattern officiel de Finsweet
-  if (!window.FinsweetAttributes) {
-    window.FinsweetAttributes = [];
+  // ✅ Utiliser window.fsAttributes (LA BONNE VARIABLE)
+  if (!window.fsAttributes) {
+    window.fsAttributes = [];
   }
 
-  window.FinsweetAttributes.push([
+  window.fsAttributes.push([
     'list',
     (listInstances) => {
-      console.log('✅ Finsweet chargé, configuration des filtres vides...');
+      console.log('✅ Finsweet list callback déclenché!', listInstances.length, 'instances');
       
       // Maintenant que Finsweet est chargé, on peut configurer nos filtres
       setupEmptyFacets();
     },
   ]);
 
-  console.log('📋 Callback Finsweet configuré pour les filtres vides');
+  console.log('📋 Callback Finsweet configuré correctement avec fsAttributes');
 }
 
 function setupEmptyFacets() {
+  console.log('🎯 Configuration des filtres vides...');
+  
   // Gestion de tous les inputs avec fs-list-field
-  document.querySelectorAll('input[fs-list-field]').forEach(checkbox => {
+  const inputs = document.querySelectorAll('input[fs-list-field]');
+  console.log(`📊 ${inputs.length} inputs fs-list-field trouvés`);
+  
+  inputs.forEach((checkbox, index) => {
     const parentFacet = checkbox.closest('.is-list-emptyfacet');
 
     if (parentFacet) {
+      console.log(`🔒 Input ${index+1} dans empty facet - désactivation`);
+      
       // Appliquer un curseur par défaut à la checkbox elle-même
       checkbox.style.cursor = 'default';
 
@@ -44,6 +51,7 @@ function setupEmptyFacets() {
     checkbox.addEventListener('click', (e) => {
       const isEmpty = checkbox.closest('.is-list-emptyfacet');
       if (isEmpty) {
+        console.log('🚫 Clic bloqué sur filtre vide');
         e.preventDefault();
         e.stopPropagation();
         return;
