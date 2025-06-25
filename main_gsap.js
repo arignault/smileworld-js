@@ -14,6 +14,7 @@ import { initMap } from './map-integration.js';
 import { initPrivateRoomPopup } from './privateroom.js';
 import { initPreselection } from './preselect.js';
 import { initMenuDesktopHoverActivite } from './menu-desktop-hover-activite.js';
+import { initializeEmptyFacetsHandler } from './finsweet-empty-facets.js';
 
 function initializeModules() {
     console.log("✅ GSAP est prêt. Initialisation des modules...");
@@ -25,6 +26,9 @@ function initializeModules() {
         initMenuMobile();
         initDebugMenu();
         initMenuDesktopHoverActivite();
+        
+        // Initialise le gestionnaire de filtres vides Finsweet
+        initializeEmptyFacetsHandler();
 
         // --- Code Splitting pour les pages spécifiques ---
         // Page Réservation : on charge le module si l'URL contient "/reservation"
