@@ -15,6 +15,7 @@ import { initPrivateRoomPopup } from './privateroom.js';
 import { initPreselection } from './preselect.js';
 import { initMenuDesktopHoverActivite } from './menu-desktop-hover-activite.js';
 import { initializeEmptyFacetsHandler } from './finsweet-empty-facets.js';
+import { MandatoryFilterSelection } from './mandatory-filter-selection.js';
 
 function initializeModules() {
     console.log("✅ GSAP est prêt. Initialisation des modules...");
@@ -35,7 +36,16 @@ function initializeModules() {
         if (window.location.pathname.includes('/reservation')) {
             console.log("-> Page Réservation détectée via l'URL. Chargement du module...");
             initReservation();
-                    console.log("✅ Module Réservation chargé et initialisé.");
+            console.log("✅ Module Réservation chargé et initialisé.");
+        }
+
+        // Pages Offres et Anniversaires : filtrage obligatoire
+        const currentPath = window.location.pathname;
+        if (currentPath === '/offres' || currentPath === '/anniversaires') {
+            console.log(`-> Page ${currentPath} détectée. Initialisation du filtrage obligatoire...`);
+            const mandatoryFilter = new MandatoryFilterSelection();
+            mandatoryFilter.init();
+            console.log("✅ Module de filtrage obligatoire chargé et initialisé.");
         }
 
         // Initialisation des modules qui dépendent d'éléments spécifiques
