@@ -396,17 +396,13 @@ function initializeCard(card, shouldPreserveOpen = false) {
         console.log(`💾 Display original sauvé pour ${el.className}: ${computedStyle.display}`);
     });
     
-    // S'assurer que la carte démarre fermée SEULEMENT si elle n'est pas déjà ouverte ET qu'on ne doit pas la préserver
-    if (!card.classList.contains('is-open') || !shouldPreserveOpen) {
-        if (shouldPreserveOpen && card.classList.contains('is-open')) {
-            console.log('🛡️ Carte ouverte préservée, pas de modification GSAP');
-            // Ne rien faire, laisser la carte dans son état ouvert
-        } else {
-            window.gsap.set(elementsToToggle, { display: 'none', opacity: 0, y: -20 });
-            console.log('🔒 Carte fermée par défaut');
-        }
+    // S'assurer que la carte démarre fermée SEULEMENT si on ne doit pas la préserver OU si elle n'est pas ouverte
+    if (shouldPreserveOpen && card.classList.contains('is-open')) {
+        console.log('🛡️ Carte ouverte préservée, pas de modification GSAP');
+        // Ne rien faire, laisser la carte dans son état ouvert
     } else {
-        console.log('🔓 Carte déjà ouverte, état préservé');
+        window.gsap.set(elementsToToggle, { display: 'none', opacity: 0, y: -20 });
+        console.log('🔒 Carte fermée par défaut');
     }
 
     const handleCardToggle = (event) => {
