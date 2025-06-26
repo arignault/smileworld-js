@@ -348,9 +348,9 @@ element.dataset.moduleInitialized = 'true';
 3. **GSAP doit être chargé AVANT** le bundle (Webflow le fait automatiquement)
 
 4. **Google Maps** : 
-   ```html
+    ```html
    <script src="https://maps.googleapis.com/maps/api/js?key=API_KEY&libraries=places,marker&loading=async&language=fr"></script>
-   ```
+    ```
 
 ### Workflow complet :
 

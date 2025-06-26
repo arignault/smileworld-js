@@ -50,6 +50,8 @@ function initializeModules() {
 
         // Initialisation des modules qui dépendent d'éléments spécifiques
         initMap();
+        
+        // Centre Cards : initialisé plus tard dans window.load pour s'assurer que le CMS est chargé
 
         // Salles privatisables (uniquement si le conteneur est présent)
         if (document.querySelector('.salles_privatisable_holder')) {

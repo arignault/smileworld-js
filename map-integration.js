@@ -65,7 +65,7 @@ const mapManager = {
         });
     },
 
-        focusOnCenter: async function(placeId) {
+    focusOnCenter: async function(placeId) {
         if (!placeId || !this.map) return;
         console.log(`🔎 Zoom sur le centre avec Place ID : ${placeId}`);
 

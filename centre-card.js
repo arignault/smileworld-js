@@ -157,55 +157,68 @@ function findCardBySlug(targetSlug) {
     return null;
 }
 
-function applyActiveStyle(cardElement) {
-    if (!cardElement) return;
-    
-    console.log('🎨 Application du style actif à la carte');
-    
-    // Appliquer le background noir à la carte
-    cardElement.style.backgroundColor = '#000000';
-    cardElement.style.color = '#ffffff';
-    
-    // Adapter les textes en blanc
-    const textElements = cardElement.querySelectorAll('h1, h2, h3, h4, h5, h6, p, div, span');
-    textElements.forEach(el => {
-        if (el.style.color !== 'inherit' && !el.style.color) {
-            el.style.color = '#ffffff';
-        }
-    });
-    
-    // Adapter les liens
-    const links = cardElement.querySelectorAll('a');
-    links.forEach(link => {
-        link.style.color = '#ffffff';
-    });
-    
-    // Adapter la flèche si elle existe
-    const arrow = cardElement.querySelector(SELECTORS.ARROW);
-    if (arrow) {
-        arrow.style.color = '#ffffff';
-        // Inverser l'icône SVG si nécessaire
-        const svgElements = arrow.querySelectorAll('svg, path');
-        svgElements.forEach(svg => {
-            svg.style.fill = '#ffffff';
-            svg.style.stroke = '#ffffff';
-        });
+async function applyActiveCardBehavior(cardElement) {
+    if (!cardElement) {
+        console.log('❌ Aucune carte fournie pour applyActiveCardBehavior');
+        return;
     }
     
-    // Marquer comme carte active
-    cardElement.classList.add('is-active-page');
+    console.log('🎯 Application du comportement carte active:', cardElement);
     
-    console.log('✅ Style actif appliqué avec succès');
+    // Juste ouvrir la carte active, rien d'autre
+    console.log('🔓 Ouverture automatique de la carte active...');
+    
+    // Attendre un peu que toutes les cartes soient initialisées
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    console.log('🔍 État carte avant ouverture:', cardElement.classList.contains('is-open') ? 'OUVERTE' : 'FERMÉE');
+    
+    if (!cardElement.classList.contains('is-open')) {
+        console.log('📤 Ouverture via toggleCard...');
+        
+        try {
+            await toggleCard(cardElement);
+            console.log('✅ Ouverture de la carte active terminée');
+        } catch (error) {
+            console.error('❌ Erreur lors de l\'ouverture de la carte active:', error);
+        }
+    } else {
+        console.log('✅ Carte déjà ouverte, parfait !');
+    }
+    
+    console.log('✅ Comportement carte active appliqué');
 }
 
-function detectAndHighlightActivePage() {
+async function detectAndHighlightActivePage() {
+    console.log('🎯 === DÉTECTION DE LA PAGE ACTIVE ===');
+    
     const targetSlug = extractSlugFromPath();
+    console.log('📍 Slug détecté:', targetSlug);
+    
     if (targetSlug) {
+        console.log('🔍 Recherche de la carte correspondante...');
         const activeCard = findCardBySlug(targetSlug);
+        
         if (activeCard) {
-            applyActiveStyle(activeCard);
+            console.log('✅ Carte active trouvée, application du comportement...');
+            await applyActiveCardBehavior(activeCard);
+        } else {
+            console.log('❌ Aucune carte trouvée pour le slug:', targetSlug);
+            
+            // Debug : lister toutes les cartes disponibles
+            const allCards = document.querySelectorAll(SELECTORS.CARD);
+            console.log('📋 Cartes disponibles:', allCards.length);
+            allCards.forEach((card, index) => {
+                const item = card.closest('.w-dyn-item');
+                const links = item ? item.querySelectorAll('a[href*="/nos-parcs-a-paris-region-parisienne/"]') : [];
+                console.log(`  Carte ${index + 1}:`, links.length > 0 ? links[0].getAttribute('href') : 'Pas de lien trouvé');
+            });
         }
+    } else {
+        console.log('ℹ️ Aucun slug détecté, pas de page active à mettre en évidence');
     }
+    
+    console.log('🏁 === FIN DÉTECTION PAGE ACTIVE ===');
 }
 
 // --- Fonctions d'animation ---
@@ -347,13 +360,16 @@ async function toggleCard(cardElement) {
 
 // --- Fonctions d'initialisation ---
 
-function initializeCard(card) {
+function initializeCard(card, shouldPreserveOpen = false) {
     if (!card || initializedCards.has(card)) {
         console.log('⏭️ Carte déjà initialisée, ignorée');
         return;
     }
 
     console.log('🔧 Initialisation de la carte:', card);
+    if (shouldPreserveOpen) {
+        console.log('🛡️ Carte à préserver ouverte');
+    }
 
     // Chercher clickable wrap avec fallback
     let clickableWrap = card.parentElement?.querySelector(SELECTORS.CLICKABLE_WRAP);
@@ -380,10 +396,15 @@ function initializeCard(card) {
         console.log(`💾 Display original sauvé pour ${el.className}: ${computedStyle.display}`);
     });
     
-    // S'assurer que la carte démarre fermée SEULEMENT si elle n'est pas déjà ouverte
-    if (!card.classList.contains('is-open')) {
-        window.gsap.set(elementsToToggle, { display: 'none', opacity: 0, y: -20 });
-        console.log('🔒 Carte fermée par défaut');
+    // S'assurer que la carte démarre fermée SEULEMENT si elle n'est pas déjà ouverte ET qu'on ne doit pas la préserver
+    if (!card.classList.contains('is-open') || !shouldPreserveOpen) {
+        if (shouldPreserveOpen && card.classList.contains('is-open')) {
+            console.log('🛡️ Carte ouverte préservée, pas de modification GSAP');
+            // Ne rien faire, laisser la carte dans son état ouvert
+        } else {
+            window.gsap.set(elementsToToggle, { display: 'none', opacity: 0, y: -20 });
+            console.log('🔒 Carte fermée par défaut');
+        }
     } else {
         console.log('🔓 Carte déjà ouverte, état préservé');
     }
@@ -414,9 +435,9 @@ function setupMutationObserver() {
                 mutation.addedNodes.forEach(node => {
                     if (node.nodeType === 1) {
                         if (node.matches(SELECTORS.CARD)) {
-                            initializeCard(node);
+                            initializeCard(node, false);
                         }
-                        node.querySelectorAll(SELECTORS.CARD).forEach(initializeCard);
+                        node.querySelectorAll(SELECTORS.CARD).forEach(card => initializeCard(card, false));
                     }
                 });
             }
@@ -426,8 +447,53 @@ function setupMutationObserver() {
     observer.observe(cardsContainer, { childList: true, subtree: true });
 }
 
+function setupMenuParcsListener() {
+    console.log('🎯 Configuration de l\'écoute du menu Parcs...');
+    
+    // Écouter les clics sur les liens des centres dans le menu Parcs
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest('a[href*="/nos-parcs-a-paris-region-parisienne/"]');
+        if (!link) return;
+        
+        // Vérifier si on est sur une page activités par centre
+        if (!window.location.pathname.includes('/activites-par-centre/')) return;
+        
+        const href = link.getAttribute('href');
+        const centreSlug = href.split('/nos-parcs-a-paris-region-parisienne/')[1];
+        
+        console.log('🖱️ Clic détecté sur lien centre:', centreSlug);
+        
+        // Petite pause pour laisser le menu se fermer
+        setTimeout(() => {
+            const targetCard = findCardBySlug(centreSlug);
+            if (targetCard) {
+                console.log('✅ Carte trouvée pour le centre cliqué, ouverture...');
+                
+                // Fermer toutes les autres cartes d'abord
+                const allOpenCards = document.querySelectorAll(`${SELECTORS.CARD}.is-open`);
+                allOpenCards.forEach(card => {
+                    if (card !== targetCard) {
+                        closeCard(card);
+                    }
+                });
+                
+                // Ouvrir la carte ciblée
+                if (!targetCard.classList.contains('is-open')) {
+                    openCard(targetCard);
+                }
+            } else {
+                console.log('❌ Aucune carte trouvée pour le centre:', centreSlug);
+            }
+        }, 300);
+    });
+    
+    console.log('✅ Écoute du menu Parcs configurée');
+}
+
 export function initCentreCards() {
     console.log('🚀 === INITIALISATION DES CARTES DE CENTRE ===');
+    console.log('📍 Page actuelle:', window.location.pathname);
+    console.log('🏗️ DOM ready state:', document.readyState);
     
     if (!window.gsap) {
         console.log('❌ GSAP non disponible, initialisation annulée');
@@ -463,25 +529,44 @@ export function initCentreCards() {
         return;
     }
 
-    // S'assurer qu'aucune carte n'est ouverte au démarrage (réactivé)
+    // Détecter d'abord quelle carte doit être active
+    const targetSlug = extractSlugFromPath();
+    let activeCardToPreserve = null;
+    if (targetSlug) {
+        activeCardToPreserve = findCardBySlug(targetSlug);
+        console.log('🎯 Carte à préserver de la fermeture:', activeCardToPreserve ? 'TROUVÉE' : 'NON TROUVÉE');
+    }
+
+    // S'assurer qu'aucune carte n'est ouverte au démarrage (sauf celle qui sera activée)
     cards.forEach(card => {
         if (card.classList.contains('is-open')) {
-            console.log('🔒 Fermeture forcée de carte ouverte au démarrage');
-            card.classList.remove('is-open');
+            if (card === activeCardToPreserve) {
+                console.log('✅ Carte active préservée, pas de fermeture forcée');
+            } else {
+                console.log('🔒 Fermeture forcée de carte ouverte au démarrage');
+                card.classList.remove('is-open');
+            }
         }
     });
 
     // Initialiser chaque carte
     cards.forEach((card, index) => {
         console.log(`🔧 Initialisation carte ${index + 1}/${cards.length}`);
-        initializeCard(card);
+        const shouldPreserveOpen = card === activeCardToPreserve;
+        initializeCard(card, shouldPreserveOpen);
     });
     
     // Configurer l'observateur de mutations
     setupMutationObserver();
     
-    // Détecter et mettre en évidence la page active
-    detectAndHighlightActivePage();
+    // Configurer l'écoute du menu Parcs
+    setupMenuParcsListener();
+    
+    // Détecter et mettre en évidence la page active (avec délai pour s'assurer que le DOM est prêt)
+    setTimeout(async () => {
+        console.log('🔍 Début détection page active...');
+        await detectAndHighlightActivePage();
+    }, 100);
     
     console.log('✅ === INITIALISATION TERMINÉE ===');
 }
