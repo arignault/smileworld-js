@@ -1,4 +1,4 @@
-// Version: 1.0.1 - Nettoyage du code, passage à window.gsap
+// Version: 1.0.2 - Fix transition directe entre tags (debouncing)
 
 // Gère l'affichage des images au survol
 export const initMenuDesktopHoverActivite = () => {
@@ -23,8 +23,9 @@ export const initMenuDesktopHoverActivite = () => {
         }
     });
 
-    // Stocke les animations en cours
+    // Stocke les animations en cours et l'état de survol
     const activeAnimations = new Map();
+    let currentHoveredItem = null;
 
     // Gère l'affichage des images au survol
     const handleImageDisplay = (hoveredName, isEntering) => {
@@ -41,6 +42,8 @@ export const initMenuDesktopHoverActivite = () => {
         }
 
         if (isEntering) {
+            currentHoveredItem = hoveredName;
+            
             if (defaultImage && defaultImage !== targetImage) {
                 if (activeAnimations.has(defaultImage)) {
                     activeAnimations.get(defaultImage).kill();
@@ -68,13 +71,19 @@ export const initMenuDesktopHoverActivite = () => {
             });
             activeAnimations.set(targetImage, showAnim);
         } else {
+            // Ne restaurer l'image par défaut que si on quitte vraiment tous les éléments
+            if (currentHoveredItem === hoveredName) {
+                currentHoveredItem = null;
+            }
+            
             const hideAnim = window.gsap.to(targetImage, {
                 opacity: 0,
                 duration: 0.15,
                 ease: "power2.out",
                 onComplete: () => {
                     targetImage.style.display = 'none';
-                    if (defaultImage) {
+                    // Ne restaurer par défaut que si aucun élément n'est survolé
+                    if (currentHoveredItem === null && defaultImage) {
                         defaultImage.style.display = 'block';
                         if (activeAnimations.has(defaultImage)) {
                             activeAnimations.get(defaultImage).kill();
