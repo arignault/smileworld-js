@@ -1,5 +1,5 @@
-// marquee-animation.js v1.4.0 - Gestion robuste des conflits d'animations
-console.log('🎠 marquee-animation.js v1.4.0 chargé');
+// marquee-animation.js v1.4.1 - Inversion couleur conditionnelle
+console.log('🎠 marquee-animation.js v1.4.1 chargé');
 
 let currentHoveredSlide = null;
 let slideStates = new WeakMap(); // Tracking d'état par slide
@@ -158,8 +158,8 @@ function setupSlideHover(slide, marqueeTimeline, index) {
             });
         }
         
-        // Inversion de couleur du titre
-        if (titreOriginal) {
+        // Inversion de couleur du titre SEULEMENT si le slide a une vidéo
+        if (titreOriginal && vimeoElement) {
             const originalColor = titreOriginal.dataset.originalColor || '#000000';
             const invertedColor = isLightColor(originalColor) ? '#000000' : '#ffffff';
             
@@ -219,8 +219,8 @@ function cleanResetSlide(slide) {
         });
     }
     
-    // Reset couleur du titre
-    if (titreOriginal) {
+    // Reset couleur du titre SEULEMENT si il y avait une vidéo
+    if (titreOriginal && vimeoElement) {
         const originalColor = titreOriginal.dataset.originalColor || '#000000';
         window.gsap.to(titreOriginal, {
             color: originalColor,
