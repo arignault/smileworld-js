@@ -1,7 +1,7 @@
-// Version: 1.1.3 - Nettoyage du code
+// Version: 1.4.0 - Animation de sortie améliorée et sessionStorage
 // import { gsap } from 'gsap';
 
-console.log('🚀 loading-screen.js v1.3.0 chargé');
+console.log('🚀 loading-screen.js v1.4.0 chargé');
 
 // Configuration de l'animation
 const config = {
@@ -27,7 +27,23 @@ function tryHide() {
 
 // Initialise l'écran de chargement
 export function initLoadingScreen() {
-    console.log('🎬 initLoadingScreen - Début de l\'initialisation');
+    // PISTE 2: Le "Session Storage Trick" pour n'afficher le loader qu'une fois.
+    try {
+        if (sessionStorage.getItem('preloaderShown')) {
+            console.log('✅ Preloader déjà affiché dans cette session, on le cache immédiatement.');
+            const loadingScreen = document.querySelector('.loadingscreen');
+            if (loadingScreen) {
+                loadingScreen.style.display = 'none';
+            }
+            isInitialized = true;
+            isHiding = true; // Bloque toute autre logique de masquage
+            return Promise.resolve();
+        }
+    } catch (e) {
+        console.warn("Impossible d'accéder à sessionStorage, le preloader s'affichera à chaque fois.", e);
+    }
+
+    console.log('🎬 initLoadingScreen - Début de l\'initialisation (0.9s)');
     if (isInitialized) {
         console.log('ℹ️ Écran de chargement déjà initialisé');
         return Promise.resolve();
@@ -67,16 +83,15 @@ export function initLoadingScreen() {
         ease: config.ease
     });
 
-    // Lancement du minuteur pour la durée minimale
+    // Lancement du minuteur pour la durée minimale - RÉDUIT À 0.9s
     setTimeout(() => {
-        console.log('⏱️ 1.5 secondes écoulées.');
+        console.log('⏱️ 0.9 secondes écoulées.');
         minimumTimeElapsed = true;
         tryHide(); // Tente de masquer si l'autre condition est déjà remplie
-    }, 1500);
+    }, 900); // 900ms au lieu de 1500ms
 
-    // setupInternalLinkListener(); // EXPÉRIMENTATION : On désactive l'écouteur de liens
     isInitialized = true;
-    console.log('✅ Écran de chargement initialisé avec succès');
+    console.log('✅ Écran de chargement initialisé avec succès (0.9s)');
     return Promise.resolve(loadingScreen);
 }
 
@@ -114,21 +129,35 @@ function hideLoadingScreen() {
         return;
     }
 
-    console.log('🎬 Démarrage de l\'animation de masquage');
+    console.log('🎬 Démarrage de l\'animation de masquage améliorée');
     const tl = window.gsap.timeline({
         onComplete: () => {
             console.log('✅ Animation de masquage terminée');
             window.gsap.set(loadingScreen, { display: 'none' });
             isHiding = false;
+            // On enregistre que le preloader a été montré pour cette session
+            try {
+                sessionStorage.setItem('preloaderShown', 'true');
+            } catch (e) {
+                console.warn("Impossible d'enregistrer l'état du preloader dans sessionStorage.", e);
+            }
         }
     });
 
-    // Animation de sortie simplifiée et unifiée
-    tl.to(loadingScreen, {
+    // PISTE 1: Animation de sortie améliorée en deux temps
+    // 1. Le logo (et le lottie) se réduit et disparaît
+    tl.to(logoWrap, {
+        opacity: 0,
+        scale: config.logoShrinkScale,
+        duration: config.logoPopDuration,
+        ease: config.ease
+    })
+    // 2. Puis l'écran entier disparaît en fondu
+    .to(loadingScreen, {
         opacity: 0,
         duration: config.fadeOutDuration,
         ease: config.ease
-    });
+    }, "-=0.1"); // On fait se chevaucher légèrement les animations pour plus de fluidité
 }
 
 // Masque immédiatement l'écran de chargement

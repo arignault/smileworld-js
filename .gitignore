@@ -34,4 +34,8 @@ watch-js.log
 Autre/centre-card-backup
 
 # Serveur de développement local
-dev-server/ 
+dev-server/
+
+# Guides et fichiers d'export IA
+guide-faq-ia.md
+faq-smileworld.json 

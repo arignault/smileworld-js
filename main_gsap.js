@@ -11,11 +11,11 @@ import { initCentreCards } from './centre-card.js';
 import { initDebugMenu } from './debug-menu.js';
 import { initReservation } from './reservation.js';
 import { initMap } from './map-integration.js';
-import { initPrivateRoomPopup } from './privateroom.js';
 import { initPreselection } from './preselect.js';
 import { initMenuDesktopHoverActivite } from './menu-desktop-hover-activite.js';
 import { initializeEmptyFacetsHandler } from './finsweet-empty-facets.js';
 import { MandatoryFilterSelection } from './mandatory-filter-selection.js';
+import { initMarqueeAnimation } from './marquee-animation.js';
 
 function initializeModules() {
     console.log("✅ GSAP est prêt. Initialisation des modules...");
@@ -48,16 +48,18 @@ function initializeModules() {
             console.log("✅ Module de filtrage obligatoire chargé et initialisé.");
         }
 
+        // Page d'accueil : animation marquee
+        if (currentPath === '/' || currentPath === '/index' || currentPath === '') {
+            console.log("-> Page d'accueil détectée. Initialisation de l'animation marquee...");
+            setTimeout(() => {
+                initMarqueeAnimation();
+            }, 500); // Petit délai pour s'assurer que le contenu CMS est chargé
+        }
+
         // Initialisation des modules qui dépendent d'éléments spécifiques
         initMap();
         
         // Centre Cards : initialisé plus tard dans window.load pour s'assurer que le CMS est chargé
-
-        // Salles privatisables (uniquement si le conteneur est présent)
-        if (document.querySelector('.salles_privatisable_holder')) {
-            console.log("-> Élément .salles_privatisable_holder détecté. Initialisation du module.");
-            initPrivateRoomPopup();
-        }
 
         // Présélection pour la réservation (uniquement si des boutons sont présents)
         if (document.querySelector('[data-attribute="preselect-booking-button"]')) {
@@ -76,7 +78,7 @@ function initializeModules() {
 }
 
 function waitForGsapAndInitialize() {
-    initLoadingScreen(); // On lance l'animation du loader immédiatement
+    initLoadingScreen(); // Preloader réactivé avec durée réduite
 
     let attempts = 0;
     const maxAttempts = 100; // Attend max 10 secondes

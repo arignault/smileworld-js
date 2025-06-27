@@ -29,7 +29,7 @@ class MandatoryFilterSelection {
      */
     init() {
         const currentPath = window.location.pathname;
-        const targetPages = ['/offres', '/anniversaires'];
+        const targetPages = ['/offres', '/anniversaires', '/tarifs-generaux'];
         
         if (!targetPages.includes(currentPath)) {
             console.log(`🚫 mandatory-filter-selection.js - Page ${currentPath} non concernée`);
