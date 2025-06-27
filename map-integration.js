@@ -1,6 +1,6 @@
 // Fichier : map-integration-v2.js
-// Version : 2.1.0 - Amélioration UX mobile avec Bottom Sheet
-console.log('🗺️ map-integration.js v2.1.0 chargé');
+// Version : 2.1.1 - Correction reset zoom mobile
+console.log('🗺️ map-integration.js v2.1.1 chargé');
 
 const mapManager = {
     map: null,
@@ -211,9 +211,14 @@ const mapManager = {
     },
 
     hideBottomSheet: function() {
-        if (!this.bottomSheetElement) return;
+        if (!this.bottomSheetElement || !this.map) return;
         this.bottomSheetElement.classList.remove('is-visible');
         this.bottomSheetElement.setAttribute('aria-hidden', 'true');
+
+        // Réinitialiser la vue de la carte à son état initial
+        console.log('🔙 Réinitialisation de la vue de la carte...');
+        this.map.panTo(this.initialCenter);
+        this.map.setZoom(this.initialZoom);
     },
 
     buildInfoWindowContent: function(place, isBottomSheet = false) {
