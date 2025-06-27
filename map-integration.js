@@ -1,11 +1,12 @@
 // Fichier : map-integration-v2.js
-// Version : 2.0.1 - Correction langue et affichage
-console.log('🗺️ map-integration.js v2.0.1 chargé');
+// Version : 2.1.0 - Amélioration UX mobile avec Bottom Sheet
+console.log('🗺️ map-integration.js v2.1.0 chargé');
 
 const mapManager = {
     map: null,
     markers: [],
     infoWindow: null,
+    bottomSheetElement: null,
     initialCenter: { lat: 48.82, lng: 2.25 },
     initialZoom: 10,
 
@@ -33,7 +34,81 @@ const mapManager = {
             this.resetMapView();
         });
 
+        this.injectBottomSheet();
         this.createMarkers();
+    },
+
+    injectBottomSheet: function() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .map-bottom-sheet {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background-color: white;
+                border-top-left-radius: 16px;
+                border-top-right-radius: 16px;
+                box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+                transform: translateY(100%);
+                transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+                z-index: 1000;
+                max-height: 85vh;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                visibility: hidden;
+            }
+            .map-bottom-sheet.is-visible {
+                transform: translateY(0);
+                visibility: visible;
+            }
+            .map-bottom-sheet__content {
+                padding: 24px;
+                padding-top: 50px;
+            }
+            .map-bottom-sheet__close-btn {
+                position: absolute;
+                top: 12px;
+                right: 12px;
+                background: #f0f0f0;
+                border: none;
+                border-radius: 50%;
+                width: 32px;
+                height: 32px;
+                font-size: 22px;
+                line-height: 32px;
+                text-align: center;
+                cursor: pointer;
+                font-weight: bold;
+                color: #333;
+                z-index: 2;
+            }
+            .map-bottom-sheet__handle {
+                position: absolute;
+                top: 8px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 40px;
+                height: 4px;
+                background-color: #ccc;
+                border-radius: 2px;
+            }
+        `;
+        document.head.appendChild(style);
+
+        const sheetHtml = `
+            <div id="map-bottom-sheet" class="map-bottom-sheet" aria-hidden="true">
+                <div class="map-bottom-sheet__handle"></div>
+                <button class="map-bottom-sheet__close-btn" aria-label="Fermer">&times;</button>
+                <div class="map-bottom-sheet__content"></div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', sheetHtml);
+        this.bottomSheetElement = document.getElementById('map-bottom-sheet');
+        
+        this.bottomSheetElement.querySelector('.map-bottom-sheet__close-btn').addEventListener('click', () => {
+            this.hideBottomSheet();
+        });
     },
 
     createMarkers: function() {
@@ -58,14 +133,18 @@ const mapManager = {
             });
 
             marker.addListener('click', () => {
-                this.focusOnCenter(placeId);
+                if (window.matchMedia("(max-width: 768px)").matches) {
+                    this.showBottomSheetForPlace(placeId);
+                } else {
+                    this.focusOnCenter(placeId, marker);
+                }
             });
 
             this.markers.push({ placeId, marker });
         });
     },
 
-    focusOnCenter: async function(placeId) {
+    focusOnCenter: async function(placeId, marker) {
         if (!placeId || !this.map) return;
         console.log(`🔎 Zoom sur le centre avec Place ID : ${placeId}`);
 
@@ -84,10 +163,10 @@ const mapManager = {
                 this.map.panTo(place.location);
                 this.map.setZoom(15);
 
-                const content = this.buildInfoWindowContent(place);
+                const content = this.buildInfoWindowContent(place, false);
                 this.infoWindow.setContent(content);
                 
-                const targetMarker = this.markers.find(m => m.placeId === placeId)?.marker;
+                const targetMarker = marker || this.markers.find(m => m.placeId === placeId)?.marker;
                 if(targetMarker) {
                     this.infoWindow.open(this.map, targetMarker);
                 }
@@ -99,9 +178,45 @@ const mapManager = {
         }
     },
 
+    showBottomSheetForPlace: async function(placeId) {
+        if (!placeId || !this.map) return;
+        console.log(`📱 Affichage du panneau mobile pour Place ID : ${placeId}`);
 
+        try {
+            const { Place } = await google.maps.importLibrary("places");
+            const place = new Place({ id: placeId });
+            
+            const fields = [
+                'displayName', 'formattedAddress', 'location', 'rating', 
+                'googleMapsURI', 'photos', 'reviews', 'userRatingCount', 'regularOpeningHours'
+            ];
+            await place.fetchFields({ fields });
 
-    buildInfoWindowContent: function(place) {
+            if (place.location) {
+                this.map.panTo(place.location);
+                this.map.setZoom(15);
+
+                const contentHtml = this.buildInfoWindowContent(place, true);
+                this.bottomSheetElement.querySelector('.map-bottom-sheet__content').innerHTML = contentHtml;
+
+                this.bottomSheetElement.classList.add('is-visible');
+                this.bottomSheetElement.setAttribute('aria-hidden', 'false');
+
+            } else {
+                 console.error(`Aucune donnée de localisation trouvée pour le Place ID ${placeId}`);
+            }
+        } catch (error) {
+            console.error(`Erreur lors de la récupération des détails pour le Place ID ${placeId}:`, error);
+        }
+    },
+
+    hideBottomSheet: function() {
+        if (!this.bottomSheetElement) return;
+        this.bottomSheetElement.classList.remove('is-visible');
+        this.bottomSheetElement.setAttribute('aria-hidden', 'true');
+    },
+
+    buildInfoWindowContent: function(place, isBottomSheet = false) {
         let photoHtml = '';
         if (place.photos && place.photos.length > 0) {
             const photoUrl = place.photos[0].getURI({ maxWidth: 400, maxHeight: 200 });
@@ -143,8 +258,10 @@ const mapManager = {
             hoursHtml = `<div style="font-size: 13px; color: #333; margin-bottom: 12px; display: flex; align-items: center;"><svg viewBox="0 0 24 24" style="width:16px; height:16px; margin-right: 8px; fill: #555;"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"></path><path d="M13 7h-2v6h6v-2h-4V7z"></path></svg><span>${todaysHours}</span></div>`;
         }
 
+        const containerStyle = `font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; ${isBottomSheet ? '' : 'max-width: 290px;'} padding: 5px;`;
+
         return `
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 290px; padding: 5px;">
+            <div style="${containerStyle}">
                 ${photoHtml}
                 <div style="font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px;">${place.displayName}</div>
                 <div style="font-size: 13px; color: #555; margin-bottom: 8px;">${place.formattedAddress}</div>
@@ -160,6 +277,7 @@ const mapManager = {
         if (!this.map) return;
         console.log('🔄 Réinitialisation de la vue de la carte.');
         this.infoWindow.close();
+        this.hideBottomSheet();
         this.map.panTo(this.initialCenter);
         this.map.setZoom(this.initialZoom);
     }
