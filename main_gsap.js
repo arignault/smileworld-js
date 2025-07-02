@@ -15,7 +15,7 @@ import { initPreselection } from './preselect.js';
 import { initMenuDesktopHoverActivite } from './menu-desktop-hover-activite.js';
 import { initializeEmptyFacetsHandler } from './finsweet-empty-facets.js';
 import { MandatoryFilterSelection } from './mandatory-filter-selection.js';
-import EventFormVisibility from './event-form-visibility.js';
+import { EventFormVisibility } from './event-form-visibility.js';
 import { initMarqueeAnimation } from './marquee-animation.js';
 
 function initializeModules() {

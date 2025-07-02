@@ -1,124 +1,207 @@
 /**
- * Event Form Visibility v1.2.0
- * Affiche le formulaire de devis (iframe) uniquement lorsqu'un centre est sélectionné.
- * Spécifique à la page /smile-event
- * Assurez-vous que le conteneur du formulaire a l'ID "devis-form-wrapper"
- * et qu'un dropdown de filtre Finsweet avec l'attribut [fs-list-field] existe.
+ * Event Form Visibility v1.3.0
+ * Force la sélection d'un centre avant d'afficher le formulaire de devis
+ * Gère automatiquement le conteneur #devis-form-wrapper
+ * Chargé uniquement sur /smile-event
  */
+
 class EventFormVisibility {
     constructor() {
-        this.version = '1.2.0';
+        this.version = '1.3.0';
         this.initialized = false;
         this.selectors = {
-            filterDropdown: 'select[fs-list-field]',
-            formWrapper: '#devis-form-wrapper'
+            formWrapper: '#devis-form-wrapper',
+            filterDropdowns: 'select[fs-list-field]',
+            filterForms: '[fs-list-element="filters"]'
         };
-        this.messageText = '👆 Sélectionnez un centre pour afficher le formulaire de demande de devis.';
+        this.messages = {
+            selectFilter: '👆 Sélectionnez un centre pour afficher le formulaire de demande de devis'
+        };
     }
 
+    /**
+     * Initialise le module si on est sur la bonne page
+     */
     init() {
         const currentPath = window.location.pathname;
-        if (currentPath !== '/smile-event') {
-            return; // Pas sur la bonne page
-        }
-
-        // Mécanisme d'attente pour s'assurer que les éléments Finsweet sont chargés
-        let attempts = 0;
-        const maxAttempts = 50; // Attend max 5 secondes
-        const interval = 100;
-
-        const intervalId = setInterval(() => {
-            const filterEl = document.querySelector(this.selectors.filterDropdown);
-            const formWrapperEl = document.querySelector(this.selectors.formWrapper);
-
-            if (filterEl && formWrapperEl) {
-                clearInterval(intervalId);
-                this.performInitialization(filterEl, formWrapperEl);
-            } else {
-                attempts++;
-                if (attempts > maxAttempts) {
-                    clearInterval(intervalId);
-                    console.error(`❌ event-form-visibility.js: Éléments non trouvés après 5s. Vérifiez les sélecteurs : filterDropdown ("${this.selectors.filterDropdown}") et formWrapper ("${this.selectors.formWrapper}").`);
-                }
-            }
-        }, interval);
-    }
-
-    performInitialization(filterEl, formWrapperEl) {
-        if (this.initialized) {
+        const targetPages = ['/smile-event'];
+        
+        if (!targetPages.includes(currentPath)) {
+            console.log(`🚫 event-form-visibility.js - Page ${currentPath} non concernée`);
             return;
         }
 
-        console.log(`🎯 event-form-visibility.js v${this.version} - Initialisation`);
-        
-        this.formWrapperEl = formWrapperEl;
-        this.filterDropdownEl = filterEl;
+        if (this.initialized) {
+            console.log('⚠️ event-form-visibility.js déjà initialisé');
+            return;
+        }
+
+        console.log(`🎯 event-form-visibility.js v${this.version} - Initialisation sur ${currentPath}`);
         
         this.setupInitialState();
         this.bindEvents();
         this.initialized = true;
-        console.log('✅ Logique d\'affichage du formulaire de devis activée.');
+        
+        console.log('✅ Logique d\'affichage du formulaire de devis activée - Sélectionnez un centre pour voir le formulaire');
     }
 
+    /**
+     * Configure l'état initial - cache le formulaire de devis
+     */
     setupInitialState() {
-        this.formWrapperEl.style.display = 'none';
-        this.showPromptMessage();
-        // On vérifie immédiatement l'état du dropdown au cas où une valeur serait déjà sélectionnée au chargement
-        this.handleFilterChange({ target: this.filterDropdownEl }); 
+        const formWrapper = document.querySelector(this.selectors.formWrapper);
+        
+        if (!formWrapper) {
+            console.log('❌ Conteneur du formulaire de devis non trouvé');
+            return;
+        }
+
+        // Cacher le formulaire de devis
+        formWrapper.style.display = 'none';
+
+        // Créer et afficher le message de sélection
+        this.showSelectionMessage();
+        
+        console.log('🔒 Formulaire de devis caché - En attente de sélection de centre');
     }
 
-    showPromptMessage() {
-        let messageDiv = this.formWrapperEl.parentElement.querySelector('.event-form-prompt');
-        if (!messageDiv) {
-            messageDiv = document.createElement('div');
-            messageDiv.className = 'event-form-prompt';
-             messageDiv.style.cssText = `
-                padding: 40px 20px;
-                text-align: center;
-                background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
-                border-radius: 12px;
-                margin: 20px 0;
-                color: #1a2a4c;
-                font-size: 18px;
-                font-weight: 500;
-                box-shadow: 0 8px 32px rgba(102, 166, 255, 0.3);
+    /**
+     * Affiche le message demandant de sélectionner un centre
+     */
+    showSelectionMessage() {
+        const formWrapper = document.querySelector(this.selectors.formWrapper);
+        if (!formWrapper || !formWrapper.parentElement) return;
+
+        // Supprimer l'ancien message s'il existe
+        const existingMessage = formWrapper.parentElement.querySelector('.event-form-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+
+        // Créer le nouveau message
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'event-form-message';
+        messageDiv.style.cssText = `
+            padding: 40px 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
+            border-radius: 12px;
+            margin: 20px 0;
+            color: #1a2a4c;
+            font-size: 18px;
+            font-weight: 500;
+            box-shadow: 0 8px 32px rgba(102, 166, 255, 0.3);
+            animation: pulse 2s infinite;
+        `;
+        
+        messageDiv.innerHTML = `
+            <div style="font-size: 48px; margin-bottom: 16px;">🏢</div>
+            <div>${this.messages.selectFilter}</div>
+        `;
+
+        // Ajouter l'animation CSS
+        if (!document.querySelector('#event-form-styles')) {
+            const style = document.createElement('style');
+            style.id = 'event-form-styles';
+            style.textContent = `
+                @keyframes pulse {
+                    0%, 100% { transform: scale(1); opacity: 1; }
+                    50% { transform: scale(1.02); opacity: 0.9; }
+                }
+                .event-form-message {
+                    transition: all 0.3s ease;
+                }
             `;
-            this.formWrapperEl.parentElement.insertBefore(messageDiv, this.formWrapperEl);
+            document.head.appendChild(style);
         }
-        messageDiv.innerHTML = `<div style="font-size: 48px; margin-bottom: 16px;">🏢</div><div>${this.messageText}</div>`;
-        messageDiv.style.display = 'block';
+
+        formWrapper.parentElement.insertBefore(messageDiv, formWrapper);
     }
 
-    hidePromptMessage() {
-        const messageDiv = this.formWrapperEl.parentElement.querySelector('.event-form-prompt');
-        if (messageDiv) {
-            messageDiv.style.display = 'none';
-        }
-    }
-
+    /**
+     * Lie les événements aux dropdowns de filtres
+     */
     bindEvents() {
-        this.filterDropdownEl.addEventListener('change', (event) => {
-            this.handleFilterChange(event);
+        const filterDropdowns = document.querySelectorAll(this.selectors.filterDropdowns);
+        
+        filterDropdowns.forEach(dropdown => {
+            dropdown.addEventListener('change', () => {
+                this.handleFilterChange();
+            });
         });
+
+        console.log(`🔗 ${filterDropdowns.length} dropdown(s) écouté(s)`);
     }
 
-    handleFilterChange(event) {
-        const selectedValue = event.target.value;
-        if (selectedValue && selectedValue !== '') {
-            this.formWrapperEl.style.display = '';
-            this.hidePromptMessage();
+    /**
+     * Gère les changements de filtres
+     */
+    handleFilterChange() {
+        const selectedFilters = document.querySelectorAll(`${this.selectors.filterDropdowns}`);
+        let hasSelection = false;
+        
+        selectedFilters.forEach(dropdown => {
+            if (dropdown.value && dropdown.value !== '') {
+                hasSelection = true;
+            }
+        });
+        
+        if (hasSelection) {
+            console.log('✅ Centre sélectionné - Affichage du formulaire de devis');
+            this.showFormWrapper();
+            this.hideSelectionMessage();
         } else {
-            this.formWrapperEl.style.display = 'none';
-            this.showPromptMessage();
+            console.log('🔒 Aucun centre sélectionné - Masquage du formulaire de devis');
+            this.hideFormWrapper();
+            this.showSelectionMessage();
         }
+    }
+
+    /**
+     * Affiche le conteneur du formulaire de devis
+     */
+    showFormWrapper() {
+        const formWrapper = document.querySelector(this.selectors.formWrapper);
+        if (formWrapper) {
+            formWrapper.style.display = '';
+        }
+    }
+
+    /**
+     * Cache le conteneur du formulaire de devis
+     */
+    hideFormWrapper() {
+        const formWrapper = document.querySelector(this.selectors.formWrapper);
+        if (formWrapper) {
+            formWrapper.style.display = 'none';
+        }
+    }
+
+    /**
+     * Cache le message de sélection
+     */
+    hideSelectionMessage() {
+        const message = document.querySelector('.event-form-message');
+        if (message) {
+            message.style.display = 'none';
+        }
+    }
+
+    /**
+     * Réinitialise le module
+     */
+    reset() {
+        this.hideSelectionMessage();
+        this.hideFormWrapper();
+        this.initialized = false;
+        console.log('🔄 Logique du formulaire de devis réinitialisée');
     }
 }
 
-// Instance globale pour un accès facile depuis la console de débogage si nécessaire
+// Instance globale
 window.eventFormVisibility = new EventFormVisibility();
 
-// L'initialisation est maintenant gérée via la méthode init qui contient le polling.
-// On s'assure juste de l'appeler une fois que le document est prêt.
+// Auto-initialisation si le DOM est prêt
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.eventFormVisibility.init();
@@ -127,4 +210,7 @@ if (document.readyState === 'loading') {
     window.eventFormVisibility.init();
 }
 
-export default EventFormVisibility; 
+// Export pour utilisation dans d'autres modules
+export { EventFormVisibility };
+
+console.log('🚀 event-form-visibility.js v1.3.0 chargé'); 
