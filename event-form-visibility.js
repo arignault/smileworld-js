@@ -1,16 +1,16 @@
 /**
- * Event Form Visibility v1.0.0
+ * Event Form Visibility v1.2.0
  * Affiche le formulaire de devis (iframe) uniquement lorsqu'un centre est sélectionné.
  * Spécifique à la page /smile-event
  * Assurez-vous que le conteneur du formulaire a l'ID "devis-form-wrapper"
- * et que le dropdown de filtre Finsweet a l'attribut [fs-list-field="centre"]
+ * et qu'un dropdown de filtre Finsweet avec l'attribut [fs-list-field] existe.
  */
 class EventFormVisibility {
     constructor() {
-        this.version = '1.1.0';
+        this.version = '1.2.0';
         this.initialized = false;
         this.selectors = {
-            filterDropdown: '[fs-list-element="filters"] select',
+            filterDropdown: 'select[fs-list-field]',
             formWrapper: '#devis-form-wrapper'
         };
         this.messageText = '👆 Sélectionnez un centre pour afficher le formulaire de demande de devis.';
@@ -19,30 +19,41 @@ class EventFormVisibility {
     init() {
         const currentPath = window.location.pathname;
         if (currentPath !== '/smile-event') {
-            // Pas sur la bonne page, on ne fait rien.
-            return;
+            return; // Pas sur la bonne page
         }
 
+        // Mécanisme d'attente pour s'assurer que les éléments Finsweet sont chargés
+        let attempts = 0;
+        const maxAttempts = 50; // Attend max 5 secondes
+        const interval = 100;
+
+        const intervalId = setInterval(() => {
+            const filterEl = document.querySelector(this.selectors.filterDropdown);
+            const formWrapperEl = document.querySelector(this.selectors.formWrapper);
+
+            if (filterEl && formWrapperEl) {
+                clearInterval(intervalId);
+                this.performInitialization(filterEl, formWrapperEl);
+            } else {
+                attempts++;
+                if (attempts > maxAttempts) {
+                    clearInterval(intervalId);
+                    console.error(`❌ event-form-visibility.js: Éléments non trouvés après 5s. Vérifiez les sélecteurs : filterDropdown ("${this.selectors.filterDropdown}") et formWrapper ("${this.selectors.formWrapper}").`);
+                }
+            }
+        }, interval);
+    }
+
+    performInitialization(filterEl, formWrapperEl) {
         if (this.initialized) {
-            console.log('⚠️ event-form-visibility.js déjà initialisé');
             return;
         }
 
         console.log(`🎯 event-form-visibility.js v${this.version} - Initialisation`);
         
-        this.formWrapperEl = document.querySelector(this.selectors.formWrapper);
-        this.filterDropdownEl = document.querySelector(this.selectors.filterDropdown);
-
-        if (!this.formWrapperEl) {
-             console.error(`❌ event-form-visibility.js - Conteneur du formulaire non trouvé. Vérifiez que l'élément avec le sélecteur "${this.selectors.formWrapper}" existe.`);
-            return;
-        }
-
-        if (!this.filterDropdownEl) {
-            console.error(`❌ event-form-visibility.js - Dropdown de filtre non trouvé. Vérifiez qu'un <select> existe bien dans votre bloc de filtres [fs-list-element="filters"].`);
-            return;
-        }
-
+        this.formWrapperEl = formWrapperEl;
+        this.filterDropdownEl = filterEl;
+        
         this.setupInitialState();
         this.bindEvents();
         this.initialized = true;
@@ -106,7 +117,8 @@ class EventFormVisibility {
 // Instance globale pour un accès facile depuis la console de débogage si nécessaire
 window.eventFormVisibility = new EventFormVisibility();
 
-// Auto-initialisation si le DOM est prêt
+// L'initialisation est maintenant gérée via la méthode init qui contient le polling.
+// On s'assure juste de l'appeler une fois que le document est prêt.
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.eventFormVisibility.init();
