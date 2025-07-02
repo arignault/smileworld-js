@@ -289,6 +289,7 @@ const mapManager = {
 };
 
 window.initGoogleMap = mapManager.initMap.bind(mapManager);
+window.mapManager = mapManager;
 
 export function initMap() {
     const mapElement = document.getElementById('map');
