@@ -388,7 +388,7 @@ export class SmileWorldReservation {
   }
   
   _injectVideoPlayer() {
-    this.dom.videoBackgroundDiv.innerHTML = `<video playsinline autoplay muted loop class="background-video_element"><source src="${this.config.defaultVideoUrl}" type="video/mp4"></video>`;
+    this.dom.videoBackgroundDiv.innerHTML = `<video playsinline autoplay muted loop class="background-video_element" style="width: 100%; height: 100%; object-fit: cover;"><source src="${this.config.defaultVideoUrl}" type="video/mp4"></video>`;
   }
   
   _applyUrlParameters() {
