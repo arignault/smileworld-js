@@ -15,6 +15,7 @@ import { initPreselection } from './preselect.js';
 import { initMenuDesktopHoverActivite } from './menu-desktop-hover-activite.js';
 import { initializeEmptyFacetsHandler } from './finsweet-empty-facets.js';
 import { MandatoryFilterSelection } from './mandatory-filter-selection.js';
+import EventFormVisibility from './event-form-visibility.js';
 import { initMarqueeAnimation } from './marquee-animation.js';
 
 function initializeModules() {
@@ -31,12 +32,15 @@ function initializeModules() {
         // Initialise le gestionnaire de filtres vides Finsweet
         initializeEmptyFacetsHandler();
 
+        // Initialise la logique pour le formulaire de devis sur la page smile-event
+        new EventFormVisibility().init();
+
         // --- Code Splitting pour les pages spécifiques ---
         // Page Réservation : on charge le module si l'URL contient "/reservation"
         if (window.location.pathname.includes('/reservation')) {
             console.log("-> Page Réservation détectée via l'URL. Chargement du module...");
             initReservation();
-            console.log("✅ Module Réservation chargé et initialisé.");
+                    console.log("✅ Module Réservation chargé et initialisé.");
         }
 
         // Pages Offres et Anniversaires : filtrage obligatoire
@@ -58,7 +62,7 @@ function initializeModules() {
 
         // Initialisation des modules qui dépendent d'éléments spécifiques
         initMap();
-        
+
         // Centre Cards : initialisé plus tard dans window.load pour s'assurer que le CMS est chargé
 
         // Présélection pour la réservation (uniquement si des boutons sont présents)
