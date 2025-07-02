@@ -1,5 +1,5 @@
 /**
- * Event Form Visibility v1.4.0
+ * Event Form Visibility v1.5.0
  * Force la sélection d'un centre avant d'afficher le formulaire de devis
  * Gère automatiquement le conteneur #devis-form-wrapper
  * Chargé uniquement sur /smile-event
@@ -7,11 +7,11 @@
 
 class EventFormVisibility {
     constructor() {
-        this.version = '1.4.0';
+        this.version = '1.5.0';
         this.initialized = false;
         this.selectors = {
             formWrapper: '#devis-form-wrapper',
-            filterDropdowns: 'select[fs-list-field]',
+            filterElements: '[fs-list-value]',
             filterForms: '[fs-list-element="filters"]'
         };
     }
@@ -60,13 +60,16 @@ class EventFormVisibility {
     }
 
     /**
-     * Lie les événements aux dropdowns de filtres
+     * Lie les événements aux éléments de filtres
      */
     bindEvents() {
-        const filterDropdowns = document.querySelectorAll(this.selectors.filterDropdowns);
+        const filterElements = document.querySelectorAll(this.selectors.filterElements);
         
-        filterDropdowns.forEach(dropdown => {
-            dropdown.addEventListener('change', () => {
+        filterElements.forEach(element => {
+            element.addEventListener('change', () => {
+                this.handleFilterChange();
+            });
+            element.addEventListener('click', () => {
                 this.handleFilterChange();
             });
         });
@@ -76,19 +79,25 @@ class EventFormVisibility {
             this.handleFilterChange();
         });
 
-        console.log(`🔗 ${filterDropdowns.length} dropdown(s) écouté(s)`);
+        console.log(`🔗 ${filterElements.length} élément(s) de filtre écouté(s)`);
     }
 
     /**
      * Gère les changements de filtres
      */
     handleFilterChange() {
-        const filterDropdowns = document.querySelectorAll(this.selectors.filterDropdowns);
+        const filterElements = document.querySelectorAll(this.selectors.filterElements);
         let hasSelection = false;
         
-        filterDropdowns.forEach(dropdown => {
-            if (dropdown.value && dropdown.value !== '' && dropdown.value !== dropdown.options[0].value) {
-                hasSelection = true;
+        filterElements.forEach(element => {
+            // Vérifier si l'élément est sélectionné/actif
+            if (element.checked || element.classList.contains('w--current') || 
+                (element.tagName.toLowerCase() === 'select' && element.value && element.value !== '')) {
+                const filterValue = element.getAttribute('fs-list-value');
+                if (filterValue) {
+                    hasSelection = true;
+                    console.log(`🎯 Filtre actif détecté: ${filterValue}`);
+                }
             }
         });
         
@@ -146,4 +155,4 @@ if (document.readyState === 'loading') {
 // Export pour utilisation dans d'autres modules
 export { EventFormVisibility };
 
-console.log('🚀 event-form-visibility.js v1.4.0 chargé'); 
+console.log('🚀 event-form-visibility.js v1.5.0 chargé'); 
