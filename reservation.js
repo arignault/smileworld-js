@@ -3,7 +3,7 @@ import {gsap} from 'gsap';
 // window.Webflow = window.Webflow || [];
 // window.Webflow.push(function() {
 /* ========================================================================
-   Smile-World Reservation – v7.0.0 (Refactored)
+   Smile-World Reservation – v7.1.0 (Auto-clic bouton Réserver)
    (c) 2025 – Alex | Refactor by Gemini
    ====================================================================== */
 
@@ -418,6 +418,14 @@ export class SmileWorldReservation {
                   const finalActivityButton = this.dom.filteredActivitiesPane.querySelector(`[data-activity-slug="${activitySlug}"]`);
                   if (finalActivityButton) {
                     finalActivityButton.click(); // Sélectionne l'activité dans la liste filtrée
+                    
+                    // Auto-clic sur le bouton "Réserver" après un délai pour s'assurer que tout est configuré
+                    setTimeout(() => {
+                        if (!this.dom.reserveBtn.classList.contains('disabled')) {
+                            console.log('🎯 Auto-clic sur le bouton Réserver avec les deux paramètres présélectionnés');
+                            this.dom.reserveBtn.click();
+                        }
+                    }, 200);
                 }
             }, 100);
         }, 100);
