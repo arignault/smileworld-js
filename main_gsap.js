@@ -1,5 +1,5 @@
-// main_gsap.js v3.0.1 - Réintégration du loading screen
-console.log("🚀 main_gsap.js v3.0.1 chargé");
+// main_gsap.js v3.1.0 - Animation marquee sur toutes les pages
+console.log("🚀 main_gsap.js v3.1.0 chargé");
 
 // import { gsap } from "gsap"; // GSAP est maintenant chargé globalement via CDN
 import { initLoadingScreen, requestHideLoadingScreen, forceHideLoadingScreen } from './loading-screen.js';
@@ -52,13 +52,11 @@ function initializeModules() {
             console.log("✅ Module de filtrage obligatoire chargé et initialisé.");
         }
 
-        // Page d'accueil : animation marquee
-        if (currentPath === '/' || currentPath === '/index' || currentPath === '') {
-            console.log("-> Page d'accueil détectée. Initialisation de l'animation marquee...");
-            setTimeout(() => {
-                initMarqueeAnimation();
-            }, 500); // Petit délai pour s'assurer que le contenu CMS est chargé
-        }
+        // Animation marquee : initialisation sur toutes les pages
+        console.log("-> Initialisation de l'animation marquee sur toutes les pages...");
+        setTimeout(() => {
+            initMarqueeAnimation();
+        }, 500); // Petit délai pour s'assurer que le contenu CMS est chargé
 
         // Initialisation des modules qui dépendent d'éléments spécifiques
         initMap();

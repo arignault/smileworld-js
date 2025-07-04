@@ -38,4 +38,7 @@ dev-server/
 
 # Guides et fichiers d'export IA
 guide-faq-ia.md
-faq-smileworld.json 
+faq-smileworld.json
+
+# Fichiers SEO et documentation interne
+seo-meta-descriptions.md 
