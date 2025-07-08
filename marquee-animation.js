@@ -58,11 +58,25 @@ function createMarqueeEffect(wrapper) {
     const isMobile = window.matchMedia('(pointer:coarse)').matches || window.innerWidth <= 768;
     if (isMobile) {
         console.log('📱 Mode mobile détecté – défilement manuel activé, animation auto désactivée.');
-        // On se contente d’activer le scroll horizontal sans modifier la mise en page définie dans Webflow
+
+        // Créer un conteneur horizontal si pas déjà présent
+        const marqueeContainer = document.createElement('div');
+        marqueeContainer.className = 'marquee-container';
+        marqueeContainer.style.display = 'inline-flex';
+        marqueeContainer.style.whiteSpace = 'nowrap';
+
+        // Conserver le contenu original SANS duplication
+        marqueeContainer.innerHTML = wrapper.innerHTML;
+
+        wrapper.innerHTML = '';
+        wrapper.appendChild(marqueeContainer);
+
+        // Activer le scroll horizontal natif
         wrapper.style.overflowX = 'auto';
         wrapper.style.whiteSpace = 'nowrap';
-        wrapper.style.touchAction = 'pan-x'; // Drag horizontal natif
-        return; // Pas d'animation GSAP sur mobile
+        wrapper.style.touchAction = 'pan-x';
+
+        return; // Fin spéciale mobile (pas d'animation GSAP)
     }
 
     // Configuration du conteneur
