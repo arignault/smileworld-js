@@ -58,19 +58,11 @@ function createMarqueeEffect(wrapper) {
     const isMobile = window.matchMedia('(pointer:coarse)').matches || window.innerWidth <= 768;
     if (isMobile) {
         console.log('📱 Mode mobile détecté – défilement manuel activé, animation auto désactivée.');
-        // Mise en page horizontale scrollable
-        wrapper.style.display = 'flex';
-        wrapper.style.flexDirection = 'row';
-        wrapper.style.flexWrap = 'nowrap';
+        // On se contente d’activer le scroll horizontal sans modifier la mise en page définie dans Webflow
         wrapper.style.overflowX = 'auto';
-        wrapper.style.overflowY = 'hidden';
-        wrapper.style.webkitOverflowScrolling = 'touch'; // iOS inertial scrolling
-
-        Array.from(slides).forEach(child => {
-            child.style.flex = '0 0 auto'; // Empêche le wrapping
-            child.style.display = 'block'; // Laisse le CSS interne gérer la largeur
-        });
-        return; // On ne crée pas l'animation GSAP sur mobile
+        wrapper.style.whiteSpace = 'nowrap';
+        wrapper.style.touchAction = 'pan-x'; // Drag horizontal natif
+        return; // Pas d'animation GSAP sur mobile
     }
 
     // Configuration du conteneur
