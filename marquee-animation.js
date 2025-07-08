@@ -57,11 +57,15 @@ function createMarqueeEffect(wrapper) {
     // Détection mobile : permettre le défilement manuel et désactiver l'animation auto
     const isMobile = window.matchMedia('(pointer:coarse)').matches || window.innerWidth <= 768;
     if (isMobile) {
-        console.log('📱 Mode mobile détecté – le scroll auto sera simplement mis en pause, scroll manuel activé.');
+        console.log('📱 Mobile détecté – animation marquee désactivée, scroll horizontal natif.');
+        wrapper.style.overflowX = 'auto';
+        wrapper.style.whiteSpace = 'nowrap';
+        wrapper.style.touchAction = 'pan-x';
+        return; // On ne crée ni conteneur ni timeline
     }
 
     // Configuration du conteneur
-    wrapper.style.overflow = isMobile ? 'auto' : 'hidden';
+    wrapper.style.overflow = 'hidden';
     wrapper.style.whiteSpace = 'nowrap';
     
     // Créer un conteneur pour les slides en mouvement
@@ -95,13 +99,6 @@ function createMarqueeEffect(wrapper) {
                    });
     
     console.log(`✅ Animation marquee créée avec une largeur de ${contentWidth}px`);
-    // Sur mobile : pause de la timeline et activation du scroll manuel
-    if (isMobile) {
-        marqueeTimeline.pause();
-        wrapper.style.overflowX = 'auto';
-        wrapper.style.webkitOverflowScrolling = 'touch';
-        wrapper.style.touchAction = 'pan-x';
-    }
     
     // Ajouter les effets de survol robustes
     setupHoverEffects(marqueeContainer, marqueeTimeline);
