@@ -101,71 +101,48 @@ function createMarqueeEffect(wrapper) {
 // 🔄 Scroll / Drag manuel avec inertie (GSAP Draggable + fallback wheel)
 // -----------------------------------------------------------------------------
 function enableManualScroll(wrapper, marqueeContainer, marqueeTimeline, contentWidth) {
-    // Sensibilité et vitesse de base
-    const BASE_SPEED = 1; // timeScale par défaut
-    let velocityProxy = { v: 0 };
+    // Activer uniquement sur devices sans hover (mobile / tactile)
+    const isTouchDevice = window.matchMedia('(hover: none)').matches;
+    if (!isTouchDevice) return; // Desktop : on garde l'animation auto + hover inchangés
 
-    // Utilitaire pour synchroniser la timeline avec la position X actuelle
-    const syncTimelineWithX = () => {
-        const currentX = window.gsap.getProperty(marqueeContainer, 'x');
-        const progress = ((-currentX % contentWidth) + contentWidth) % contentWidth / contentWidth; // 0 → 1
-        marqueeTimeline.progress(progress);
-    };
-
-    // ---------------------------------------------------------------------
-    // 🎡 Wheel / trackpad : modifie timeScale avec inertie
-    // ---------------------------------------------------------------------
-    wrapper.addEventListener('wheel', (e) => {
-        // Empêcher le scroll vertical de la page pendant l'interaction
-        e.preventDefault();
-        const delta = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.003; // Ajuster la sensibilité
-        // Accumuler la vélocité
-        velocityProxy.v += delta;
-        // Appliquer immédiatement
-        marqueeTimeline.timeScale(BASE_SPEED + velocityProxy.v);
-        // Ramener en douceur vers la vitesse de base
-        window.gsap.to(velocityProxy, {
-            v: 0,
-            duration: 2,
-            ease: 'power3.out',
-            onUpdate: () => marqueeTimeline.timeScale(BASE_SPEED + velocityProxy.v)
-        });
-    }, { passive: false });
-
-    // ---------------------------------------------------------------------
-    // 🖱️  Drag (si Draggable dispo) avec inertie infinie
-    // ---------------------------------------------------------------------
-    if (window.Draggable) {
-        console.log('🖱️  Draggable détecté, activation du drag avec inertie');
-        // Enregistrer les plugins disponibles
+    const initDraggable = () => {
+        if (!window.Draggable) return; // sécurité
         try {
-            window.gsap.registerPlugin(window.Draggable, window.InertiaPlugin, window.ModifiersPlugin);
-        } catch (err) {
-            // Certains plugins peuvent être absents, ignorer l'erreur
+            window.gsap.registerPlugin(window.Draggable, window.InertiaPlugin);
+        } catch (e) {
+            window.gsap.registerPlugin(window.Draggable);
         }
         const wrapX = window.gsap.utils.wrap(-contentWidth, 0);
-
         window.Draggable.create(marqueeContainer, {
             type: 'x',
             inertia: true,
-            // Pas de limites car on fait un wrap manuel
-            onPress: () => {
-                // Pendant le drag on stoppe l'animation automatique
+            onPress() {
                 marqueeTimeline.pause();
             },
-            onDrag: function () {
-                // Appliquer le wrap pour l'infini
+            onDrag() {
                 window.gsap.set(marqueeContainer, { x: wrapX(this.x) });
             },
-            onThrowUpdate: function () {
+            onThrowUpdate() {
                 window.gsap.set(marqueeContainer, { x: wrapX(this.x) });
             },
-            onRelease: () => {
-                // À la fin on resynchronise la timeline et on relance
-                syncTimelineWithX();
-                marqueeTimeline.resume();
+            onRelease() {
+                // Resynchroniser la timeline avec la position courante
+                const currentX = window.gsap.getProperty(marqueeContainer, 'x');
+                const progress = ((-currentX % contentWidth) + contentWidth) % contentWidth / contentWidth;
+                marqueeTimeline.progress(progress).resume();
             }
         });
+        console.log('🤌 Drag tactile activé pour le marquee');
+    };
+
+    if (window.Draggable) {
+        initDraggable();
+    } else {
+        console.log('📦 Chargement dynamique de GSAP Draggable pour activer le drag tactile...');
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/gsap@3/dist/Draggable.min.js';
+        script.onload = initDraggable;
+        document.head.appendChild(script);
     }
 }
 
