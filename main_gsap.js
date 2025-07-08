@@ -1,12 +1,8 @@
-// main_gsap.js v3.0.2 - Revert animation marquee page d'accueil uniquement
-console.log("🚀 main_gsap.js v3.0.2 chargé");
+// main_gsap.js v3.0.3 - Correct GSAP Plugin Registration
+console.log("🚀 main_gsap.js v3.0.3 chargé");
 
-import { gsap } from "gsap";
-import { Draggable } from "gsap/Draggable";
-import { InertiaPlugin } from "gsap/InertiaPlugin";
-
-// Enregistrement des plugins GSAP
-gsap.registerPlugin(Draggable, InertiaPlugin);
+// Les imports de GSAP sont supprimés car il est chargé globalement via CDN.
+// Les plugins Draggable et InertiaPlugin doivent également être chargés globalement.
 
 import { initLoadingScreen, requestHideLoadingScreen, forceHideLoadingScreen } from './loading-screen.js';
 import { initTextAnimation } from './text-animation.js';
@@ -27,6 +23,14 @@ import { initMarqueeAnimation } from './marquee-animation.js';
 function initializeModules() {
     console.log("✅ GSAP est prêt. Initialisation des modules...");
     
+    // Enregistrement des plugins GSAP maintenant que GSAP est disponible
+    if (window.Draggable && window.InertiaPlugin) {
+        window.gsap.registerPlugin(window.Draggable, window.InertiaPlugin);
+        console.log("✅ Plugins Draggable et Inertia enregistrés.");
+    } else {
+        console.error("❌ Draggable ou InertiaPlugin non trouvés sur window. Assurez-vous qu'ils sont chargés.");
+    }
+
     try {
         // Initialise les modules généraux
         initTextAnimation();
