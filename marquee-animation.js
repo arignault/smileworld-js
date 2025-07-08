@@ -58,6 +58,7 @@ function createMarqueeEffect(wrapper) {
     const isMobile = window.matchMedia('(pointer:coarse)').matches || window.innerWidth <= 768;
     if (isMobile) {
         console.log('📱 Mobile détecté : on conserve la structure marquee mais on met la timeline en pause pour permettre le drag natif.');
+        // Rien à faire, alignement forcé plus bas.
     }
 
     // Configuration du conteneur
@@ -102,6 +103,13 @@ function createMarqueeEffect(wrapper) {
         wrapper.style.overflowX = 'auto';
         wrapper.style.touchAction = 'pan-x';
         wrapper.style.webkitOverflowScrolling = 'touch';
+
+        // Assurer l'alignement horizontal
+        const slideItems = marqueeContainer.querySelectorAll('.w-dyn-item, .slide-item, [class*="slide"]');
+        slideItems.forEach(item => {
+            item.style.display = 'inline-block';
+            item.style.verticalAlign = 'top';
+        });
     }
     
     // Ajouter les effets de survol robustes
