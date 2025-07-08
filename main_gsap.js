@@ -1,7 +1,13 @@
 // main_gsap.js v3.0.2 - Revert animation marquee page d'accueil uniquement
 console.log("🚀 main_gsap.js v3.0.2 chargé");
 
-// import { gsap } from "gsap"; // GSAP est maintenant chargé globalement via CDN
+import { gsap } from "gsap";
+import { Draggable } from "gsap/Draggable";
+import { InertiaPlugin } from "gsap/InertiaPlugin";
+
+// Enregistrement des plugins GSAP
+gsap.registerPlugin(Draggable, InertiaPlugin);
+
 import { initLoadingScreen, requestHideLoadingScreen, forceHideLoadingScreen } from './loading-screen.js';
 import { initTextAnimation } from './text-animation.js';
 import { initFaqItems } from './faq-toggle.js';
