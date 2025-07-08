@@ -54,6 +54,19 @@ function createMarqueeEffect(wrapper) {
         return;
     }
 
+    // Détection mobile : permettre le défilement manuel et désactiver l'animation auto
+    const isMobile = window.matchMedia('(pointer:coarse)').matches || window.innerWidth <= 768;
+    if (isMobile) {
+        console.log('📱 Mode mobile détecté – défilement manuel activé, animation auto désactivée.');
+        wrapper.style.overflowX = 'auto';
+        wrapper.style.whiteSpace = 'nowrap';
+        // S'assurer que chaque slide reste en ligne pour le scroll horizontal
+        Array.from(slides).forEach(child => {
+            child.style.display = 'inline-block';
+        });
+        return; // On ne crée pas l'animation GSAP sur mobile
+    }
+
     // Configuration du conteneur
     wrapper.style.overflow = 'hidden';
     wrapper.style.whiteSpace = 'nowrap';
@@ -92,9 +105,6 @@ function createMarqueeEffect(wrapper) {
     
     // Ajouter les effets de survol robustes
     setupHoverEffects(marqueeContainer, marqueeTimeline);
-
-    // 👉 Activer le drag tactile (mobile) sans toucher au desktop
-    enableTouchDrag(wrapper, marqueeContainer, marqueeTimeline, contentWidth);
 }
 
 function setupHoverEffects(container, timeline) {
@@ -259,58 +269,4 @@ function isLightColor(color) {
     // Calculer la luminance
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     return luminance > 0.5;
-} 
-
-// -----------------------------------------------------------------------------
-// 📱 Drag tactile pour faire défiler le marquee sur mobile
-// -----------------------------------------------------------------------------
-function enableTouchDrag(wrapper, marqueeContainer, marqueeTimeline, contentWidth) {
-    // Activer uniquement si le device n’a pas de hover (mobile/tablette)
-    if (!window.matchMedia('(hover: none)').matches) return;
-
-    let startX = 0;
-    let marqueeStartX = 0;
-    let isDragging = false;
-
-    const wrapX = (x) => {
-        const mod = (-x) % contentWidth;
-        return -(mod < 0 ? mod + contentWidth : mod);
-    };
-
-    const onPointerDown = (e) => {
-        isDragging = true;
-        startX = e.touches ? e.touches[0].clientX : e.clientX;
-        marqueeStartX = window.gsap.getProperty(marqueeContainer, 'x');
-        marqueeTimeline.pause();
-        window.addEventListener('pointermove', onPointerMove);
-        window.addEventListener('pointerup', onPointerUp);
-        window.addEventListener('touchmove', onPointerMove, { passive: false });
-        window.addEventListener('touchend', onPointerUp);
-    };
-
-    const onPointerMove = (e) => {
-        if (!isDragging) return;
-        const currentX = e.touches ? e.touches[0].clientX : e.clientX;
-        const delta = currentX - startX;
-        const newX = wrapX(marqueeStartX + delta);
-        window.gsap.set(marqueeContainer, { x: newX });
-    };
-
-    const onPointerUp = () => {
-        if (!isDragging) return;
-        isDragging = false;
-        // Recalculer le progress de la timeline pour repartir proprement
-        const currentX = window.gsap.getProperty(marqueeContainer, 'x');
-        const progress = ((-currentX % contentWidth) + contentWidth) % contentWidth / contentWidth;
-        marqueeTimeline.progress(progress).resume();
-        window.removeEventListener('pointermove', onPointerMove);
-        window.removeEventListener('pointerup', onPointerUp);
-        window.removeEventListener('touchmove', onPointerMove);
-        window.removeEventListener('touchend', onPointerUp);
-    };
-
-    wrapper.addEventListener('pointerdown', onPointerDown);
-    wrapper.addEventListener('touchstart', onPointerDown, { passive: false });
-
-    console.log('🤌 Drag tactile activé pour le marquee');
 } 
