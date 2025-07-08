@@ -104,12 +104,18 @@ function createMarqueeEffect(wrapper) {
         wrapper.style.touchAction = 'pan-x';
         wrapper.style.webkitOverflowScrolling = 'touch';
 
-        // Assurer l'alignement horizontal
-        const slideItems = marqueeContainer.querySelectorAll('.w-dyn-item, .slide-item, [class*="slide"]');
-        slideItems.forEach(item => {
-            item.style.display = 'inline-block';
-            item.style.verticalAlign = 'top';
-        });
+        // Assurer l'alignement horizontal : conteneur de collection + items
+        const sliderList = wrapper.querySelector('.cms_slider_list, .w-dyn-items');
+        if (sliderList) {
+            sliderList.style.display = 'inline-flex';
+            sliderList.style.flexWrap = 'nowrap';
+            sliderList.style.whiteSpace = 'nowrap';
+
+            const items = sliderList.querySelectorAll('.w-dyn-item');
+            items.forEach(item => {
+                item.style.display = 'inline-block';
+            });
+        }
     }
     
     // Ajouter les effets de survol robustes
