@@ -87,63 +87,14 @@ function createMarqueeEffect(wrapper) {
                        duration: contentWidth / 100,
                        ease: 'none'
                    });
-
+    
     console.log(`✅ Animation marquee créée avec une largeur de ${contentWidth}px`);
-
-    // 👉 Nouveau : activation du scroll / drag manuel avec inertie
-    enableManualScroll(wrapper, marqueeContainer, marqueeTimeline, contentWidth);
     
     // Ajouter les effets de survol robustes
     setupHoverEffects(marqueeContainer, marqueeTimeline);
-}
 
-// -----------------------------------------------------------------------------
-// 🔄 Scroll / Drag manuel avec inertie (GSAP Draggable + fallback wheel)
-// -----------------------------------------------------------------------------
-function enableManualScroll(wrapper, marqueeContainer, marqueeTimeline, contentWidth) {
-    // Activer uniquement sur devices sans hover (mobile / tactile)
-    const isTouchDevice = window.matchMedia('(hover: none)').matches;
-    if (!isTouchDevice) return; // Desktop : on garde l'animation auto + hover inchangés
-
-    const initDraggable = () => {
-        if (!window.Draggable) return; // sécurité
-        try {
-            window.gsap.registerPlugin(window.Draggable, window.InertiaPlugin);
-        } catch (e) {
-            window.gsap.registerPlugin(window.Draggable);
-        }
-        const wrapX = window.gsap.utils.wrap(-contentWidth, 0);
-        window.Draggable.create(marqueeContainer, {
-            type: 'x',
-            inertia: true,
-            onPress() {
-                marqueeTimeline.pause();
-            },
-            onDrag() {
-                window.gsap.set(marqueeContainer, { x: wrapX(this.x) });
-            },
-            onThrowUpdate() {
-                window.gsap.set(marqueeContainer, { x: wrapX(this.x) });
-            },
-            onRelease() {
-                // Resynchroniser la timeline avec la position courante
-                const currentX = window.gsap.getProperty(marqueeContainer, 'x');
-                const progress = ((-currentX % contentWidth) + contentWidth) % contentWidth / contentWidth;
-                marqueeTimeline.progress(progress).resume();
-            }
-        });
-        console.log('🤌 Drag tactile activé pour le marquee');
-    };
-
-    if (window.Draggable) {
-        initDraggable();
-    } else {
-        console.log('📦 Chargement dynamique de GSAP Draggable pour activer le drag tactile...');
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/gsap@3/dist/Draggable.min.js';
-        script.onload = initDraggable;
-        document.head.appendChild(script);
-    }
+    // 👉 Activer le drag tactile (mobile) sans toucher au desktop
+    enableTouchDrag(wrapper, marqueeContainer, marqueeTimeline, contentWidth);
 }
 
 function setupHoverEffects(container, timeline) {
@@ -308,4 +259,58 @@ function isLightColor(color) {
     // Calculer la luminance
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     return luminance > 0.5;
+} 
+
+// -----------------------------------------------------------------------------
+// 📱 Drag tactile pour faire défiler le marquee sur mobile
+// -----------------------------------------------------------------------------
+function enableTouchDrag(wrapper, marqueeContainer, marqueeTimeline, contentWidth) {
+    // Activer uniquement si le device n’a pas de hover (mobile/tablette)
+    if (!window.matchMedia('(hover: none)').matches) return;
+
+    let startX = 0;
+    let marqueeStartX = 0;
+    let isDragging = false;
+
+    const wrapX = (x) => {
+        const mod = (-x) % contentWidth;
+        return -(mod < 0 ? mod + contentWidth : mod);
+    };
+
+    const onPointerDown = (e) => {
+        isDragging = true;
+        startX = e.touches ? e.touches[0].clientX : e.clientX;
+        marqueeStartX = window.gsap.getProperty(marqueeContainer, 'x');
+        marqueeTimeline.pause();
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerUp);
+        window.addEventListener('touchmove', onPointerMove, { passive: false });
+        window.addEventListener('touchend', onPointerUp);
+    };
+
+    const onPointerMove = (e) => {
+        if (!isDragging) return;
+        const currentX = e.touches ? e.touches[0].clientX : e.clientX;
+        const delta = currentX - startX;
+        const newX = wrapX(marqueeStartX + delta);
+        window.gsap.set(marqueeContainer, { x: newX });
+    };
+
+    const onPointerUp = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        // Recalculer le progress de la timeline pour repartir proprement
+        const currentX = window.gsap.getProperty(marqueeContainer, 'x');
+        const progress = ((-currentX % contentWidth) + contentWidth) % contentWidth / contentWidth;
+        marqueeTimeline.progress(progress).resume();
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('touchmove', onPointerMove);
+        window.removeEventListener('touchend', onPointerUp);
+    };
+
+    wrapper.addEventListener('pointerdown', onPointerDown);
+    wrapper.addEventListener('touchstart', onPointerDown, { passive: false });
+
+    console.log('🤌 Drag tactile activé pour le marquee');
 } 
