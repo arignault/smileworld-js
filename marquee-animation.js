@@ -58,11 +58,17 @@ function createMarqueeEffect(wrapper) {
     const isMobile = window.matchMedia('(pointer:coarse)').matches || window.innerWidth <= 768;
     if (isMobile) {
         console.log('📱 Mode mobile détecté – défilement manuel activé, animation auto désactivée.');
+        // Mise en page horizontale scrollable
+        wrapper.style.display = 'flex';
+        wrapper.style.flexDirection = 'row';
+        wrapper.style.flexWrap = 'nowrap';
         wrapper.style.overflowX = 'auto';
-        wrapper.style.whiteSpace = 'nowrap';
-        // S'assurer que chaque slide reste en ligne pour le scroll horizontal
+        wrapper.style.overflowY = 'hidden';
+        wrapper.style.webkitOverflowScrolling = 'touch'; // iOS inertial scrolling
+
         Array.from(slides).forEach(child => {
-            child.style.display = 'inline-block';
+            child.style.flex = '0 0 auto'; // Empêche le wrapping
+            child.style.display = 'block'; // Laisse le CSS interne gérer la largeur
         });
         return; // On ne crée pas l'animation GSAP sur mobile
     }
