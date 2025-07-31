@@ -1,6 +1,6 @@
 // Fichier : map-integration-v2.js
-// Version : 2.1.1 - Correction reset zoom mobile
-console.log('🗺️ map-integration.js v2.1.1 chargé');
+// Version : 2.1.2 - Suppression affichage dernier avis
+console.log('🗺️ map-integration.js v2.1.2 chargé');
 
 const mapManager = {
     map: null,
@@ -240,20 +240,9 @@ const mapManager = {
         }
 
         let reviewsHtml = '';
-        if (place.reviews && place.reviews.length > 0) {
-            const review = place.reviews[0];
-            if (review.text) {
-                 reviewsHtml = `
-                    <div style="margin-top: 16px;">
-                        <strong style="display: block; font-size: 14px; color: #111; margin-bottom: 8px; font-weight: 600;">Dernier avis</strong>
-                        <div style="border-left: 3px solid #f0f0f0; padding-left: 12px; font-style: italic;">
-                            <p style="margin: 0 0 5px 0; font-size: 13px; color: #555;">"${review.text.substring(0, 100)}..."</p>
-                            <span style="font-weight: 500; font-size: 12px; color: #333;">- ${review.authorAttribution.displayName}</span>
-                        </div>
-                    </div>
-                `;
-            }
-        }
+        // (v2.1.2) Affichage du dernier avis supprimé conformément au cahier des charges.
+        // Nous conservons ratingHtml ci-dessus pour afficher la note et le nombre d'avis.
+
         
         let hoursHtml = '';
         if (place.regularOpeningHours && place.regularOpeningHours.weekdayDescriptions) {
