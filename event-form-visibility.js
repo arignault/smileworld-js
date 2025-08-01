@@ -23,7 +23,7 @@ class EventFormVisibility {
      */
     init() {
         const currentPath = window.location.pathname;
-        const targetPages = ['/smile-event'];
+        const targetPages = ['/smile-event-solutions-entreprises'];
         
         if (!targetPages.includes(currentPath)) {
             console.log(`🚫 event-form-visibility.js - Page ${currentPath} non concernée`);
