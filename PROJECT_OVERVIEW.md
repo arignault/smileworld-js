@@ -275,7 +275,7 @@ positions: {
 
 ### Dependencies (`package.json`)
 **Principales dépendances :**
-- **`gsap`** : v3.13.0 (animations)
+ - **`gsap`** : v3.12.5 (animations)
 - **`@vimeo/player`** : v2.29.0 (vidéos)
 - **`vite`** : v5.3.1 (build)
 - **`live-server`** : v1.2.2 (dev)

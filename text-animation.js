@@ -28,11 +28,11 @@ export function initTextAnimation() {
             if (isAnimating) return;
             isAnimating = true;
 
-            const sequence = gsap.timeline({
+            const sequence = window.gsap.timeline({
                 onComplete: () => {
                     isAnimating = false;
                     // Revenir au début pour le prochain cycle
-                    gsap.to(spanMover, {
+                    window.gsap.to(spanMover, {
                         y: config.positions.start,
                         duration: config.duration,
                         ease: config.ease,
@@ -69,7 +69,7 @@ export function initTextAnimation() {
 
         // Nettoyer l'animation lors du déchargement de la page
         window.addEventListener('beforeunload', () => {
-            gsap.killTweensOf(spanMover);
+            window.gsap.killTweensOf(spanMover);
         });
     } catch (error) {
         console.error("Erreur dans l'animation de texte:", error);

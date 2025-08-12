@@ -1,5 +1,3 @@
-import {gsap} from 'gsap';
-
 // window.Webflow = window.Webflow || [];
 // window.Webflow.push(function() {
 /* ========================================================================
