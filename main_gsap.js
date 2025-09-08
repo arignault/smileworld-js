@@ -9,7 +9,7 @@ import { initMenuDesktop } from './menu-desktop.js';
 import { initMenuMobile } from './menu-mobile.js';
 import { initCentreCards } from './centre-card.js';
 import { initDebugMenu } from './debug-menu.js';
-import { initReservation } from './reservation.js';
+import './reservation-rework.js';
 import { initMap } from './map-integration.js';
 import { initPreselection } from './preselect.js';
 import { initMenuDesktopHoverActivite } from './menu-desktop-hover-activite.js';
@@ -36,12 +36,8 @@ function initializeModules() {
         new EventFormVisibility().init();
 
         // --- Code Splitting pour les pages spécifiques ---
-        // Page Réservation : on charge le module si l'URL contient "/reservation"
-        if (window.location.pathname.includes('/reservation')) {
-            console.log("-> Page Réservation détectée via l'URL. Chargement du module...");
-            initReservation();
-                    console.log("✅ Module Réservation chargé et initialisé.");
-        }
+        // Page Réservation : le module rework est importé en side-effect et
+        // s'auto-initialise uniquement sur /reservation (voir garde interne)
 
         // Pages Offres et Anniversaires : filtrage obligatoire
         const currentPath = window.location.pathname;

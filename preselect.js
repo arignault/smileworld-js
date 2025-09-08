@@ -21,29 +21,21 @@ export function initPreselection() {
     
     console.log('✅ Module de présélection initialisé.');
 
-    const activitySlug = preselectWrapper.dataset.preselectActivitySlug;
     const parkId = preselectWrapper.dataset.preselectParkId;
 
-    const params = new URLSearchParams();
-    if (activitySlug) {
-        params.set('activite', activitySlug);
-    }
+    // On ne conserve que la présélection par centre
     if (parkId) {
-        params.set('parc', parkId);
-    }
-
-    if (params.toString()) {
-        const newHref = `${reservationPageUrl}?${params.toString()}`;
+        const newHref = `${reservationPageUrl}?parc=${encodeURIComponent(parkId)}`;
         bookingButtons.forEach(button => {
             button.href = newHref;
-            
+
             // On s'assure que notre logique de redirection est prioritaire
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 window.location.href = newHref;
-            }, true); // On utilise la capture pour être sûr de passer en premier
+            }, true); // capture pour passer en premier
         });
-        log(`Liens de réservation mis à jour et clics gérés pour pointer vers : ${newHref}`);
+        log(`Liens de réservation mis à jour (centre uniquement) -> ${newHref}`);
     }
 } 
