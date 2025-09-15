@@ -3,7 +3,7 @@
   // N'activer ce module que sur la page Réservation
   if (!window.location.pathname.includes('/reservation')) return;
   const APEX_BASE = 'https://www.apex-timing.com/gokarts/sessions_booking.php?center=';
-  const ITEM_SELECTOR = '[data-attribute="parc-item"], [data-centre-apex-id], [data-apex-id]';
+  const ITEM_SELECTOR = '[data-attribute="parc-item"]';
   const NO_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // ===== CSS injecté =====
@@ -16,7 +16,6 @@
     z-index: 9999; background: #0c0c0f;
     display: none; opacity: 0;
     pointer-events: none;
-    overscroll-behavior: none; /* évite la propagation du scroll au body */
   }
   #booking_overlay.is-open {
     display: block;
@@ -47,17 +46,13 @@
     transform: scale(.985); opacity: 0;
   }
   .booking-panel.is-in {
-    /* Utiliser none comme état final pour éviter un parent transformé qui peut bloquer le scroll dans certains navigateurs Android */
-    transform: none; opacity: 1;
+    transform: scale(1); opacity: 1;
     transition: transform 320ms cubic-bezier(.2,.7,0,1), opacity 260ms ease;
   }
 
   #booking_iframe {
     position: absolute; inset: 0; width: 100%; height: 100%;
     border: 0; background: #fff;
-    /* Améliore la gestion des gestes de défilement sur Android/Samsung Internet */
-    touch-action: pan-y;
-    -ms-touch-action: pan-y;
   }
 
   @media (max-width: 767px) {
@@ -73,6 +68,19 @@
   const styleTag = document.createElement('style');
   styleTag.textContent = css;
   document.head.appendChild(styleTag);
+
+  // Charger le script Apex ax.iframe.js une seule fois par page
+  const APEX_AX_SCRIPT = 'https://www.apex-timing.com/gokarts/javascript/ax.iframe.js';
+  (function ensureApexIframeScript(){
+    try {
+      if (!document.querySelector('script[src*="apex-timing.com/gokarts/javascript/ax.iframe.js"]')) {
+        const s = document.createElement('script');
+        s.src = APEX_AX_SCRIPT;
+        s.async = true;
+        document.head.appendChild(s);
+      }
+    } catch (_) {}
+  })();
 
   // ===== DOM overlay =====
   const overlay = document.createElement('div');
@@ -100,7 +108,7 @@
   iframe.title = 'Réservation';
   iframe.loading = 'lazy';
   iframe.referrerPolicy = 'no-referrer-when-downgrade';
-  iframe.setAttribute('scrolling', 'yes');
+  iframe.classList.add('axiframe');
 
   panel.appendChild(iframe);
   overlay.appendChild(bar);
@@ -125,6 +133,9 @@
         requestAnimationFrame(() => panel.classList.add('is-in'));
       });
     }
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function hideOverlayAnimated() {
@@ -143,6 +154,8 @@
       overlay.addEventListener('transitionend', onEnd);
       setTimeout(finish, 350); // fallback sécurité
     }
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
   }
 
   // ===== Events =====
@@ -155,21 +168,14 @@
   document.addEventListener('click', (e) => {
     const item = e.target.closest(ITEM_SELECTOR);
     if (!item) return;
-    e.preventDefault();
-    e.stopPropagation();
-    // Cherche l'ID APEX sur plusieurs attributs possibles
-    const apexId = item.getAttribute('data-apex-id')
-      || item.getAttribute('data-centre-apex-id')
-      || item.dataset?.centreApexId
-      || item.dataset?.apexId
-      || item.querySelector('[data-apex-id], [data-centre-apex-id]')?.getAttribute('data-apex-id')
-      || item.querySelector('[data-centre-apex-id]')?.getAttribute('data-centre-apex-id');
+    const apexId = item.getAttribute('data-apex-id');
     const centreName =
       item.getAttribute('data-centre-name') ||
       (item.querySelector('.h6, h3, .centre_card_title')?.textContent || '').trim();
-    // Valide qu'on a un ID numérique raisonnable (3+ chiffres)
-    if (!/^\d{3,}$/.test(apexId)) return;
-    iframe.src = APEX_BASE + apexId;
+    if (!/^\d{3}$/.test(apexId)) return;
+    const url = APEX_BASE + apexId;
+    iframe.setAttribute('data-src', url);
+    iframe.src = url;
     titleEl.textContent = centreName ? `Réservation · ${centreName}` : 'Réservation';
     showOverlayAnimated();
   });
@@ -184,7 +190,9 @@
     const params = new URLSearchParams(window.location.search);
     const parkId = params.get('parc');
     if (parkId && /^\d{3}$/.test(parkId)) {
-      iframe.src = APEX_BASE + parkId;
+      const url = APEX_BASE + parkId;
+      iframe.setAttribute('data-src', url);
+      iframe.src = url;
       titleEl.textContent = 'Réservation';
       showOverlayAnimated();
     }
