@@ -16,6 +16,7 @@
     z-index: 9999; background: #0c0c0f;
     display: none; opacity: 0;
     pointer-events: none;
+    overscroll-behavior: none; /* évite la propagation du scroll au body */
   }
   #booking_overlay.is-open {
     display: block;
@@ -46,13 +47,17 @@
     transform: scale(.985); opacity: 0;
   }
   .booking-panel.is-in {
-    transform: scale(1); opacity: 1;
+    /* Utiliser none comme état final pour éviter un parent transformé qui peut bloquer le scroll dans certains navigateurs Android */
+    transform: none; opacity: 1;
     transition: transform 320ms cubic-bezier(.2,.7,0,1), opacity 260ms ease;
   }
 
   #booking_iframe {
     position: absolute; inset: 0; width: 100%; height: 100%;
     border: 0; background: #fff;
+    /* Améliore la gestion des gestes de défilement sur Android/Samsung Internet */
+    touch-action: pan-y;
+    -ms-touch-action: pan-y;
   }
 
   @media (max-width: 767px) {
@@ -95,6 +100,7 @@
   iframe.title = 'Réservation';
   iframe.loading = 'lazy';
   iframe.referrerPolicy = 'no-referrer-when-downgrade';
+  iframe.setAttribute('scrolling', 'yes');
 
   panel.appendChild(iframe);
   overlay.appendChild(bar);
@@ -119,9 +125,6 @@
         requestAnimationFrame(() => panel.classList.add('is-in'));
       });
     }
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function hideOverlayAnimated() {
@@ -140,8 +143,6 @@
       overlay.addEventListener('transitionend', onEnd);
       setTimeout(finish, 350); // fallback sécurité
     }
-    document.documentElement.style.overflow = '';
-    document.body.style.overflow = '';
   }
 
   // ===== Events =====
