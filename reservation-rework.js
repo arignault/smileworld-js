@@ -3,7 +3,7 @@
   // N'activer ce module que sur la page Réservation
   if (!window.location.pathname.includes('/reservation')) return;
   const APEX_BASE = 'https://www.apex-timing.com/gokarts/sessions_booking.php?center=';
-  const ITEM_SELECTOR = '[data-attribute="parc-item"]';
+  const ITEM_SELECTOR = '[data-attribute="parc-item"], [data-centre-apex-id], [data-apex-id]';
   const NO_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // ===== CSS injecté =====
@@ -157,11 +157,18 @@
     if (!item) return;
     e.preventDefault();
     e.stopPropagation();
-    const apexId = item.getAttribute('data-apex-id');
+    // Cherche l'ID APEX sur plusieurs attributs possibles
+    const apexId = item.getAttribute('data-apex-id')
+      || item.getAttribute('data-centre-apex-id')
+      || item.dataset?.centreApexId
+      || item.dataset?.apexId
+      || item.querySelector('[data-apex-id], [data-centre-apex-id]')?.getAttribute('data-apex-id')
+      || item.querySelector('[data-centre-apex-id]')?.getAttribute('data-centre-apex-id');
     const centreName =
       item.getAttribute('data-centre-name') ||
       (item.querySelector('.h6, h3, .centre_card_title')?.textContent || '').trim();
-    if (!/^\d{3}$/.test(apexId)) return;
+    // Valide qu'on a un ID numérique raisonnable (3+ chiffres)
+    if (!/^\d{3,}$/.test(apexId)) return;
     iframe.src = APEX_BASE + apexId;
     titleEl.textContent = centreName ? `Réservation · ${centreName}` : 'Réservation';
     showOverlayAnimated();
