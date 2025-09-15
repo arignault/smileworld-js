@@ -7,6 +7,7 @@
     z-index: 9999; background: #0c0c0f;
     display: none; opacity: 0;
     pointer-events: none;
+    overscroll-behavior: contain; /* bloque la propagation du scroll vers le body */
   }
   #booking_overlay.is-open {
     display: block;
