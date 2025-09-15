@@ -155,6 +155,8 @@
   document.addEventListener('click', (e) => {
     const item = e.target.closest(ITEM_SELECTOR);
     if (!item) return;
+    e.preventDefault();
+    e.stopPropagation();
     const apexId = item.getAttribute('data-apex-id');
     const centreName =
       item.getAttribute('data-centre-name') ||
