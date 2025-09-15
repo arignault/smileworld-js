@@ -44,6 +44,7 @@
     top: var(--booking-bar-h);
     height: calc(100% - var(--booking-bar-h));
     transform: scale(.985); opacity: 0;
+    overflow-y: auto; /* permet de scroller le contenu (iframe) */
   }
   .booking-panel.is-in {
     transform: scale(1); opacity: 1;
@@ -109,6 +110,7 @@
   iframe.loading = 'lazy';
   iframe.referrerPolicy = 'no-referrer-when-downgrade';
   iframe.classList.add('axiframe');
+  iframe.setAttribute('scrolling', 'yes');
 
   panel.appendChild(iframe);
   overlay.appendChild(bar);
