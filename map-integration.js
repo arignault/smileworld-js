@@ -119,12 +119,26 @@ const mapManager = {
             const lat = parseFloat(item.dataset.lat);
             const lng = parseFloat(item.dataset.lng);
             const placeId = item.dataset.placeId;
-            // Récupérer l'URL du centre exclusivement via l'attribut data-centre-url
+            // Construire l'URL "Voir le centre" à partir du slug (data-centre-url)
             const rawCentreUrl = item.dataset.centreUrl || null;
             let centreUrl = null;
             try {
                 if (rawCentreUrl) {
-                    centreUrl = new URL(rawCentreUrl, window.location.origin).href;
+                    let path = rawCentreUrl.trim();
+                    const PREFIX = '/nos-parcs-a-paris-region-parisienne/';
+                    if (/^https?:\/\//i.test(path)) {
+                        // URL absolue fournie
+                        centreUrl = path;
+                    } else if (path.startsWith(PREFIX)) {
+                        // Déjà préfixé correctement
+                        centreUrl = new URL(path, window.location.origin).href;
+                    } else if (path.startsWith('/')) {
+                        // Chemin absolu mais sans le bon dossier, on force le préfixe
+                        centreUrl = new URL(PREFIX + path.replace(/^\/+/, ''), window.location.origin).href;
+                    } else {
+                        // Slug simple → on ajoute le préfixe attendu
+                        centreUrl = new URL(PREFIX + path, window.location.origin).href;
+                    }
                 } else {
                     console.warn('Aucune URL de centre fournie (data-centre-url manquant) pour:', item);
                 }
