@@ -119,6 +119,18 @@ const mapManager = {
             const lat = parseFloat(item.dataset.lat);
             const lng = parseFloat(item.dataset.lng);
             const placeId = item.dataset.placeId;
+            // Récupérer l'URL du centre exclusivement via l'attribut data-centre-url
+            const rawCentreUrl = item.dataset.centreUrl || null;
+            let centreUrl = null;
+            try {
+                if (rawCentreUrl) {
+                    centreUrl = new URL(rawCentreUrl, window.location.origin).href;
+                } else {
+                    console.warn('Aucune URL de centre fournie (data-centre-url manquant) pour:', item);
+                }
+            } catch (e) {
+                console.warn('URL de centre invalide détectée dans data-centre-url, le bouton "Voir le centre" sera masqué.', rawCentreUrl);
+            }
 
             if (isNaN(lat) || isNaN(lng) || !placeId) {
                 const name = item.querySelector('h3')?.textContent || 'Nom non trouvé';
@@ -140,7 +152,7 @@ const mapManager = {
                 }
             });
 
-            this.markers.push({ placeId, marker });
+            this.markers.push({ placeId, marker, centreUrl });
         });
     },
 
@@ -154,7 +166,7 @@ const mapManager = {
             
             const fields = [
                 'displayName', 'formattedAddress', 'location', 'rating', 
-                'googleMapsURI', 'photos', 'reviews', 'userRatingCount', 'regularOpeningHours'
+                'googleMapsURI', 'photos', 'userRatingCount', 'regularOpeningHours'
             ];
             // On demande les champs avec la langue spécifiée globalement
             await place.fetchFields({ fields });
@@ -163,7 +175,8 @@ const mapManager = {
                 this.map.panTo(place.location);
                 this.map.setZoom(15);
 
-                const content = this.buildInfoWindowContent(place, false);
+                const markerData = this.markers.find(m => m.placeId === placeId);
+                const content = this.buildInfoWindowContent(place, false, markerData?.centreUrl);
                 this.infoWindow.setContent(content);
                 
                 const targetMarker = marker || this.markers.find(m => m.placeId === placeId)?.marker;
@@ -188,7 +201,7 @@ const mapManager = {
             
             const fields = [
                 'displayName', 'formattedAddress', 'location', 'rating', 
-                'googleMapsURI', 'photos', 'reviews', 'userRatingCount', 'regularOpeningHours'
+                'googleMapsURI', 'photos', 'userRatingCount', 'regularOpeningHours'
             ];
             await place.fetchFields({ fields });
 
@@ -196,7 +209,8 @@ const mapManager = {
                 this.map.panTo(place.location);
                 this.map.setZoom(15);
 
-                const contentHtml = this.buildInfoWindowContent(place, true);
+                const markerData = this.markers.find(m => m.placeId === placeId);
+                const contentHtml = this.buildInfoWindowContent(place, true, markerData?.centreUrl);
                 this.bottomSheetElement.querySelector('.map-bottom-sheet__content').innerHTML = contentHtml;
 
                 this.bottomSheetElement.classList.add('is-visible');
@@ -221,7 +235,7 @@ const mapManager = {
         this.map.setZoom(this.initialZoom);
     },
 
-    buildInfoWindowContent: function(place, isBottomSheet = false) {
+    buildInfoWindowContent: function(place, isBottomSheet = false, centreUrl = null) {
         let photoHtml = '';
         if (place.photos && place.photos.length > 0) {
             const photoUrl = place.photos[0].getURI({ maxWidth: 400, maxHeight: 200 });
@@ -254,6 +268,9 @@ const mapManager = {
 
         const containerStyle = `font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; ${isBottomSheet ? '' : 'max-width: 290px;'} padding: 5px;`;
 
+        const viewCentreButton = centreUrl ? `<a href="${centreUrl}" style="display: inline-block; margin-top: 8px; margin-right: 8px; font-size: 13px; color: white; background-color: #1a73e8; text-decoration: none; font-weight: 600; padding: 8px 10px; border-radius: 6px;">Voir le centre</a>` : '';
+        const viewOnMapsLink = `<a href="${place.googleMapsURI}" target="_blank" style="display: inline-block; margin-top: 8px; font-size: 13px; color: #1a73e8; text-decoration: none; font-weight: 500;">Voir sur Google Maps</a>`;
+
         return `
             <div style="${containerStyle}">
                 ${photoHtml}
@@ -261,7 +278,7 @@ const mapManager = {
                 <div style="font-size: 13px; color: #555; margin-bottom: 8px;">${place.formattedAddress}</div>
                 ${ratingHtml}
                 ${hoursHtml}
-                <a href="${place.googleMapsURI}" target="_blank" style="display: inline-block; margin-top: 8px; font-size: 13px; color: #1a73e8; text-decoration: none; font-weight: 500;">Voir sur Google Maps</a>
+                ${viewCentreButton}${viewOnMapsLink}
                 ${reviewsHtml}
             </div>
         `;
