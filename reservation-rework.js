@@ -17,6 +17,7 @@
     display: none; opacity: 0;
     pointer-events: none;
     overscroll-behavior: contain; /* bloque la propagation du scroll vers le body */
+    touch-action: pan-y; /* améliore le geste de scroll vertical mobile */
   }
   #booking_overlay.is-open {
     display: block;
@@ -46,6 +47,8 @@
     height: calc(100% - var(--booking-bar-h));
     transform: scale(.985); opacity: 0;
     overflow-y: auto; /* permet de scroller le contenu (iframe) */
+    -webkit-overflow-scrolling: touch; /* inertie iOS */
+    touch-action: pan-y;
   }
   .booking-panel.is-in {
     transform: scale(1); opacity: 1;
@@ -55,6 +58,8 @@
   #booking_iframe {
     position: absolute; inset: 0; width: 100%; height: 100%;
     border: 0; background: #fff;
+    /* s'assure que l'iframe capte bien les interactions */
+    pointer-events: auto;
   }
 
   @media (max-width: 767px) {
@@ -119,6 +124,30 @@
   document.body.appendChild(overlay);
 
   // ===== Helpers =====
+  let __scrollLockY = 0;
+  function lockBodyScroll() {
+    try {
+      __scrollLockY = window.scrollY || document.documentElement.scrollTop || 0;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${__scrollLockY}px`;
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      document.body.style.width = '100%';
+      // On évite de mettre overflow:hidden sur html/body qui casse le scroll des iframes sur certains navigateurs
+    } catch (_) {}
+  }
+
+  function unlockBodyScroll() {
+    try {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.width = '';
+      window.scrollTo(0, __scrollLockY || 0);
+    } catch (_) {}
+  }
+
   function updateBarHeightVar() {
     const h = Math.ceil(bar.getBoundingClientRect().height || 56);
     overlay.style.setProperty('--booking-bar-h', h + 'px');
@@ -136,9 +165,7 @@
         requestAnimationFrame(() => panel.classList.add('is-in'));
       });
     }
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    lockBodyScroll();
   }
 
   function hideOverlayAnimated() {
@@ -157,8 +184,7 @@
       overlay.addEventListener('transitionend', onEnd);
       setTimeout(finish, 350); // fallback sécurité
     }
-    document.documentElement.style.overflow = '';
-    document.body.style.overflow = '';
+    unlockBodyScroll();
   }
 
   // ===== Events =====
