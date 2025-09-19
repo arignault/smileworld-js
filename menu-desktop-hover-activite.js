@@ -117,7 +117,7 @@ export const initMenuDesktopHoverActivite = () => {
         };
 
         const animProps = isEntering 
-            ? { scale: 1.1, backgroundColor: '#FFFFFF' }
+            ? { scale: 1.1, backgroundColor: 'rgba(255, 255, 255, 0.00);' }
             : { scale: 1, backgroundColor: '' };
 
         const anim = window.gsap.to(item, { ...animProps, ...animConfig });
