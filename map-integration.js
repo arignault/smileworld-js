@@ -9,6 +9,100 @@ const mapManager = {
     bottomSheetElement: null,
     initialCenter: { lat: 48.82, lng: 2.25 },
     initialZoom: 10,
+    // Cache client: mémoire + localStorage (TTL 24h par défaut)
+    _placeCacheMemory: new Map(),
+    cacheTtlMs: 24 * 60 * 60 * 1000,
+
+    _cacheKey(placeId) {
+        return `sw_place_${placeId}`;
+    },
+
+    getCachedPlaceData(placeId) {
+        try {
+            // Mémoire
+            const inMem = this._placeCacheMemory.get(placeId);
+            if (inMem && inMem.expiresAt > Date.now()) {
+                return inMem.data;
+            }
+            // localStorage
+            const raw = localStorage.getItem(this._cacheKey(placeId));
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.expiresAt > Date.now()) {
+                // Hydrater mémoire
+                this._placeCacheMemory.set(placeId, parsed);
+                return parsed.data;
+            }
+            // Expiré → nettoyer
+            localStorage.removeItem(this._cacheKey(placeId));
+            this._placeCacheMemory.delete(placeId);
+            return null;
+        } catch (_e) {
+            return null;
+        }
+    },
+
+    setCachedPlaceData(placeId, data) {
+        const entry = { data, expiresAt: Date.now() + this.cacheTtlMs };
+        try {
+            this._placeCacheMemory.set(placeId, entry);
+            localStorage.setItem(this._cacheKey(placeId), JSON.stringify(entry));
+        } catch (_e) {
+            // En cas de quota, on garde au moins en mémoire
+            this._placeCacheMemory.set(placeId, entry);
+        }
+    },
+
+    normalizePlaceToData(place) {
+        // Convertit l'objet Place Google en données simples sérialisables
+        let lat = null;
+        let lng = null;
+        if (place.location) {
+            if (typeof place.location.lat === 'function') {
+                lat = place.location.lat();
+                lng = place.location.lng();
+            } else if (typeof place.location.lat === 'number') {
+                lat = place.location.lat;
+                lng = place.location.lng;
+            }
+        }
+        let photoUrl = null;
+        try {
+            if (place.photos && place.photos.length > 0 && typeof place.photos[0].getURI === 'function') {
+                photoUrl = place.photos[0].getURI({ maxWidth: 400, maxHeight: 200 });
+            }
+        } catch (_e) {}
+
+        return {
+            displayName: place.displayName || '',
+            formattedAddress: place.formattedAddress || '',
+            location: lat != null && lng != null ? { lat, lng } : null,
+            rating: typeof place.rating === 'number' ? place.rating : null,
+            userRatingCount: typeof place.userRatingCount === 'number' ? place.userRatingCount : null,
+            googleMapsURI: place.googleMapsURI || '',
+            regularOpeningHours: place.regularOpeningHours && place.regularOpeningHours.weekdayDescriptions ? { weekdayDescriptions: place.regularOpeningHours.weekdayDescriptions } : null,
+            photoUrl
+        };
+    },
+
+    async getPlaceData(placeId) {
+        // 1) Cache
+        const cached = this.getCachedPlaceData(placeId);
+        if (cached) {
+            return cached;
+        }
+        // 2) Fetch via Places et mettre en cache
+        const { Place } = await google.maps.importLibrary("places");
+        const place = new Place({ id: placeId });
+        const fields = [
+            'displayName', 'formattedAddress', 'location', 'rating',
+            'googleMapsURI', 'photos', 'userRatingCount', 'regularOpeningHours'
+        ];
+        await place.fetchFields({ fields });
+        const data = this.normalizePlaceToData(place);
+        this.setCachedPlaceData(placeId, data);
+        return data;
+    },
 
     initMap: function() {
         const mapElement = document.getElementById('map');
@@ -175,22 +269,14 @@ const mapManager = {
         console.log(`🔎 Zoom sur le centre avec Place ID : ${placeId}`);
 
         try {
-            const { Place } = await google.maps.importLibrary("places");
-            const place = new Place({ id: placeId });
-            
-            const fields = [
-                'displayName', 'formattedAddress', 'location', 'rating', 
-                'googleMapsURI', 'photos', 'userRatingCount', 'regularOpeningHours'
-            ];
-            // On demande les champs avec la langue spécifiée globalement
-            await place.fetchFields({ fields });
+            const placeData = await this.getPlaceData(placeId);
 
-            if (place.location) {
-                this.map.panTo(place.location);
+            if (placeData.location) {
+                this.map.panTo(placeData.location);
                 this.map.setZoom(15);
 
                 const markerData = this.markers.find(m => m.placeId === placeId);
-                const content = this.buildInfoWindowContent(place, false, markerData?.centreUrl);
+                const content = this.buildInfoWindowContent(placeData, false, markerData?.centreUrl);
                 this.infoWindow.setContent(content);
                 
                 const targetMarker = marker || this.markers.find(m => m.placeId === placeId)?.marker;
@@ -210,21 +296,14 @@ const mapManager = {
         console.log(`📱 Affichage du panneau mobile pour Place ID : ${placeId}`);
 
         try {
-            const { Place } = await google.maps.importLibrary("places");
-            const place = new Place({ id: placeId });
-            
-            const fields = [
-                'displayName', 'formattedAddress', 'location', 'rating', 
-                'googleMapsURI', 'photos', 'userRatingCount', 'regularOpeningHours'
-            ];
-            await place.fetchFields({ fields });
+            const placeData = await this.getPlaceData(placeId);
 
-            if (place.location) {
-                this.map.panTo(place.location);
+            if (placeData.location) {
+                this.map.panTo(placeData.location);
                 this.map.setZoom(15);
 
                 const markerData = this.markers.find(m => m.placeId === placeId);
-                const contentHtml = this.buildInfoWindowContent(place, true, markerData?.centreUrl);
+                const contentHtml = this.buildInfoWindowContent(placeData, true, markerData?.centreUrl);
                 this.bottomSheetElement.querySelector('.map-bottom-sheet__content').innerHTML = contentHtml;
 
                 this.bottomSheetElement.classList.add('is-visible');
@@ -251,7 +330,9 @@ const mapManager = {
 
     buildInfoWindowContent: function(place, isBottomSheet = false, centreUrl = null) {
         let photoHtml = '';
-        if (place.photos && place.photos.length > 0) {
+        if (place.photoUrl) {
+            photoHtml = `<img src="${place.photoUrl}" alt="Photo de ${place.displayName}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 12px;">`;
+        } else if (place.photos && place.photos.length > 0 && typeof place.photos[0].getURI === 'function') {
             const photoUrl = place.photos[0].getURI({ maxWidth: 400, maxHeight: 200 });
             photoHtml = `<img src="${photoUrl}" alt="Photo de ${place.displayName}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 12px;">`;
         }
