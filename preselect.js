@@ -43,5 +43,18 @@ export function initPreselection() {
             button.addEventListener('click', handler, true);
         });
         log(`Boutons configurés pour ouvrir Apex en nouvel onglet (sans redirection locale) -> ${apexUrl}`);
+
+        // Sécurité supplémentaire: intercepteur global en capture, pour capter tous clics dans le bouton
+        document.addEventListener('click', function globalPreselectInterceptor(e) {
+            const btn = e.target.closest('[data-attribute="preselect-booking-button"]');
+            if (!btn) return;
+            try {
+                e.preventDefault();
+                if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+                if (typeof e.stopPropagation === 'function') e.stopPropagation();
+            } catch (_) {}
+            window.open(apexUrl, '_blank', 'noopener');
+            return false;
+        }, true);
     }
 } 
