@@ -34,6 +34,7 @@
     padding: 10px 16px; background: #111; color: #fff;
     border-bottom: 1px solid rgba(255,255,255,.12);
     font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    z-index: 2; /* superpose le bandeau au-dessus du panel */
   }
   .booking-bar__btn {
     background: #ffc31f; color: #000; font-weight: 700;
@@ -43,12 +44,13 @@
 
   .booking-panel {
     position: absolute; left: 0; right: 0;
-    top: var(--booking-bar-h);
-    height: calc(100% - var(--booking-bar-h));
+    top: 0;
+    height: 100%;
     transform: scale(.985); opacity: 0;
     overflow-y: auto; /* permet de scroller le contenu (iframe) */
     -webkit-overflow-scrolling: touch; /* inertie iOS */
     touch-action: pan-y;
+    z-index: 1;
   }
   .booking-panel.is-in {
     transform: scale(1); opacity: 1;
