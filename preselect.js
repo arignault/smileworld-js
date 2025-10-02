@@ -17,13 +17,11 @@ export function initPreselection() {
     }
 
     const bookingButtons = document.querySelectorAll('[data-attribute="preselect-booking-button"]');
-    // La condition de chargement est déjà dans main_gsap, donc on sait qu'il y a au moins un bouton.
     
     console.log('✅ Module de présélection initialisé.');
 
     const parkId = preselectWrapper.dataset.preselectParkId;
 
-    // On ne conserve que la présélection par centre
     if (parkId) {
         const apexUrl = `https://www.apex-timing.com/gokarts/sessions_booking.php?center=${encodeURIComponent(parkId)}`;
         bookingButtons.forEach(button => {
@@ -31,16 +29,19 @@ export function initPreselection() {
             button.target = '_blank';
             button.rel = 'noopener';
 
-            // Priorité à notre logique: ouverture nouvel onglet + fallback
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const win = window.open(apexUrl, '_blank', 'noopener');
-                if (!win) {
-                    window.location.href = apexUrl; // fallback si bloqué
-                }
-            }, true);
+            // Empêche toute navigation locale et supprime le fallback
+            const handler = function(e) {
+                try {
+                    e.preventDefault();
+                    if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+                    if (typeof e.stopPropagation === 'function') e.stopPropagation();
+                } catch (_) {}
+                window.open(apexUrl, '_blank', 'noopener');
+                return false;
+            };
+            // capture pour prioriser notre handler
+            button.addEventListener('click', handler, true);
         });
-        log(`Boutons configurés pour ouvrir Apex en nouvel onglet -> ${apexUrl}`);
+        log(`Boutons configurés pour ouvrir Apex en nouvel onglet (sans redirection locale) -> ${apexUrl}`);
     }
 } 

@@ -9,17 +9,22 @@
 
   // Mode nouvel onglet uniquement: pas d'overlay ni d'iframe injectés
   if (NEWTAB_ONLY) {
-    // Clic sur un centre → ouvre dans un nouvel onglet
+    // Clic sur un centre → ouvre dans un nouvel onglet et empêche toute navigation locale
     document.addEventListener('click', (e) => {
       const item = e.target.closest(ITEM_SELECTOR);
       if (!item) return;
       const apexId = item.getAttribute('data-apex-id');
       if (!/^\d{3}$/.test(apexId)) return;
       const url = APEX_BASE + apexId;
+      // Empêche la navigation par défaut de l'élément cliqué (liens, etc.)
+      try {
+        e.preventDefault();
+        if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+        if (typeof e.stopPropagation === 'function') e.stopPropagation();
+      } catch (_) {}
       const win = window.open(url, '_blank', 'noopener');
-      if (!win) {
-        window.location.href = url;
-      }
+      // Pas de fallback vers la même fenêtre: on reste sur /reservation
+      return false;
     });
 
     // Ouverture auto via ?parc=XXX (si testé/manuellement)
@@ -29,9 +34,7 @@
       if (parkId && /^\d{3}$/.test(parkId)) {
         const url = APEX_BASE + parkId;
         const win = window.open(url, '_blank', 'noopener');
-        if (!win) {
-          window.location.replace(url);
-        }
+        // Si bloqué par le navigateur, on ne redirige pas la fenêtre actuelle
       }
     } catch (_) {}
 
