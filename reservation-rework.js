@@ -205,10 +205,12 @@
       (item.querySelector('.h6, h3, .centre_card_title')?.textContent || '').trim();
     if (!/^\d{3}$/.test(apexId)) return;
     const url = APEX_BASE + apexId;
-    iframe.setAttribute('data-src', url);
-    iframe.src = url;
-    titleEl.textContent = centreName ? `Réservation · ${centreName}` : 'Réservation';
-    showOverlayAnimated();
+    // Ouvre dans un nouvel onglet et n'utilise plus l'iframe
+    const win = window.open(url, '_blank', 'noopener');
+    if (!win) {
+      // Fallback si bloqueur de pop-up: on navigue dans le même onglet
+      window.location.href = url;
+    }
   });
 
   // Mise à jour hauteur du bandeau si resize
@@ -216,16 +218,17 @@
   ro.observe(bar);
   window.addEventListener('resize', updateBarHeightVar);
 
-  // Ouverture auto via paramètre d'URL ?parc=XXX
+  // Ouverture auto via paramètre d'URL ?parc=XXX (peut être bloqué par pop-up blockers)
   try {
     const params = new URLSearchParams(window.location.search);
     const parkId = params.get('parc');
     if (parkId && /^\d{3}$/.test(parkId)) {
       const url = APEX_BASE + parkId;
-      iframe.setAttribute('data-src', url);
-      iframe.src = url;
-      titleEl.textContent = 'Réservation';
-      showOverlayAnimated();
+      const win = window.open(url, '_blank', 'noopener');
+      if (!win) {
+        // Fallback: navigation dans le même onglet si ouverture bloquée
+        window.location.replace(url);
+      }
     }
   } catch (_) {}
 })();

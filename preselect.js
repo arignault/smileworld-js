@@ -25,17 +25,22 @@ export function initPreselection() {
 
     // On ne conserve que la présélection par centre
     if (parkId) {
-        const newHref = `${reservationPageUrl}?parc=${encodeURIComponent(parkId)}`;
+        const apexUrl = `https://www.apex-timing.com/gokarts/sessions_booking.php?center=${encodeURIComponent(parkId)}`;
         bookingButtons.forEach(button => {
-            button.href = newHref;
+            button.href = apexUrl;
+            button.target = '_blank';
+            button.rel = 'noopener';
 
-            // On s'assure que notre logique de redirection est prioritaire
+            // Priorité à notre logique: ouverture nouvel onglet + fallback
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                window.location.href = newHref;
-            }, true); // capture pour passer en premier
+                const win = window.open(apexUrl, '_blank', 'noopener');
+                if (!win) {
+                    window.location.href = apexUrl; // fallback si bloqué
+                }
+            }, true);
         });
-        log(`Liens de réservation mis à jour (centre uniquement) -> ${newHref}`);
+        log(`Boutons configurés pour ouvrir Apex en nouvel onglet -> ${apexUrl}`);
     }
 } 
