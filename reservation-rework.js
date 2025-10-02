@@ -5,6 +5,38 @@
   const APEX_BASE = 'https://www.apex-timing.com/gokarts/sessions_booking.php?center=';
   const ITEM_SELECTOR = '[data-attribute="parc-item"]';
   const NO_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const NEWTAB_ONLY = true; // Désactive l'overlay et ouvre toujours en nouvel onglet
+
+  // Mode nouvel onglet uniquement: pas d'overlay ni d'iframe injectés
+  if (NEWTAB_ONLY) {
+    // Clic sur un centre → ouvre dans un nouvel onglet
+    document.addEventListener('click', (e) => {
+      const item = e.target.closest(ITEM_SELECTOR);
+      if (!item) return;
+      const apexId = item.getAttribute('data-apex-id');
+      if (!/^\d{3}$/.test(apexId)) return;
+      const url = APEX_BASE + apexId;
+      const win = window.open(url, '_blank', 'noopener');
+      if (!win) {
+        window.location.href = url;
+      }
+    });
+
+    // Ouverture auto via ?parc=XXX (si testé/manuellement)
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const parkId = params.get('parc');
+      if (parkId && /^\d{3}$/.test(parkId)) {
+        const url = APEX_BASE + parkId;
+        const win = window.open(url, '_blank', 'noopener');
+        if (!win) {
+          window.location.replace(url);
+        }
+      }
+    } catch (_) {}
+
+    return; // On n'exécute pas la logique d'overlay en-dessous
+  }
 
   // ===== CSS injecté =====
   const css = `
