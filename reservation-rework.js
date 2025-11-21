@@ -23,7 +23,11 @@
         if (typeof e.stopPropagation === 'function') e.stopPropagation();
       } catch (_) {}
       const win = window.open(url, '_blank', 'noopener');
-      // Pas de fallback vers la même fenêtre: on reste sur /reservation
+      // Fallback sur le même onglet si le navigateur bloque l'ouverture
+      if (!win) {
+        window.location.href = url;
+      }
+      // Sinon, on reste sur /reservation
       return false;
     });
 
