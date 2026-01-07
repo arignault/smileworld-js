@@ -41,7 +41,7 @@ function initializeModules() {
 
         // Pages Offres et Anniversaires : filtrage obligatoire
         const currentPath = window.location.pathname;
-        if (currentPath === '/offres' || currentPath === '/anniversaires') {
+        if (currentPath === '/offres' || currentPath === '/anniversaires'|| currentPath === '/anniversaire-enfant') {
             console.log(`-> Page ${currentPath} détectée. Initialisation du filtrage obligatoire...`);
             const mandatoryFilter = new MandatoryFilterSelection();
             mandatoryFilter.init();
