@@ -22,12 +22,8 @@
         if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
         if (typeof e.stopPropagation === 'function') e.stopPropagation();
       } catch (_) {}
-      const win = window.open(url, '_blank', 'noopener');
-      // Fallback sur le même onglet si le navigateur bloque l'ouverture
-      if (!win) {
-        window.location.href = url;
-      }
-      // Sinon, on reste sur /reservation
+      window.open(url, '_blank', 'noopener');
+      // On reste toujours sur /reservation, même si l'ouverture est bloquée
       return false;
     });
 
@@ -37,7 +33,7 @@
       const parkId = params.get('parc');
       if (parkId && /^\d{3}$/.test(parkId)) {
         const url = APEX_BASE + parkId;
-        const win = window.open(url, '_blank', 'noopener');
+        window.open(url, '_blank', 'noopener');
         // Si bloqué par le navigateur, on ne redirige pas la fenêtre actuelle
       }
     } catch (_) {}
@@ -245,11 +241,7 @@
     if (!/^\d{3}$/.test(apexId)) return;
     const url = APEX_BASE + apexId;
     // Ouvre dans un nouvel onglet et n'utilise plus l'iframe
-    const win = window.open(url, '_blank', 'noopener');
-    if (!win) {
-      // Fallback si bloqueur de pop-up: on navigue dans le même onglet
-      window.location.href = url;
-    }
+    window.open(url, '_blank', 'noopener');
   });
 
   // Mise à jour hauteur du bandeau si resize
@@ -263,11 +255,7 @@
     const parkId = params.get('parc');
     if (parkId && /^\d{3}$/.test(parkId)) {
       const url = APEX_BASE + parkId;
-      const win = window.open(url, '_blank', 'noopener');
-      if (!win) {
-        // Fallback: navigation dans le même onglet si ouverture bloquée
-        window.location.replace(url);
-      }
+      window.open(url, '_blank', 'noopener');
     }
   } catch (_) {}
 })();
